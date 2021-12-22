@@ -113,21 +113,28 @@ type Card struct {
 	Variation      bool   `json:"variation"`
 }
 
-func fetch(path string) *Card {
+func fetch(path string) (*Card, bool) {
 	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/", path))
 	if err != nil {
 		log.Fatalln(err)
+		return &Card{}, false
+	}
+
+	if resp.StatusCode != 200 {
+		LogMessage(fmt.Sprintf("Card %s not found", path), "yellow")
+		return &Card{}, false
 	}
 
 	//We Read the response body on the line below.
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalln(err)
+		return &Card{}, false
 	}
 
 	r := bytes.NewReader(body)
 	decoder := json.NewDecoder(r)
 	val := &Card{}
 	err = decoder.Decode(val)
-	return val
+	return val, true
 }

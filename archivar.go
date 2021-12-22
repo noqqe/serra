@@ -2,19 +2,34 @@
 package main
 
 import (
-	"flag"
-
+	"github.com/docopt/docopt-go"
 	"github.com/noqqe/archivar/src/archivar"
 )
 
 // Main Loop
 func main() {
 
-	var set_file string
+	usage := `Archivar
 
-	// flags declaration using flag package
-	flag.StringVar(&set_file, "f", "inventory/set-1.yml", "Specify set file")
-	flag.Parse()
+Usage:
+  archivar new <path>...
+	archivar update <path>...
+  archivar value <path>...
 
-	archivar.Start(set_file)
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
+`
+
+	args, _ := docopt.ParseDoc(usage)
+
+	if args["new"].(bool) {
+		archivar.New(args["<path>"].(string))
+	}
+	if args["update"].(bool) {
+		for _, i := range args["<path>"].([]string) {
+			archivar.Update(i)
+		}
+	}
+
 }

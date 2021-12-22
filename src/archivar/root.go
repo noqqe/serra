@@ -10,8 +10,15 @@ const (
 	version string = "0.0.1"
 )
 
-// Main Wrapper for a set of tests
-func Start(set_file string) {
+// Create new set file
+func New(set_file string) {
+
+	var s Setfile
+	s.Write(set_file)
+}
+
+// Update values and names in a setfile
+func Update(set_file string) {
 
 	var s Setfile
 	var total float32
@@ -24,8 +31,13 @@ func Start(set_file string) {
 
 	// Loop over different challenges
 	for _, entry := range s.Cards {
-		card := fetch(entry)
-		fmt.Println(card)
+		card, ok := fetch(entry)
+
+		// catch empty cards
+		if ok == false {
+			continue
+		}
+
 		t, _ := strconv.ParseFloat(card.Prices.Eur.(string), 32)
 		total = total + float32(t)
 		time.Sleep(100 * time.Millisecond)
