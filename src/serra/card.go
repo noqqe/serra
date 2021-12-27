@@ -28,7 +28,7 @@ type Card struct {
 	FullArt         bool     `json:"full_art"`
 	Games           []string `json:"games"`
 	HighresImage    bool     `json:"highres_image"`
-	ID              string   `json:"id"`
+	ID              string   `json:"id" bson:"_id"`
 	IllustrationID  string   `json:"illustration_id"`
 	ImageStatus     string   `json:"image_status"`
 	ImageUris       struct {
