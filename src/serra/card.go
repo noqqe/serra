@@ -3,6 +3,7 @@ package serra
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -113,28 +114,29 @@ type Card struct {
 	Variation      bool   `json:"variation"`
 }
 
-func fetch(path string) (*Card, bool) {
+func fetch(path string) (*Card, error) {
 	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/", path))
 	if err != nil {
 		log.Fatalln(err)
-		return &Card{}, false
+		return &Card{}, err
 	}
 
 	if resp.StatusCode != 200 {
 		LogMessage(fmt.Sprintf("Card %s not found", path), "yellow")
-		return &Card{}, false
+		err := errors.New("card: not found")
+		return &Card{}, err
 	}
 
 	//We Read the response body on the line below.
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalln(err)
-		return &Card{}, false
+		return &Card{}, err
 	}
 
 	r := bytes.NewReader(body)
 	decoder := json.NewDecoder(r)
 	val := &Card{}
 	err = decoder.Decode(val)
-	return val, true
+	return val, nil
 }

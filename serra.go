@@ -12,7 +12,7 @@ func main() {
 	usage := `Archivar
 
 Usage:
-  serra new <path>...
+  serra add <path>...
 	serra update <path>...
   serra value <path>...
 
@@ -23,13 +23,8 @@ Options:
 
 	args, _ := docopt.ParseDoc(usage)
 
-	if args["new"].(bool) {
-		serra.New(args["<path>"].(string))
-	}
-	if args["update"].(bool) {
-		for _, i := range args["<path>"].([]string) {
-			serra.Update(i)
-		}
+	if args["add"].(bool) {
+		serra.Add(args["<path>"].([]string))
 	}
 
 }
