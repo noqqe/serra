@@ -2,6 +2,7 @@ package serra
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -34,7 +35,7 @@ func storage_add(coll *mongo.Collection, card *Card) error {
 
 	_, err := coll.InsertOne(context.TODO(), card)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	return nil
 
