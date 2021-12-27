@@ -1,6 +1,6 @@
-# archivar
+# serra
 
 # Install
 
     go build .
-    ./archivar
+    ./serra
