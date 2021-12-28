@@ -41,6 +41,9 @@ func List() {
 
 	client := storage_connect()
 	coll := client.Database("serra").Collection("cards")
-	storage_find(coll)
+	cards, _ := storage_find(coll)
+	for _, card := range cards {
+		fmt.Sprintf("%s %s", card.Name, card.Prices.Eur)
+	}
 
 }

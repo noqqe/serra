@@ -2,7 +2,6 @@ package serra
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -42,7 +41,7 @@ func storage_add(coll *mongo.Collection, card *Card) error {
 
 }
 
-func storage_find(coll *mongo.Collection) error {
+func storage_find(coll *mongo.Collection) ([]Card, error) {
 
 	opts := options.Find().SetSort(bson.D{{"collectornumber", 1}})
 	cursor, err := coll.Find(context.TODO(), bson.D{{}}, opts)
@@ -52,14 +51,11 @@ func storage_find(coll *mongo.Collection) error {
 
 	// Get a list of all returned documents and print them out.
 	// See the mongo.Cursor documentation for more examples of using cursors.
-	var results []bson.M
+	var results []Card
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		log.Fatal(err)
-		return err
+		return []Card{}, err
 	}
-	for _, result := range results {
-		fmt.Println(result)
-	}
-	return nil
+	return results, nil
 
 }
