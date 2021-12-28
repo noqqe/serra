@@ -43,7 +43,7 @@ func List() {
 	coll := client.Database("serra").Collection("cards")
 	cards, _ := storage_find(coll)
 	for _, card := range cards {
-		fmt.Sprintf("%s %s", card.Name, card.Prices.Eur)
+		fmt.Printf("%s (%s) %s\n", card.Name, card.Set, card.Prices.Eur)
 	}
 
 }
