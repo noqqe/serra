@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type Card struct {
@@ -112,9 +114,21 @@ type Card struct {
 	TypeLine       string `json:"type_line"`
 	URI            string `json:"uri"`
 	Variation      bool   `json:"variation"`
+
+	// Added by Serra
+	_count   int64        `bson:"_count"`
+	_prices  []PriceEntry `bson:"_prices"`
+	_updated string       `bson:"_updated"`
+}
+
+type PriceEntry struct {
+	date  string  `bson:"date"`
+	value float64 `bson:"value"`
 }
 
 func fetch(path string) (*Card, error) {
+
+	// TODO better URL Building...
 	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/", path))
 	if err != nil {
 		log.Fatalln(err)
@@ -138,5 +152,13 @@ func fetch(path string) (*Card, error) {
 	decoder := json.NewDecoder(r)
 	val := &Card{}
 	err = decoder.Decode(val)
+
+	// Increase counter
+	val._count = val._count + 1
+
+	// Increase Price
+	v, _ := strconv.ParseFloat(val.Prices.Eur.(string), 32)
+	val._prices = append(val._prices, PriceEntry{time.Now().Format("2006-01-02 15:04:05"), v})
+
 	return val, nil
 }

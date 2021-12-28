@@ -17,6 +17,8 @@ func LogMessage(message string, color string) {
 		fmt.Printf("%s%s%s\n", colorRed, message, colorReset)
 	} else if color == "green" {
 		fmt.Printf("%s%s%s\n", colorGreen, message, colorReset)
+	} else if color == "purple" {
+		fmt.Printf("%s%s%s\n", colorPurple, message, colorReset)
 	} else {
 		fmt.Printf("%s\n", message)
 	}
