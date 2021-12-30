@@ -24,12 +24,6 @@ func storage_connect() *mongo.Client {
 		panic(err)
 	}
 
-	// defer func() {
-	// 	if err := client.Disconnect(context.TODO()); err != nil {
-	// 		panic(err)
-	// 	}
-	// }()
-
 	return client
 }
 
@@ -51,8 +45,6 @@ func storage_find(coll *mongo.Collection) ([]Card, error) {
 		log.Fatal(err)
 	}
 
-	// Get a list of all returned documents and print them out.
-	// See the mongo.Cursor documentation for more examples of using cursors.
 	var results []Card
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		log.Fatal(err)
@@ -82,4 +74,11 @@ func storage_aggregate(coll *mongo.Collection, groupstage bson.D) ([]primitive.M
 	}
 	return results, nil
 
+}
+
+func storage_disconnect(client *mongo.Client) error {
+	if err := client.Disconnect(context.TODO()); err != nil {
+		return err
+	}
+	return nil
 }

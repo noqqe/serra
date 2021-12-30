@@ -21,7 +21,7 @@ func Add(cards []string) {
 	for _, card := range cards {
 
 		// Fetch card from scryfall
-		c, err := fetch(card)
+		c, err := fetch_card(card)
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue
@@ -36,10 +36,11 @@ func Add(cards []string) {
 
 		LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) added to Collection.", c.Name, c.Prices.Eur), "purple")
 	}
+	storage_disconnect(client)
 
 }
 
-func List() {
+func Cards() {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
@@ -48,6 +49,7 @@ func List() {
 	for _, card := range cards {
 		fmt.Printf("%s (%s) %.2f\n", card.Name, card.Set, card.Prices.Eur)
 	}
+	storage_disconnect(client)
 }
 
 func Sets() {
@@ -69,5 +71,6 @@ func Sets() {
 	for _, set := range sets {
 		fmt.Printf("* %s (%.2f Eur)\n", set["_id"], set["sum"])
 	}
+	storage_disconnect(client)
 
 }

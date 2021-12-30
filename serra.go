@@ -13,7 +13,7 @@ func main() {
 
 Usage:
   serra add <card>...
-  serra list
+  serra cards
   serra sets
   serra update
 
@@ -28,8 +28,8 @@ Options:
 		serra.Add(args["<card>"].([]string))
 	}
 
-	if args["list"].(bool) {
-		serra.List()
+	if args["cards"].(bool) {
+		serra.Cards()
 	}
 
 	if args["sets"].(bool) {

@@ -9,9 +9,16 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Card struct {
+	// Added by Serra
+	SerraCount   int64        `bson:"serra_count"`
+	SerraPrices  []PriceEntry `bson:"serra_prices"`
+	SerraUpdated string       `bson:"serra_updated"`
+
 	Artist          string   `json:"artist"`
 	ArtistIds       []string `json:"artist_ids"`
 	Booster         bool     `json:"booster"`
@@ -109,19 +116,14 @@ type Card struct {
 	TypeLine       string `json:"type_line"`
 	URI            string `json:"uri"`
 	Variation      bool   `json:"variation"`
-
-	// Added by Serra
-	_count   int64        `bson:"_count"`
-	_prices  []PriceEntry `bson:"_prices"`
-	_updated string       `bson:"_updated"`
 }
 
 type PriceEntry struct {
-	date  string  `bson:"date"`
-	value float64 `bson:"value"`
+	Date  primitive.DateTime `bson:"date"`
+	Value float64            `bson:"value"`
 }
 
-func fetch(path string) (*Card, error) {
+func fetch_card(path string) (*Card, error) {
 
 	// TODO better URL Building...
 	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/", path))
@@ -148,10 +150,10 @@ func fetch(path string) (*Card, error) {
 	err = decoder.Decode(val)
 
 	// Increase counter
-	val._count = val._count + 1
+	val.SerraCount = val.SerraCount + 1
 
 	// Increase Price
-	val._prices = append(val._prices, PriceEntry{time.Now().Format("2006-01-02 15:04:05"), val.Prices.Eur})
+	val.SerraPrices = append(val.SerraPrices, PriceEntry{primitive.NewDateTimeFromTime(time.Now()), val.Prices.Eur})
 
 	return val, nil
 }
