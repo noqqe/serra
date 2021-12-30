@@ -37,10 +37,10 @@ func storage_add(coll *mongo.Collection, card *Card) error {
 
 }
 
-func storage_find(coll *mongo.Collection) ([]Card, error) {
+func storage_find(coll *mongo.Collection, filter, sort bson.D) ([]Card, error) {
 
-	opts := options.Find().SetSort(bson.D{{"collectornumber", 1}})
-	cursor, err := coll.Find(context.TODO(), bson.D{{}}, opts)
+	opts := options.Find().SetSort(sort)
+	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
 		log.Fatal(err)
 	}

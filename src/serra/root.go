@@ -19,7 +19,6 @@ func Add(cards []string) {
 
 	// Loop over different cards
 	for _, card := range cards {
-
 		// Fetch card from scryfall
 		c, err := fetch_card(card)
 		if err != nil {
@@ -45,7 +44,11 @@ func Cards() {
 
 	client := storage_connect()
 	coll := client.Database("serra").Collection("cards")
-	cards, _ := storage_find(coll)
+
+	sort := bson.D{{"collectornumber", 1}}
+	filter := bson.D{{}}
+	cards, _ := storage_find(coll, filter, sort)
+
 	for _, card := range cards {
 		fmt.Printf("%s (%s) %.2f\n", card.Name, card.Set, card.Prices.Eur)
 	}
@@ -73,4 +76,21 @@ func Sets() {
 	}
 	storage_disconnect(client)
 
+}
+
+func Update() {
+	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
+
+	client := storage_connect()
+	coll := client.Database("serra").Collection("cards")
+
+	sort := bson.D{{"_id", 1}}
+	filter := bson.D{{"_id", "0d4f3c1d-d25e-4263-ab2b-19534c852678"}}
+	cards, _ := storage_find(coll, filter, sort)
+
+	for _, card := range cards {
+		fmt.Printf("%s (%s) %.2f\n", card.Name, card.Set, card.Prices.Eur)
+	}
+
+	storage_disconnect(client)
 }

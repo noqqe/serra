@@ -124,7 +124,6 @@ type PriceEntry struct {
 }
 
 func fetch_card(path string) (*Card, error) {
-
 	// TODO better URL Building...
 	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/", path))
 	if err != nil {

@@ -36,4 +36,8 @@ Options:
 		serra.Sets()
 	}
 
+	if args["update"].(bool) {
+		serra.Update()
+	}
+
 }
