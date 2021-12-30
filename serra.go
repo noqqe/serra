@@ -15,7 +15,7 @@ Usage:
   serra add <card>...
   serra list
   serra sets
-	serra update <path>...
+  serra update
 
 Options:
   -h --help     Show this screen.
