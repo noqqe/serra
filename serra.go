@@ -9,7 +9,7 @@ import (
 // Main Loop
 func main() {
 
-	usage := `Archivar
+	usage := `Serra
 
 Usage:
   serra add <card>...

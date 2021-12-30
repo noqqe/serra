@@ -12,7 +12,7 @@ const (
 
 // Add
 func Add(cards []string) {
-	LogMessage(fmt.Sprintf("Archivar %v\n", version), "green")
+	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 	coll := client.Database("serra").Collection("cards")
@@ -40,7 +40,7 @@ func Add(cards []string) {
 }
 
 func List() {
-	LogMessage(fmt.Sprintf("Archivar %v\n", version), "green")
+	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 	coll := client.Database("serra").Collection("cards")
@@ -51,7 +51,7 @@ func List() {
 }
 
 func Sets() {
-	LogMessage(fmt.Sprintf("Archivar %v\n", version), "green")
+	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 	coll := client.Database("serra").Collection("cards")
