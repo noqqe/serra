@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -55,6 +57,28 @@ func storage_find(coll *mongo.Collection) ([]Card, error) {
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		log.Fatal(err)
 		return []Card{}, err
+	}
+	return results, nil
+
+}
+
+func storage_aggregate(coll *mongo.Collection, groupstage bson.D) ([]primitive.M, error) {
+
+	// db.cards.aggregate([ {$group: { _id: "$setname", sum: { $sum: "$prices.eur"}}}])
+	opts := options.Aggregate().SetMaxTime(2 * time.Second)
+	cursor, err := coll.Aggregate(
+		context.TODO(),
+		mongo.Pipeline{groupstage},
+		opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get a list of all returned documents and print them out.
+	// See the mongo.Cursor documentation for more examples of using cursors.
+	var results []bson.M
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		log.Fatal(err)
 	}
 	return results, nil
 

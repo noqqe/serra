@@ -14,8 +14,8 @@ func main() {
 Usage:
   serra add <card>...
   serra list
+  serra sets
 	serra update <path>...
-  serra value <path>...
 
 Options:
   -h --help     Show this screen.
@@ -30,6 +30,10 @@ Options:
 
 	if args["list"].(bool) {
 		serra.List()
+	}
+
+	if args["sets"].(bool) {
+		serra.Sets()
 	}
 
 }

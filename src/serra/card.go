@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -73,12 +72,8 @@ type Card struct {
 	OracleText    string        `json:"oracle_text"`
 	Oversized     bool          `json:"oversized"`
 	Prices        struct {
-		Eur       interface{} `json:"eur"`
-		EurFoil   interface{} `json:"eur_foil"`
-		Tix       interface{} `json:"tix"`
-		Usd       interface{} `json:"usd"`
-		UsdEtched interface{} `json:"usd_etched"`
-		UsdFoil   interface{} `json:"usd_foil"`
+		Eur     float64 `json:"eur,string"`
+		EurFoil float64 `json:"eur_foil,string"`
 	} `json:"prices"`
 	PrintedName     string `json:"printed_name"`
 	PrintedText     string `json:"printed_text"`
@@ -136,8 +131,7 @@ func fetch(path string) (*Card, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		LogMessage(fmt.Sprintf("Card %s not found", path), "yellow")
-		err := errors.New("card: not found")
+		err := errors.New(fmt.Sprintf("card: %s not found", path))
 		return &Card{}, err
 	}
 
@@ -157,8 +151,7 @@ func fetch(path string) (*Card, error) {
 	val._count = val._count + 1
 
 	// Increase Price
-	v, _ := strconv.ParseFloat(val.Prices.Eur.(string), 32)
-	val._prices = append(val._prices, PriceEntry{time.Now().Format("2006-01-02 15:04:05"), v})
+	val._prices = append(val._prices, PriceEntry{time.Now().Format("2006-01-02 15:04:05"), val.Prices.Eur})
 
 	return val, nil
 }

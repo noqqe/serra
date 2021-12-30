@@ -2,6 +2,8 @@ package serra
 
 import (
 	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const (
@@ -22,6 +24,7 @@ func Add(cards []string) {
 		c, err := fetch(card)
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
+			continue
 		}
 
 		// Write card to mongodb
@@ -31,7 +34,7 @@ func Add(cards []string) {
 			continue
 		}
 
-		LogMessage(fmt.Sprintf("\"%s\" (%s Eur) added to Collection.", c.Name, c.Prices.Eur), "purple")
+		LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) added to Collection.", c.Name, c.Prices.Eur), "purple")
 	}
 
 }
@@ -43,7 +46,28 @@ func List() {
 	coll := client.Database("serra").Collection("cards")
 	cards, _ := storage_find(coll)
 	for _, card := range cards {
-		fmt.Printf("%s (%s) %s\n", card.Name, card.Set, card.Prices.Eur)
+		fmt.Printf("%s (%s) %.2f\n", card.Name, card.Set, card.Prices.Eur)
+	}
+}
+
+func Sets() {
+	LogMessage(fmt.Sprintf("Archivar %v\n", version), "green")
+
+	client := storage_connect()
+	coll := client.Database("serra").Collection("cards")
+
+	groupStage := bson.D{
+		{"$group", bson.D{
+			{"_id", "$setname"},
+			{"sum", bson.D{
+				{"$sum", "$prices.eur"},
+			}},
+		}},
+	}
+
+	sets, _ := storage_aggregate(coll, groupStage)
+	for _, set := range sets {
+		fmt.Printf("* %s (%.2f Eur)\n", set["_id"], set["sum"])
 	}
 
 }
