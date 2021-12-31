@@ -15,9 +15,10 @@ import (
 
 type Card struct {
 	// Added by Serra
-	SerraCount   int64        `bson:"serra_count"`
-	SerraPrices  []PriceEntry `bson:"serra_prices"`
-	SerraUpdated string       `bson:"serra_updated"`
+	SerraCount   int64              `bson:"serra_count"`
+	SerraPrices  []PriceEntry       `bson:"serra_prices"`
+	SerraCreated primitive.DateTime `bson:"serra_created"`
+	SerraUpdated primitive.DateTime `bson:"serra_updated"`
 
 	Artist          string   `json:"artist"`
 	ArtistIds       []string `json:"artist_ids"`
@@ -150,6 +151,9 @@ func fetch_card(path string) (*Card, error) {
 
 	// Increase counter
 	val.SerraCount = val.SerraCount + 1
+
+	// Set created Time
+	card.SerraCreated = primitive.NewDateTimeFromTime(time.Now())
 
 	// Increase Price
 	val.SerraPrices = append(val.SerraPrices, PriceEntry{primitive.NewDateTimeFromTime(time.Now()), val.Prices.Eur})

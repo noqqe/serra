@@ -29,6 +29,8 @@ func storage_connect() *mongo.Client {
 
 func storage_add(coll *mongo.Collection, card *Card) error {
 
+	card.SerraUpdated = primitive.NewDateTimeFromTime(time.Now())
+
 	_, err := coll.InsertOne(context.TODO(), card)
 	if err != nil {
 		return err
