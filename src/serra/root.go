@@ -90,6 +90,14 @@ func Update() {
 
 	for _, card := range cards {
 		fmt.Printf("%s (%s) %.2f\n", card.Name, card.Set, card.Prices.Eur)
+
+		// db.cards.update({'_id':'8fa2ecf9-b53c-4f1d-9028-ca3820d043cb'},{$set:{'serra_updated':ISODate("2021-11-02T09:28:56.504Z")}, $push: {"serra_prices": { date: ISODate("2021-11-02T09:28:56.504Z"), value: 0.1 }}});
+
+		// Declare an _id filter to get a specific MongoDB document
+		filter := bson.M{"_id": bson.M{"$eq": card.ID}}
+
+		// Declare a filter that will change a field's integer value to `42`
+		update := bson.M{"$set": bson.M{"textless": true}}
 	}
 
 	storage_disconnect(client)

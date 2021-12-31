@@ -2,6 +2,7 @@ package serra
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -75,6 +76,24 @@ func storage_aggregate(coll *mongo.Collection, groupstage bson.D) ([]primitive.M
 		log.Fatal(err)
 	}
 	return results, nil
+
+}
+
+func storage_update(coll *mongo.Collection, filter, update bson.M) ([]primitive.M, error) {
+
+	// Call the driver's UpdateOne() method and pass filter and update to it
+	result, err := col.UpdateOne(
+		context.Background(),
+		filter,
+		update,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(result)
+
+	// Get a list of all returned documents and print them out.
+	// See the mongo.Cursor documentation for more examples of using cursors.
 
 }
 
