@@ -153,7 +153,7 @@ func fetch_card(path string) (*Card, error) {
 	val.SerraCount = val.SerraCount + 1
 
 	// Set created Time
-	card.SerraCreated = primitive.NewDateTimeFromTime(time.Now())
+	val.SerraCreated = primitive.NewDateTimeFromTime(time.Now())
 
 	// Increase Price
 	val.SerraPrices = append(val.SerraPrices, PriceEntry{primitive.NewDateTimeFromTime(time.Now()), val.Prices.Eur})

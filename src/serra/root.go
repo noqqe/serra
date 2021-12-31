@@ -2,8 +2,10 @@ package serra
 
 import (
 	"fmt"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -85,19 +87,34 @@ func Update() {
 	coll := client.Database("serra").Collection("cards")
 
 	sort := bson.D{{"_id", 1}}
-	filter := bson.D{{"_id", "0d4f3c1d-d25e-4263-ab2b-19534c852678"}}
+	filter := bson.D{{}}
 	cards, _ := storage_find(coll, filter, sort)
 
-	for _, card := range cards {
-		fmt.Printf("%s (%s) %.2f\n", card.Name, card.Set, card.Prices.Eur)
+	for i, card := range cards {
+		fmt.Printf("Updating (%d/%d): %s (%s)...\n", i+1, len(cards), card.Name, card.SetName)
 
-		// db.cards.update({'_id':'8fa2ecf9-b53c-4f1d-9028-ca3820d043cb'},{$set:{'serra_updated':ISODate("2021-11-02T09:28:56.504Z")}, $push: {"serra_prices": { date: ISODate("2021-11-02T09:28:56.504Z"), value: 0.1 }}});
+		/* db.cards.update(
+		{'_id':'8fa2ecf9-b53c-4f1d-9028-ca3820d043cb'},
+		{$set:{'serra_updated':ISODate("2021-11-02T09:28:56.504Z")},
+		$push: {"serra_prices": { date: ISODate("2021-11-02T09:28:56.504Z"), value: 0.1 }}});
+		*/
 
-		// Declare an _id filter to get a specific MongoDB document
+		// TODO fetch new card
+
+		updated_card, err := fetch_card(fmt.Sprintf("%s/%s", card.Set, card.CollectorNumber))
+		if err != nil {
+			LogMessage(fmt.Sprintf("%v", err), "red")
+			continue
+		}
+
 		filter := bson.M{"_id": bson.M{"$eq": card.ID}}
 
-		// Declare a filter that will change a field's integer value to `42`
-		update := bson.M{"$set": bson.M{"textless": true}}
+		update := bson.M{
+			"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now())},
+			"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
+				"value": updated_card.Prices.Eur}}}
+
+		storage_update(coll, filter, update)
 	}
 
 	storage_disconnect(client)
