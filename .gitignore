@@ -1,4 +1,4 @@
-./serra
+serra
 _db/*
 !_db/.placeholder
 _backup/*
