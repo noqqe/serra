@@ -24,3 +24,9 @@ optional
 
 * Gives a shit about conditions (NM, M, GD...)
 * If the card is foil
+
+# Cheatsheet
+
+Find cards that increased prices
+
+    db.cards.find({$expr: {$gt: [{$arrayElemAt: ["$serra_prices", -2]}, {$arrayElemAt: ["$serra_prices", -1]}]}}, {name:1})

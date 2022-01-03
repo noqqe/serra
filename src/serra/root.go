@@ -110,7 +110,7 @@ func Update() {
 		filter := bson.M{"_id": bson.M{"$eq": card.ID}}
 
 		update := bson.M{
-			"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now())},
+			"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updated_card.Prices},
 			"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
 				"value": updated_card.Prices.Eur}}}
 

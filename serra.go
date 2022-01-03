@@ -26,17 +26,11 @@ Options:
 
 	if args["add"].(bool) {
 		serra.Add(args["<card>"].([]string))
-	}
-
-	if args["cards"].(bool) {
+	} else if args["cards"].(bool) {
 		serra.Cards()
-	}
-
-	if args["sets"].(bool) {
+	} else if args["sets"].(bool) {
 		serra.Sets()
-	}
-
-	if args["update"].(bool) {
+	} else if args["update"].(bool) {
 		serra.Update()
 	}
 
