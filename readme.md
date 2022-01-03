@@ -34,6 +34,10 @@ Update card Price
 		{$set:{'serra_updated':ISODate("2021-11-02T09:28:56.504Z")},
 		$push: {"serra_prices": { date: ISODate("2021-11-02T09:28:56.504Z"), value: 0.1 }}});
 
+Set value
+
+    db.cards.aggregate([{ $group: { _id: { set: "$set" }, value: { $sum: { $multiply: ["$prices.eur", "$serra_count"] } }, count: { $sum: 1 } } }])
+
 
 # MongoDB Operations
 
