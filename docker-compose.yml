@@ -10,8 +10,21 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
     volumes:
-      - mongodb:/data/db
+      - 'mongodb:/data/db'
+      - 'mongodbbackup:/backup'
 
 volumes:
   mongodb:
+    driver: local
+    driver_opts:
+      type: none
+      device: "$PWD/_db"
+      o: bind
+
+  mongodbbackup:
+    driver: local
+    driver_opts:
+      type: none
+      device: "$PWD/_backup"
+      o: bind
 

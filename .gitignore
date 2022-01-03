@@ -1,3 +1,6 @@
-./archivar
-inventory/
+./serra
+_db/*
+!_db/.placeholder
+_backup/*
+!_backup/.placeholder
 dist/
