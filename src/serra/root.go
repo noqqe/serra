@@ -102,12 +102,6 @@ func Update() {
 	for i, card := range cards {
 		fmt.Printf("Updating (%d/%d): %s (%s)...\n", i+1, len(cards), card.Name, card.SetName)
 
-		/* db.cards.update(
-		{'_id':'8fa2ecf9-b53c-4f1d-9028-ca3820d043cb'},
-		{$set:{'serra_updated':ISODate("2021-11-02T09:28:56.504Z")},
-		$push: {"serra_prices": { date: ISODate("2021-11-02T09:28:56.504Z"), value: 0.1 }}});
-		*/
-
 		// TODO fetch new card
 
 		updated_card, err := fetch_card(fmt.Sprintf("%s/%s", card.Set, card.CollectorNumber))
