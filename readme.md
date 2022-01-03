@@ -10,8 +10,6 @@
 mvp
 
 * single view for card, with history
-* docker with local mounted volume and git ignore
-* mongodb backup container
 
 optional
 
