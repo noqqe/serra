@@ -9,7 +9,6 @@
 
 mvp
 
-* refactor cards/set to scryfall.go
 * refactor storage to have a storage object.
 * single view for card, with history
 * docker with local mounted volume and git ignore

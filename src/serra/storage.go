@@ -12,6 +12,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// https://siongui.github.io/2017/02/11/go-add-method-function-to-type-in-external-package/
+type Collection struct {
+	*mongo.Collection
+}
+
 func storage_connect() *mongo.Client {
 
 	uri := os.Getenv("MONGODB_URI")
@@ -27,7 +32,7 @@ func storage_connect() *mongo.Client {
 	return client
 }
 
-func storage_add(coll *mongo.Collection, card *Card) error {
+func (coll Collection) storage_add(card *Card) error {
 
 	card.SerraUpdated = primitive.NewDateTimeFromTime(time.Now())
 
@@ -39,7 +44,7 @@ func storage_add(coll *mongo.Collection, card *Card) error {
 
 }
 
-func storage_find(coll *mongo.Collection, filter, sort bson.D) ([]Card, error) {
+func (coll Collection) storage_find(filter, sort bson.D) ([]Card, error) {
 
 	opts := options.Find().SetSort(sort)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
@@ -56,7 +61,7 @@ func storage_find(coll *mongo.Collection, filter, sort bson.D) ([]Card, error) {
 
 }
 
-func storage_aggregate(coll *mongo.Collection, groupstage bson.D) ([]primitive.M, error) {
+func (coll Collection) storage_aggregate(groupstage bson.D) ([]primitive.M, error) {
 
 	// db.cards.aggregate([ {$group: { _id: "$setname", sum: { $sum: "$prices.eur"}}}])
 	opts := options.Aggregate().SetMaxTime(2 * time.Second)
@@ -78,7 +83,7 @@ func storage_aggregate(coll *mongo.Collection, groupstage bson.D) ([]primitive.M
 
 }
 
-func storage_update(coll *mongo.Collection, filter, update bson.M) error {
+func (coll Collection) storage_update(filter, update bson.M) error {
 
 	// Call the driver's UpdateOne() method and pass filter and update to it
 	_, err := coll.UpdateOne(

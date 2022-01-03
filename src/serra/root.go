@@ -17,7 +17,7 @@ func Add(cards []string) {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
-	coll := client.Database("serra").Collection("cards")
+	coll := &Collection{client.Database("serra").Collection("cards")}
 
 	// Loop over different cards
 	for _, card := range cards {
@@ -29,7 +29,7 @@ func Add(cards []string) {
 		}
 
 		// Write card to mongodb
-		err = storage_add(coll, c)
+		err = coll.storage_add(c)
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue
@@ -45,11 +45,11 @@ func Cards() {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
-	coll := client.Database("serra").Collection("cards")
+	coll := &Collection{client.Database("serra").Collection("cards")}
 
 	sort := bson.D{{"collectornumber", 1}}
 	filter := bson.D{{}}
-	cards, _ := storage_find(coll, filter, sort)
+	cards, _ := coll.storage_find(filter, sort)
 
 	for _, card := range cards {
 		fmt.Printf("%s (%s) %.2f\n", card.Name, card.Set, card.Prices.Eur)
@@ -61,7 +61,7 @@ func Sets() {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
-	coll := client.Database("serra").Collection("cards")
+	coll := &Collection{client.Database("serra").Collection("cards")}
 
 	groupStage := bson.D{
 		{"$group", bson.D{
@@ -72,7 +72,7 @@ func Sets() {
 		}},
 	}
 
-	sets, _ := storage_aggregate(coll, groupStage)
+	sets, _ := coll.storage_aggregate(groupStage)
 	for _, set := range sets {
 		fmt.Printf("* %s (%.2f Eur)\n", set["_id"], set["sum"])
 	}
@@ -84,11 +84,11 @@ func Update() {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
-	coll := client.Database("serra").Collection("cards")
+	coll := &Collection{client.Database("serra").Collection("cards")}
 
 	sort := bson.D{{"_id", 1}}
 	filter := bson.D{{}}
-	cards, _ := storage_find(coll, filter, sort)
+	cards, _ := coll.storage_find(filter, sort)
 
 	for i, card := range cards {
 		fmt.Printf("Updating (%d/%d): %s (%s)...\n", i+1, len(cards), card.Name, card.SetName)
@@ -114,7 +114,7 @@ func Update() {
 			"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
 				"value": updated_card.Prices.Eur}}}
 
-		storage_update(coll, filter, update)
+		coll.storage_update(filter, update)
 	}
 
 	storage_disconnect(client)
