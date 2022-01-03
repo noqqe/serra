@@ -6,6 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const (
@@ -30,15 +31,23 @@ func Add(cards []string) {
 
 		// Write card to mongodb
 		err = coll.storage_add(c)
+
+		// If duplicate key, increase count of card
+		if mongo.IsDuplicateKeyError(err) {
+			increase_count_of_card(coll, c)
+			continue
+		}
+
+		// If error, print error and continue
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue
 		}
 
-		LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) added to Collection.", c.Name, c.Prices.Eur), "purple")
+		// Give feedback of successfully added card
+		LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) added to Collection.", c.Name, c.Prices.Eur), "green")
 	}
 	storage_disconnect(client)
-
 }
 
 func Cards() {
