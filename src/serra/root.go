@@ -88,6 +88,30 @@ func Sets() {
 
 }
 
+func ShowSet(setname string) error {
+	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
+
+	client := storage_connect()
+	coll := &Collection{client.Database("serra").Collection("cards")}
+
+	sort := bson.D{{"collectornumber", 1}}
+	filter := bson.D{{"set", setname}}
+	cards, err := coll.storage_find(filter, sort)
+	if (err != nil) || len(cards) == 0 {
+		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
+		return err
+	}
+
+	// print
+	fmt.Printf("%s\n", cards[0].SetName)
+	for _, card := range cards {
+		fmt.Printf("%dx %d %s %.2f\n", card.SerraCount, card.CollectorNumber, card.Name, card.Prices.Eur)
+	}
+	storage_disconnect(client)
+	return nil
+
+}
+
 func Update() {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 

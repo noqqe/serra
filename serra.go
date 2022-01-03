@@ -14,6 +14,7 @@ func main() {
 Usage:
   serra add <card>...
   serra cards
+  serra set <set>
   serra sets
   serra update
 
@@ -30,6 +31,8 @@ Options:
 		serra.Cards()
 	} else if args["sets"].(bool) {
 		serra.Sets()
+	} else if args["set"].(bool) {
+		serra.ShowSet(args["<set>"].(string))
 	} else if args["update"].(bool) {
 		serra.Update()
 	}

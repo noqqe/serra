@@ -26,7 +26,7 @@ type Card struct {
 	BorderColor     string   `json:"border_color"`
 	CardBackID      string   `json:"card_back_id"`
 	Cmc             int64    `json:"cmc"`
-	CollectorNumber string   `json:"collector_number"`
+	CollectorNumber int64    `json:"collector_number,string"`
 	ColorIdentity   []string `json:"color_identity"`
 	Colors          []string `json:"colors"`
 	Digital         bool     `json:"digital"`
@@ -156,7 +156,7 @@ func fetch_card(path string) (*Card, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("card: %s not found", path))
+		err := errors.New(fmt.Sprintf("Error: %s not found", path))
 		return &Card{}, err
 	}
 
@@ -193,7 +193,7 @@ func fetch_set(path string) (*Set, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("set: %s not found", path))
+		err := errors.New(fmt.Sprintf("Error: %s not found", path))
 		return &Set{}, err
 	}
 
