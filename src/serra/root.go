@@ -127,7 +127,7 @@ func Update() {
 
 		// TODO fetch new card
 
-		updated_card, err := fetch_card(fmt.Sprintf("%s/%s", card.Set, card.CollectorNumber))
+		updated_card, err := fetch_card(fmt.Sprintf("%s/%d", card.Set, card.CollectorNumber))
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue
