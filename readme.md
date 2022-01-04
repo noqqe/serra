@@ -10,6 +10,7 @@
 mvp
 
 * single view for card, with history
+* remove card (double exec to reduce count)
 
 optional
 

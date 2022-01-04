@@ -24,6 +24,6 @@ func increase_count_of_card(coll *Collection, c *Card) error {
 	}
 	coll.storage_update(update_filter, update)
 
-	LogMessage(fmt.Sprintf("Updating Card \"%s\" amount to %d", stored_card.Name, stored_card.SerraCount), "purple")
+	LogMessage(fmt.Sprintf("Updating Card \"%s\" amount to %d", stored_card.Name, stored_card.SerraCount+1), "purple")
 	return nil
 }
