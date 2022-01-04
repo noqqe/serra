@@ -2,6 +2,7 @@
 
 function serra_add ()
     ./serra add $argv[1]/$argv[2]
+    echo ./serra add $argv[1]/$argv[2] > add.log
 end
 
 while true;
