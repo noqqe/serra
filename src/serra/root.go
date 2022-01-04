@@ -142,20 +142,31 @@ func ShowSet(setname string) error {
 
 }
 
-func Update() {
+func Update() error {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
 
+	// update sets
+	setscoll := &Collection{client.Database("serra").Collection("sets")}
+
+	sets, _ := fetch_sets()
+	for _, set := range sets.Data {
+		// setscoll.storage_remove(bson.M{"_id": ""})
+		// TODO: lol, no errorhandling, no dup key handling. but its fine. for now.
+		setscoll.storage_add_set(&set)
+	}
+
+	return nil
+
+	// update cards
+	coll := &Collection{client.Database("serra").Collection("cards")}
 	sort := bson.D{{"_id", 1}}
 	filter := bson.D{{}}
 	cards, _ := coll.storage_find(filter, sort)
 
 	for i, card := range cards {
 		fmt.Printf("Updating (%d/%d): %s (%s)...\n", i+1, len(cards), card.Name, card.SetName)
-
-		// TODO fetch new card
 
 		updated_card, err := fetch_card(fmt.Sprintf("%s/%d", card.Set, card.CollectorNumber))
 		if err != nil {
@@ -174,6 +185,7 @@ func Update() {
 	}
 
 	storage_disconnect(client)
+	return nil
 }
 
 func Stats() {
@@ -195,16 +207,16 @@ func Stats() {
 		fmt.Printf("* %s %d\n", set["_id"], set["count"])
 	}
 
-	LogMessage(fmt.Sprintf("Mana costs in Collection"), "green")
-	groupStage = bson.D{
-		{"$group", bson.D{
-			{"_id", "$manacost"},
-			{"count", bson.D{{"$sum", 1}}},
-		}}}
-	m, _ := coll.storage_aggregate(groupStage)
+	// LogMessage(fmt.Sprintf("Mana costs in Collection"), "green")
+	// groupStage = bson.D{
+	// 	{"$group", bson.D{
+	// 		{"_id", "$manacost"},
+	// 		{"count", bson.D{{"$sum", 1}}},
+	// 	}}}
+	// m, _ := coll.storage_aggregate(groupStage)
 
-	for _, manacosts := range m {
-		// TODO fix primitiveA Problem with loop and reflect
-		fmt.Printf("* %s %d\n", manacosts["_id"], manacosts["count"])
-	}
+	// for _, manacosts := range m {
+	// 	// TODO fix primitiveA Problem with loop and reflect
+	// 	fmt.Printf("* %s %d\n", manacosts["_id"], manacosts["count"])
+	// }
 }

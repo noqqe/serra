@@ -124,21 +124,22 @@ type PriceEntry struct {
 	Value float64            `bson:"value"`
 }
 
+// Sets
+
+type SetList struct {
+	Data []Set `json:"data"`
+}
+
 type Set struct {
-	ArenaCode   string `json:"arena_code"`
-	Block       string `json:"block"`
-	BlockCode   string `json:"block_code"`
 	CardCount   int64  `json:"card_count"`
 	Code        string `json:"code"`
 	Digital     bool   `json:"digital"`
 	FoilOnly    bool   `json:"foil_only"`
 	IconSvgURI  string `json:"icon_svg_uri"`
-	ID          string `json:"id"`
-	MtgoCode    string `json:"mtgo_code"`
+	ID          string `json:"id" bson:"_id"`
 	Name        string `json:"name"`
 	NonfoilOnly bool   `json:"nonfoil_only"`
 	Object      string `json:"object"`
-	PrintedSize int64  `json:"printed_size"`
 	ReleasedAt  string `json:"released_at"`
 	ScryfallURI string `json:"scryfall_uri"`
 	SearchURI   string `json:"search_uri"`
@@ -184,29 +185,29 @@ func fetch_card(path string) (*Card, error) {
 	return val, nil
 }
 
-func fetch_set(path string) (*Set, error) {
+func fetch_sets() (*SetList, error) {
 	// TODO better URL Building...
-	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/sets/%s/", path))
+	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/sets"))
 	if err != nil {
 		log.Fatalln(err)
-		return &Set{}, err
+		return &SetList{}, err
 	}
 
 	if resp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("Error: %s not found", path))
-		return &Set{}, err
+		err := errors.New(fmt.Sprintf("Error: /sets not found"))
+		return &SetList{}, err
 	}
 
 	//We Read the response body on the line below.
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalln(err)
-		return &Set{}, err
+		return &SetList{}, err
 	}
 
 	r := bytes.NewReader(body)
 	decoder := json.NewDecoder(r)
-	val := &Set{}
+	val := &SetList{}
 	err = decoder.Decode(val)
 
 	return val, nil

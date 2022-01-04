@@ -44,6 +44,16 @@ func (coll Collection) storage_add(card *Card) error {
 
 }
 
+func (coll Collection) storage_add_set(set *Set) error {
+
+	_, err := coll.InsertOne(context.TODO(), set)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
 func (coll Collection) storage_find(filter, sort bson.D) ([]Card, error) {
 
 	opts := options.Find().SetSort(sort)
