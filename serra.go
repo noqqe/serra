@@ -13,6 +13,7 @@ func main() {
 
 Usage:
   serra add <card>...
+  serra remove <card>...
   serra cards
   serra set <set>
   serra sets
@@ -28,6 +29,8 @@ Options:
 
 	if args["add"].(bool) {
 		serra.Add(args["<card>"].([]string))
+	} else if args["remove"].(bool) {
+		serra.Remove(args["<card>"].([]string))
 	} else if args["cards"].(bool) {
 		serra.Cards()
 	} else if args["sets"].(bool) {

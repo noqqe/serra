@@ -2,6 +2,7 @@ package serra
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -34,7 +35,7 @@ func Add(cards []string) {
 
 		// If duplicate key, increase count of card
 		if mongo.IsDuplicateKeyError(err) {
-			increase_count_of_card(coll, c)
+			modify_count_of_card(coll, c, 1)
 			continue
 		}
 
@@ -46,6 +47,35 @@ func Add(cards []string) {
 
 		// Give feedback of successfully added card
 		LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) added to Collection.", c.Name, c.Prices.Eur), "green")
+	}
+	storage_disconnect(client)
+}
+
+// Remove
+func Remove(cards []string) {
+	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
+
+	client := storage_connect()
+	coll := &Collection{client.Database("serra").Collection("cards")}
+
+	// Loop over different cards
+	for _, card := range cards {
+		// Fetch card from scryfall
+		c, err := find_card_by_setcollectornumber(coll, strings.Split(card, "/")[0], strings.Split(card, "/")[1])
+		if err != nil {
+			LogMessage(fmt.Sprintf("%v", err), "red")
+			continue
+		}
+
+		if c.SerraCount > 1 {
+			// update
+			modify_count_of_card(coll, c, -1)
+		} else {
+			coll.storage_remove(bson.M{"_id": c.ID})
+			LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) removed from the Collection.", c.Name, c.Prices.Eur), "green")
+		}
+		// delete
+
 	}
 	storage_disconnect(client)
 }

@@ -61,6 +61,17 @@ func (coll Collection) storage_find(filter, sort bson.D) ([]Card, error) {
 
 }
 
+func (coll Collection) storage_remove(filter bson.M) error {
+
+	_, err := coll.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	return nil
+
+}
+
 func (coll Collection) storage_aggregate(groupstage bson.D) ([]primitive.M, error) {
 
 	// db.cards.aggregate([ {$group: { _id: "$setname", sum: { $sum: "$prices.eur"}}}])
