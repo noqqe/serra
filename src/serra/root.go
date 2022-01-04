@@ -145,3 +145,24 @@ func Update() {
 
 	storage_disconnect(client)
 }
+
+func Stats() {
+	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
+
+	LogMessage(fmt.Sprintf("Color distribution in Collection"), "green")
+	client := storage_connect()
+	coll := &Collection{client.Database("serra").Collection("cards")}
+
+	groupStage := bson.D{
+		{"$group", bson.D{
+			{"_id", "$coloridentity"},
+			{"count", bson.D{{"$sum", 1}}},
+		}}}
+
+	sets, _ := coll.storage_aggregate(groupStage)
+	for _, set := range sets {
+
+		// TODO fix primitiveA Problem with loop and reflect
+		fmt.Printf("* %s %d\n", set["_id"], set["count"])
+	}
+}

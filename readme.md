@@ -39,6 +39,10 @@ Set value
 
     db.cards.aggregate([{ $group: { _id: { set: "$set" }, value: { $sum: { $multiply: ["$prices.eur", "$serra_count"] } }, count: { $sum: 1 } } }])
 
+Color distribution
+
+     db.cards.aggregate([{ $group: { _id: { color: "$colors" }, count: { $sum: 1 } } }])
+
 
 # MongoDB Operations
 

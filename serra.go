@@ -17,6 +17,7 @@ Usage:
   serra set <set>
   serra sets
   serra update
+  serra stats
 
 Options:
   -h --help     Show this screen.
@@ -35,6 +36,8 @@ Options:
 		serra.ShowSet(args["<set>"].(string))
 	} else if args["update"].(bool) {
 		serra.Update()
+	} else if args["stats"].(bool) {
+		serra.Stats()
 	}
 
 }
