@@ -191,8 +191,20 @@ func Stats() {
 
 	sets, _ := coll.storage_aggregate(groupStage)
 	for _, set := range sets {
-
 		// TODO fix primitiveA Problem with loop and reflect
 		fmt.Printf("* %s %d\n", set["_id"], set["count"])
+	}
+
+	LogMessage(fmt.Sprintf("Mana costs in Collection"), "green")
+	groupStage = bson.D{
+		{"$group", bson.D{
+			{"_id", "$manacost"},
+			{"count", bson.D{{"$sum", 1}}},
+		}}}
+	m, _ := coll.storage_aggregate(groupStage)
+
+	for _, manacosts := range m {
+		// TODO fix primitiveA Problem with loop and reflect
+		fmt.Printf("* %s %d\n", manacosts["_id"], manacosts["count"])
 	}
 }
