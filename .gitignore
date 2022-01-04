@@ -4,3 +4,4 @@ _db/*
 _backup/*
 !_backup/.placeholder
 dist/
+add.log
