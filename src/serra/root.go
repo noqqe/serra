@@ -145,7 +145,7 @@ func ShowSet(setname string) error {
 	// set values
 	matchStage := bson.D{
 		{"$match", bson.D{
-			{"set", "mmq"},
+			{"set", setname},
 		}},
 	}
 	groupStage := bson.D{
