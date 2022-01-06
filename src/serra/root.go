@@ -47,7 +47,7 @@ func Add(cards []string, count int64) error {
 		}
 
 		// Give feedback of successfully added card
-		LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) added to Collection.", c.Name, c.Prices.Eur), "green")
+		LogMessage(fmt.Sprintf("%dx \"%s\" (%.2f Eur) added to Collection.", c.SerraCount, c.Name, c.Prices.Eur), "green")
 	}
 	storage_disconnect(client)
 	return nil

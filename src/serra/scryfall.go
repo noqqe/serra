@@ -173,9 +173,6 @@ func fetch_card(path string) (*Card, error) {
 	val := &Card{}
 	err = decoder.Decode(val)
 
-	// Increase counter
-	val.SerraCount = val.SerraCount + 1
-
 	// Set created Time
 	val.SerraCreated = primitive.NewDateTimeFromTime(time.Now())
 
