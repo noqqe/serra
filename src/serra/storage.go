@@ -71,6 +71,23 @@ func (coll Collection) storage_find(filter, sort bson.D) ([]Card, error) {
 
 }
 
+func (coll Collection) storage_find_set(filter, sort bson.D) ([]Set, error) {
+
+	opts := options.Find().SetSort(sort)
+	cursor, err := coll.Find(context.TODO(), filter, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var results []Set
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		log.Fatal(err)
+		return []Set{}, err
+	}
+	return results, nil
+
+}
+
 func (coll Collection) storage_remove(filter bson.M) error {
 
 	_, err := coll.DeleteOne(context.TODO(), filter)

@@ -126,6 +126,7 @@ func ShowSet(setname string) error {
 
 	sort := bson.D{{"collectornumber", 1}}
 	filter := bson.D{{"set", setname}}
+
 	cards, err := coll.storage_find(filter, sort)
 	if (err != nil) || len(cards) == 0 {
 		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
@@ -133,10 +134,23 @@ func ShowSet(setname string) error {
 	}
 
 	// print
-	fmt.Printf("%s\n", cards[0].SetName)
+	var eur_sum float64
+	var card_count int64
 	for _, card := range cards {
 		fmt.Printf("%dx %d %s %.2f\n", card.SerraCount, card.CollectorNumber, card.Name, card.Prices.Eur)
+		eur_sum = eur_sum + card.Prices.Eur*float64(card.SerraCount)
+		card_count = card_count + card.SerraCount
+
 	}
+
+	setcoll := &Collection{client.Database("serra").Collection("sets")}
+	sets, _ := setcoll.storage_find_set(bson.D{{"code", setname}}, bson.D{{"_id", 1}})
+
+	LogMessage(fmt.Sprintf("\n%s\n", sets[0].Name), "green")
+	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
+	LogMessage(fmt.Sprintf("Total Cards: %d", card_count), "normal")
+	LogMessage(fmt.Sprintf("Value: %.2f Eur", eur_sum), "normal")
+
 	storage_disconnect(client)
 	return nil
 
