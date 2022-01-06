@@ -15,9 +15,11 @@ const (
 )
 
 // Add
-func Add(cards []string) {
+func Add(cards []string, count int64) error {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
+	fmt.Println(count)
+	return nil
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 
@@ -49,6 +51,7 @@ func Add(cards []string) {
 		LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) added to Collection.", c.Name, c.Prices.Eur), "green")
 	}
 	storage_disconnect(client)
+	return nil
 }
 
 // Remove

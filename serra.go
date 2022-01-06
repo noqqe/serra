@@ -2,9 +2,26 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/docopt/docopt-go"
 	"github.com/noqqe/serra/src/serra"
 )
+
+//[--count:1 <card>:[mmq/1] <set>:<nil> add:true cards:false remove:false set:false sets:false stats:false update:false]
+
+var opts struct {
+	Add     bool     `docopt:"add"`
+	Remove  bool     `docopt:"remove"`
+	Cards   bool     `docopt:"cards"`
+	Set     bool     `docopt:"set"`
+	Sets    bool     `docopt:"sets"`
+	Stats   bool     `docopt:"stats"`
+	Update  bool     `docopt:"update"`
+	Card    []string `docopt:"<card>"`
+	SetCode string   `docopt:"<setcode>"`
+	Count   int64    `docopt:"--count"`
+}
 
 // Main Loop
 func main() {
@@ -12,34 +29,39 @@ func main() {
 	usage := `Serra
 
 Usage:
-  serra add <card>...
+  serra add <card>... [--count=<number>]
   serra remove <card>...
   serra cards
-  serra set <set>
+  serra set <setcode>
   serra sets
   serra update
   serra stats
 
 Options:
-  -h --help     Show this screen.
-  --version     Show version.
+  -h --help					Show this screen.
+	--count=<number>	Count of card to add.  [default: 1].
+  --version					Show version.
 `
 
 	args, _ := docopt.ParseDoc(usage)
+	err := args.Bind(&opts)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	if args["add"].(bool) {
-		serra.Add(args["<card>"].([]string))
-	} else if args["remove"].(bool) {
-		serra.Remove(args["<card>"].([]string))
-	} else if args["cards"].(bool) {
+	if opts.Add {
+		serra.Add(opts.Card, opts.Count)
+	} else if opts.Remove {
+		serra.Remove(opts.Card)
+	} else if opts.Cards {
 		serra.Cards()
-	} else if args["sets"].(bool) {
+	} else if opts.Sets {
 		serra.Sets()
-	} else if args["set"].(bool) {
-		serra.ShowSet(args["<set>"].(string))
-	} else if args["update"].(bool) {
+	} else if opts.Set {
+		serra.ShowSet(opts.SetCode)
+	} else if opts.Update {
 		serra.Update()
-	} else if args["stats"].(bool) {
+	} else if opts.Stats {
 		serra.Stats()
 	}
 
