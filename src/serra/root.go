@@ -109,12 +109,13 @@ func Sets() {
 			{"_id", "$setname"},
 			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
 			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+			{"release", bson.D{{"$last", "$releasedat"}}},
 		}},
 	}
 
 	sets, _ := coll.storage_aggregate(bson.D{{"$match", bson.D{{}}}}, groupStage)
 	for _, set := range sets {
-		fmt.Printf("* %s (%.2f Eur) %.0f\n", set["_id"], set["value"], set["count"])
+		fmt.Printf("* %s %s (%.2f Eur) %.0f\n", set["release"].(string)[0:4], set["_id"], set["value"], set["count"])
 	}
 	storage_disconnect(client)
 
