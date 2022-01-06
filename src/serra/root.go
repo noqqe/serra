@@ -160,7 +160,7 @@ func ShowSet(setname string) error {
 	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
 	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
 	LogMessage(fmt.Sprintf("Total Cards: %.0f", stats[0]["count"]), "normal")
-	LogMessage(fmt.Sprintf("Value: %.2f", stats[0]["value"]), "normal")
+	LogMessage(fmt.Sprintf("Total Value: %.2f EUR", stats[0]["value"]), "normal")
 	LogMessage(fmt.Sprintf("Released: %s", sets[0].ReleasedAt), "normal")
 
 	LogMessage(fmt.Sprintf("\nMost valuable cards"), "purple")
