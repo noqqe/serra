@@ -99,13 +99,13 @@ func (coll Collection) storage_remove(filter bson.M) error {
 
 }
 
-func (coll Collection) storage_aggregate(groupstage bson.D) ([]primitive.M, error) {
+func (coll Collection) storage_aggregate(matchstage, groupstage bson.D) ([]primitive.M, error) {
 
 	// db.cards.aggregate([ {$group: { _id: "$setname", sum: { $sum: "$prices.eur"}}}])
 	opts := options.Aggregate().SetMaxTime(2 * time.Second)
 	cursor, err := coll.Aggregate(
 		context.TODO(),
-		mongo.Pipeline{groupstage},
+		mongo.Pipeline{matchstage, groupstage},
 		opts)
 	if err != nil {
 		log.Fatal(err)

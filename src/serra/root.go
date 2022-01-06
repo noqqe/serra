@@ -86,7 +86,7 @@ func Cards() {
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 
-	sort := bson.D{{"collectornumber", 1}}
+	sort := bson.D{{"name", 1}}
 	filter := bson.D{{}}
 	cards, _ := coll.storage_find(filter, sort)
 
@@ -110,7 +110,7 @@ func Sets() {
 		}},
 	}
 
-	sets, _ := coll.storage_aggregate(groupStage)
+	sets, _ := coll.storage_aggregate(bson.D{{"$match", bson.D{{}}}}, groupStage)
 	for _, set := range sets {
 		fmt.Printf("* %s (%.2f Eur) %.0f\n", set["_id"], set["value"], set["count"])
 	}
@@ -124,29 +124,43 @@ func ShowSet(setname string) error {
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 
-	cards, err := coll.storage_find(bson.D{{"set", setname}}, bson.D{{"collectornumber", 1}})
+	// fetch all cards in set
+	cards, err := coll.storage_find(bson.D{{"set", setname}}, bson.D{{"prices.eur", -1}})
 	if (err != nil) || len(cards) == 0 {
 		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
 		return err
 	}
 
-	// print
-	var eur_sum float64
-	var card_count int64
-	for _, card := range cards {
-		fmt.Printf("%dx %d %s %.2f\n", card.SerraCount, card.CollectorNumber, card.Name, card.Prices.Eur)
-		eur_sum = eur_sum + card.Prices.Eur*float64(card.SerraCount)
-		card_count = card_count + card.SerraCount
-
-	}
-
+	// fetch set informations
 	setcoll := &Collection{client.Database("serra").Collection("sets")}
 	sets, _ := setcoll.storage_find_set(bson.D{{"code", setname}}, bson.D{{"_id", 1}})
 
-	LogMessage(fmt.Sprintf("\n%s\n", sets[0].Name), "green")
+	// set values
+	matchStage := bson.D{
+		{"$match", bson.D{
+			{"set", "mmq"},
+		}},
+	}
+	groupStage := bson.D{
+		{"$group", bson.D{
+			{"_id", "$setname"},
+			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
+			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+		}},
+	}
+	stats, _ := coll.storage_aggregate(matchStage, groupStage)
+
+	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
 	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
-	LogMessage(fmt.Sprintf("Total Cards: %d", card_count), "normal")
-	LogMessage(fmt.Sprintf("Value: %.2f Eur", eur_sum), "normal")
+	LogMessage(fmt.Sprintf("Total Cards: %.0f", stats[0]["count"]), "normal")
+	LogMessage(fmt.Sprintf("Value: %.2f", stats[0]["value"]), "normal")
+	LogMessage(fmt.Sprintf("Released: %s", sets[0].ReleasedAt), "normal")
+
+	LogMessage(fmt.Sprintf("\nMost valuable cards"), "purple")
+	for i := 0; i < 10; i++ {
+		card := cards[i]
+		fmt.Printf("%dx %s (%s/%d) %.2f EUR\n", card.SerraCount, card.Name, sets[0].Code, card.CollectorNumber, card.Prices.Eur)
+	}
 
 	storage_disconnect(client)
 	return nil
@@ -212,7 +226,7 @@ func Stats() {
 			{"count", bson.D{{"$sum", 1}}},
 		}}}
 
-	sets, _ := coll.storage_aggregate(groupStage)
+	sets, _ := coll.storage_aggregate(bson.D{{"$match", bson.D{{}}}}, groupStage)
 	for _, set := range sets {
 		// TODO fix primitiveA Problem with loop and reflect
 		fmt.Printf("* %s %d\n", set["_id"], set["count"])
