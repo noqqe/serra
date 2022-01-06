@@ -31,6 +31,7 @@ func Add(cards []string, count int64) error {
 		}
 
 		// Write card to mongodb
+		c.SerraCount = count
 		err = coll.storage_add(c)
 
 		// If duplicate key, increase count of card
