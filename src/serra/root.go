@@ -18,8 +18,6 @@ const (
 func Add(cards []string, count int64) error {
 	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
-	fmt.Println(count)
-	return nil
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 
@@ -37,7 +35,7 @@ func Add(cards []string, count int64) error {
 
 		// If duplicate key, increase count of card
 		if mongo.IsDuplicateKeyError(err) {
-			modify_count_of_card(coll, c, 1)
+			modify_count_of_card(coll, c, count)
 			continue
 		}
 
