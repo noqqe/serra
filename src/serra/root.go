@@ -112,8 +112,12 @@ func Sets() {
 			{"release", bson.D{{"$last", "$releasedat"}}},
 		}},
 	}
+	sortStage := bson.D{
+		{"$sort", bson.D{
+			{"release", 1},
+		}}}
 
-	sets, _ := coll.storage_aggregate(bson.D{{"$match", bson.D{{}}}}, groupStage)
+	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
 	for _, set := range sets {
 		fmt.Printf("* %s %s (%.2f Eur) %.0f\n", set["release"].(string)[0:4], set["_id"], set["value"], set["count"])
 	}
@@ -151,7 +155,7 @@ func ShowSet(setname string) error {
 			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
 		}},
 	}
-	stats, _ := coll.storage_aggregate(matchStage, groupStage)
+	stats, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
 
 	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
 	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
@@ -229,7 +233,7 @@ func Stats() {
 			{"count", bson.D{{"$sum", 1}}},
 		}}}
 
-	sets, _ := coll.storage_aggregate(bson.D{{"$match", bson.D{{}}}}, groupStage)
+	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage})
 	for _, set := range sets {
 		// TODO fix primitiveA Problem with loop and reflect
 		fmt.Printf("* %s %d\n", set["_id"], set["count"])
