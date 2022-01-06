@@ -124,10 +124,7 @@ func ShowSet(setname string) error {
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 
-	sort := bson.D{{"collectornumber", 1}}
-	filter := bson.D{{"set", setname}}
-
-	cards, err := coll.storage_find(filter, sort)
+	cards, err := coll.storage_find(bson.D{{"set", setname}}, bson.D{{"collectornumber", 1}})
 	if (err != nil) || len(cards) == 0 {
 		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
 		return err
