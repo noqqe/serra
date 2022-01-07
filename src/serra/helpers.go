@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func modify_count_of_card(coll *Collection, c *Card, amount int64) error {
@@ -45,4 +47,20 @@ func find_card_by_setcollectornumber(coll *Collection, setcode string, collector
 	}
 
 	return &stored_cards[0], nil
+}
+
+func stringToTime(s primitive.DateTime) string {
+	return time.UnixMilli(int64(s)).Format("2006-01-02")
+}
+
+func show_card_details(card *Card) error {
+	fmt.Printf("* %dx %s%s%s (%s/%s)\n", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber)
+	fmt.Printf("  Added: %s\n", stringToTime(card.SerraCreated))
+	fmt.Printf("  Current Value: %s%.2f EUR%s\n", Yellow, card.Prices.Eur, Reset)
+	fmt.Printf("  History:\n")
+	for _, e := range card.SerraPrices {
+		fmt.Printf("  * %s %.2f EUR\n", stringToTime(e.Date), e.Value)
+
+	}
+	return nil
 }

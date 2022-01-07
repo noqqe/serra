@@ -105,7 +105,7 @@ func ShowCard(cardids []string) {
 		cards, _ := coll.storage_find(bson.D{{"set", strings.Split(v, "/")[0]}, {"collectornumber", strings.Split(v, "/")[1]}}, bson.D{{"name", 1}})
 
 		for _, card := range cards {
-			LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%d) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")
+			show_card_details(&card)
 		}
 	}
 }
