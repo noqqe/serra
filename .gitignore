@@ -1,4 +1,5 @@
 serra
+!src/serra
 _db/*
 !_db/.placeholder
 _backup/*
