@@ -90,7 +90,7 @@ func Cards() {
 	cards, _ := coll.storage_find(filter, sort)
 
 	for _, card := range cards {
-		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%d) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")
+		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")
 	}
 }
 
@@ -144,7 +144,7 @@ func ShowSet(setname string) error {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	storage_disconnect(client)
+	defer storage_disconnect(client)
 
 	// fetch all cards in set
 	cards, err := coll.storage_find(bson.D{{"set", setname}}, bson.D{{"prices.eur", -1}})
@@ -181,7 +181,7 @@ func ShowSet(setname string) error {
 	LogMessage(fmt.Sprintf("\nMost valuable cards"), "purple")
 	for i := 0; i < 10; i++ {
 		card := cards[i]
-		fmt.Printf("%dx %s (%s/%d) %.2f EUR\n", card.SerraCount, card.Name, sets[0].Code, card.CollectorNumber, card.Prices.Eur)
+		fmt.Printf("%dx %s (%s/%s) %.2f EUR\n", card.SerraCount, card.Name, sets[0].Code, card.CollectorNumber, card.Prices.Eur)
 	}
 
 	return nil

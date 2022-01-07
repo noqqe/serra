@@ -26,7 +26,7 @@ type Card struct {
 	BorderColor     string   `json:"border_color"`
 	CardBackID      string   `json:"card_back_id"`
 	Cmc             int64    `json:"cmc"`
-	CollectorNumber int64    `json:"collector_number,string"`
+	CollectorNumber string   `json:"collector_number"`
 	ColorIdentity   []string `json:"color_identity"`
 	Colors          []string `json:"colors"`
 	Digital         bool     `json:"digital"`
