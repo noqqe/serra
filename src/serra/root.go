@@ -105,6 +105,8 @@ func Sets() {
 			{"_id", "$setname"},
 			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
 			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+			{"unique", bson.D{{"$sum", 1}}},
+			{"code", bson.D{{"$last", "$set"}}},
 			{"release", bson.D{{"$last", "$releasedat"}}},
 		}},
 	}
@@ -115,7 +117,9 @@ func Sets() {
 
 	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
 	for _, set := range sets {
-		fmt.Printf("* %s %s (%.2f Eur) %.0f\n", set["release"].(string)[0:4], set["_id"], set["value"], set["count"])
+		fmt.Printf("* %s %s%s%s (%s%s%s)\n", set["release"].(string)[0:4], Purple, set["_id"], Reset, Cyan, set["code"], Reset)
+		fmt.Printf("  Cards: %s%d/350%s Total: %.0f \n", Yellow, set["unique"], Reset, set["count"])
+		fmt.Printf("  Value: %s%.2f Eur%s\n", Pink, set["value"], Reset)
 	}
 
 }
