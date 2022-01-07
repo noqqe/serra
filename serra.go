@@ -49,6 +49,7 @@ Options:
 		fmt.Println(err)
 	}
 
+	serra.Banner()
 	if opts.Add {
 		serra.Add(opts.Card, opts.Count)
 	} else if opts.Remove {

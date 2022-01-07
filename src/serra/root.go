@@ -16,7 +16,6 @@ const (
 
 // Add
 func Add(cards []string, count int64) error {
-	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
@@ -55,7 +54,6 @@ func Add(cards []string, count int64) error {
 
 // Remove
 func Remove(cards []string) {
-	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
@@ -83,7 +81,6 @@ func Remove(cards []string) {
 }
 
 func Cards() {
-	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
@@ -99,7 +96,6 @@ func Cards() {
 }
 
 func Sets() {
-	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
@@ -126,7 +122,6 @@ func Sets() {
 }
 
 func ShowSet(setname string) error {
-	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
@@ -175,7 +170,6 @@ func ShowSet(setname string) error {
 }
 
 func Update() error {
-	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	client := storage_connect()
 
@@ -221,7 +215,6 @@ func Update() error {
 }
 
 func Stats() {
-	LogMessage(fmt.Sprintf("Serra %v\n", version), "green")
 
 	LogMessage(fmt.Sprintf("Color distribution in Collection"), "green")
 	client := storage_connect()
