@@ -135,7 +135,8 @@ func Sets() {
 	for _, set := range sets {
 		fmt.Printf("* %s %s%s%s (%s%s%s)\n", set["release"].(string)[0:4], Purple, set["_id"], Reset, Cyan, set["code"], Reset)
 		fmt.Printf("  Cards: %s%d/350%s Total: %.0f \n", Yellow, set["unique"], Reset, set["count"])
-		fmt.Printf("  Value: %s%.2f Eur%s\n", Pink, set["value"], Reset)
+		fmt.Printf("  Value: %s%.2f EUR%s\n", Pink, set["value"], Reset)
+		fmt.Println()
 	}
 
 }
