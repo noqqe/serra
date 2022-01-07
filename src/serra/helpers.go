@@ -64,3 +64,28 @@ func show_card_details(card *Card) error {
 	fmt.Println()
 	return nil
 }
+
+func convert_mana_symbols(sym []interface{}) string {
+	var mana string
+
+	if len(sym) == 0 {
+		mana = mana + "\U0001F6AB" //probibited sign for lands
+	}
+
+	for _, v := range sym {
+		switch v {
+		case "B":
+			mana = mana + "\U000026AB" //black
+		case "R":
+			mana = mana + "\U0001F534" //red
+		case "G":
+			mana = mana + "\U0001F7E2" //green
+		case "U":
+			mana = mana + "\U0001F535" //blue
+		case "W":
+			mana = mana + "\U000026AA" //white
+		}
+	}
+	return mana
+
+}

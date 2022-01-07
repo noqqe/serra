@@ -237,14 +237,34 @@ func Stats() {
 	groupStage := bson.D{
 		{"$group", bson.D{
 			{"_id", "$coloridentity"},
-			{"count", bson.D{{"$sum", 1}}},
+			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
 		}}}
 
-	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage})
+	sortStage := bson.D{
+		{"$sort", bson.D{
+			{"count", -1},
+		}}}
+	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
 	for _, set := range sets {
-		// TODO fix primitiveA Problem with loop and reflect
-		fmt.Printf("* %s %d\n", set["_id"], set["count"])
+		x, _ := set["_id"].(primitive.A)
+		s := []interface{}(x)
+		fmt.Printf("* %s %.0f\n", convert_mana_symbols(s), set["count"])
 	}
+
+	statsGroup := bson.D{
+		{"$group", bson.D{
+			{"_id", nil},
+			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
+			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+			{"unique", bson.D{{"$sum", 1}}},
+		}},
+	}
+	stats, _ := coll.storage_aggregate(mongo.Pipeline{statsGroup})
+
+	fmt.Printf("\n%sOverall %s\n", Green, Reset)
+	fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
+	fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
+	fmt.Printf("Total Value: %s%.2f%s\n", Pink, stats[0]["value"], Reset)
 
 	// LogMessage(fmt.Sprintf("Mana costs in Collection"), "green")
 	// groupStage = bson.D{
