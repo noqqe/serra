@@ -196,37 +196,32 @@ func Update() error {
 	setscoll := &Collection{client.Database("serra").Collection("sets")}
 
 	sets, _ := fetch_sets()
-	for _, set := range sets.Data {
-		// setscoll.storage_remove(bson.M{"_id": ""})
+	for i, set := range sets.Data {
+		fmt.Printf("Updating (%d/%d): %s...\n", i+1, len(sets.Data), set.Name)
 		// TODO: lol, no errorhandling, no dup key handling. but its fine. for now.
 		setscoll.storage_add_set(&set)
 	}
 
-	return nil
-
 	// update cards
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	sort := bson.D{{"_id", 1}}
-	filter := bson.D{{}}
-	cards, _ := coll.storage_find(filter, sort)
+	cards, _ := coll.storage_find(bson.D{{}}, bson.D{{"_id", 1}})
 
 	for i, card := range cards {
 		fmt.Printf("Updating (%d/%d): %s (%s)...\n", i+1, len(cards), card.Name, card.SetName)
 
-		updated_card, err := fetch_card(fmt.Sprintf("%s/%d", card.Set, card.CollectorNumber))
+		updated_card, err := fetch_card(fmt.Sprintf("%s/%s", card.Set, card.CollectorNumber))
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue
 		}
 
-		filter := bson.M{"_id": bson.M{"$eq": card.ID}}
-
 		update := bson.M{
 			"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updated_card.Prices, "collectornumber": updated_card.CollectorNumber},
 			"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
-				"value": updated_card.Prices.Eur}}}
+				"value": updated_card.Prices.Eur}},
+		}
 
-		coll.storage_update(filter, update)
+		coll.storage_update(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
 	}
 	return nil
 }
