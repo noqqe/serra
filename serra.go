@@ -14,11 +14,12 @@ var opts struct {
 	Add     bool     `docopt:"add"`
 	Remove  bool     `docopt:"remove"`
 	Cards   bool     `docopt:"cards"`
+	Card    bool     `docopt:"card"`
 	Set     bool     `docopt:"set"`
 	Sets    bool     `docopt:"sets"`
 	Stats   bool     `docopt:"stats"`
 	Update  bool     `docopt:"update"`
-	Card    []string `docopt:"<card>"`
+	CardId  []string `docopt:"<cardid>"`
 	SetCode string   `docopt:"<setcode>"`
 	Count   int64    `docopt:"--count"`
 }
@@ -29,9 +30,10 @@ func main() {
 	usage := `Serra
 
 Usage:
-  serra add <card>... [--count=<number>]
-  serra remove <card>...
+  serra add <cardid>... [--count=<number>]
+  serra remove <cardid>...
   serra cards
+  serra card <cardid>...
   serra set <setcode>
   serra sets
   serra update
@@ -51,11 +53,13 @@ Options:
 
 	serra.Banner()
 	if opts.Add {
-		serra.Add(opts.Card, opts.Count)
+		serra.Add(opts.CardId, opts.Count)
 	} else if opts.Remove {
-		serra.Remove(opts.Card)
+		serra.Remove(opts.CardId)
 	} else if opts.Cards {
 		serra.Cards()
+	} else if opts.Card {
+		serra.ShowCard(opts.CardId)
 	} else if opts.Sets {
 		serra.Sets()
 	} else if opts.Set {
