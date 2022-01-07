@@ -3,7 +3,6 @@ package serra
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -35,8 +34,7 @@ func modify_count_of_card(coll *Collection, c *Card, amount int64) error {
 func find_card_by_setcollectornumber(coll *Collection, setcode string, collectornumber string) (*Card, error) {
 
 	sort := bson.D{{"_id", 1}}
-	c, _ := strconv.ParseInt(collectornumber, 10, 64)
-	search_filter := bson.D{{"set", setcode}, {"collectornumber", c}}
+	search_filter := bson.D{{"set", setcode}, {"collectornumber", collectornumber}}
 	stored_cards, err := coll.storage_find(search_filter, sort)
 	if err != nil {
 		return &Card{}, err
@@ -51,6 +49,20 @@ func find_card_by_setcollectornumber(coll *Collection, setcode string, collector
 
 func stringToTime(s primitive.DateTime) string {
 	return time.UnixMilli(int64(s)).Format("2006-01-02")
+}
+
+func find_set_by_code(coll *Collection, setcode string) (*Set, error) {
+
+	stored_sets, err := coll.storage_find_set(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
+	if err != nil {
+		return &Set{}, err
+	}
+
+	if len(stored_sets) < 1 {
+		return &Set{}, errors.New("Set not found")
+	}
+
+	return &stored_sets[0], nil
 }
 
 func show_card_details(card *Card) error {

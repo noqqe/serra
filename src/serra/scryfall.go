@@ -131,7 +131,7 @@ type SetList struct {
 }
 
 type Set struct {
-	CardCount   int64  `json:"card_count"`
+	CardCount   int64  `json:"card_count" bson:"cardcount"`
 	Code        string `json:"code"`
 	Digital     bool   `json:"digital"`
 	FoilOnly    bool   `json:"foil_only"`

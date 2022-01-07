@@ -85,9 +85,7 @@ func Cards() {
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storage_disconnect(client)
 
-	sort := bson.D{{"name", 1}}
-	filter := bson.D{{}}
-	cards, _ := coll.storage_find(filter, sort)
+	cards, _ := coll.storage_find(bson.D{{}}, bson.D{{"name", 1}})
 
 	for _, card := range cards {
 		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")
@@ -114,6 +112,7 @@ func Sets() {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	setscoll := &Collection{client.Database("serra").Collection("sets")}
 	defer storage_disconnect(client)
 
 	groupStage := bson.D{
@@ -133,8 +132,9 @@ func Sets() {
 
 	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
 	for _, set := range sets {
+		setobj, _ := find_set_by_code(setscoll, set["code"].(string))
 		fmt.Printf("* %s %s%s%s (%s%s%s)\n", set["release"].(string)[0:4], Purple, set["_id"], Reset, Cyan, set["code"], Reset)
-		fmt.Printf("  Cards: %s%d/350%s Total: %.0f \n", Yellow, set["unique"], Reset, set["count"])
+		fmt.Printf("  Cards: %s%d/%d%s Total: %.0f \n", Yellow, set["unique"], setobj.CardCount, Reset, set["count"])
 		fmt.Printf("  Value: %s%.2f EUR%s\n", Pink, set["value"], Reset)
 		fmt.Println()
 	}
