@@ -60,7 +60,7 @@ func show_card_details(card *Card) error {
 	fmt.Printf("  History:\n")
 	for _, e := range card.SerraPrices {
 		fmt.Printf("  * %s %.2f EUR\n", stringToTime(e.Date), e.Value)
-
 	}
+	fmt.Println()
 	return nil
 }
