@@ -19,6 +19,7 @@ func Add(cards []string, count int64) error {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	defer storage_disconnect(client)
 
 	// Loop over different cards
 	for _, card := range cards {
@@ -57,6 +58,7 @@ func Remove(cards []string) {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	defer storage_disconnect(client)
 
 	// Loop over different cards
 	for _, card := range cards {
@@ -68,37 +70,35 @@ func Remove(cards []string) {
 		}
 
 		if c.SerraCount > 1 {
-			// update
 			modify_count_of_card(coll, c, -1)
 		} else {
 			coll.storage_remove(bson.M{"_id": c.ID})
 			LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) removed from the Collection.", c.Name, c.Prices.Eur), "green")
 		}
-		// delete
 
 	}
-	storage_disconnect(client)
 }
 
 func Cards() {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	defer storage_disconnect(client)
 
 	sort := bson.D{{"name", 1}}
 	filter := bson.D{{}}
 	cards, _ := coll.storage_find(filter, sort)
 
 	for _, card := range cards {
-		fmt.Printf("%s (%s) %.2f\n", card.Name, card.Set, card.Prices.Eur)
+		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%d) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")
 	}
-	storage_disconnect(client)
 }
 
 func Sets() {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	defer storage_disconnect(client)
 
 	groupStage := bson.D{
 		{"$group", bson.D{
@@ -117,7 +117,6 @@ func Sets() {
 	for _, set := range sets {
 		fmt.Printf("* %s %s (%.2f Eur) %.0f\n", set["release"].(string)[0:4], set["_id"], set["value"], set["count"])
 	}
-	storage_disconnect(client)
 
 }
 
@@ -125,6 +124,7 @@ func ShowSet(setname string) error {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	storage_disconnect(client)
 
 	// fetch all cards in set
 	cards, err := coll.storage_find(bson.D{{"set", setname}}, bson.D{{"prices.eur", -1}})
@@ -164,14 +164,13 @@ func ShowSet(setname string) error {
 		fmt.Printf("%dx %s (%s/%d) %.2f EUR\n", card.SerraCount, card.Name, sets[0].Code, card.CollectorNumber, card.Prices.Eur)
 	}
 
-	storage_disconnect(client)
 	return nil
-
 }
 
 func Update() error {
 
 	client := storage_connect()
+	defer storage_disconnect(client)
 
 	// update sets
 	setscoll := &Collection{client.Database("serra").Collection("sets")}
@@ -209,8 +208,6 @@ func Update() error {
 
 		coll.storage_update(filter, update)
 	}
-
-	storage_disconnect(client)
 	return nil
 }
 
@@ -219,6 +216,7 @@ func Stats() {
 	LogMessage(fmt.Sprintf("Color distribution in Collection"), "green")
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	defer storage_disconnect(client)
 
 	groupStage := bson.D{
 		{"$group", bson.D{
