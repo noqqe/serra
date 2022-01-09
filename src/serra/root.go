@@ -79,13 +79,28 @@ func Remove(cards []string) {
 	}
 }
 
-func Cards() {
+func Cards(rarity, set string) {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storage_disconnect(client)
 
-	cards, _ := coll.storage_find(bson.D{{}}, bson.D{{"name", 1}})
+	filter := bson.D{}
+
+	switch rarity {
+	case "uncommon":
+		filter = append(filter, bson.E{"rarity", "uncommon"})
+	case "common":
+		filter = append(filter, bson.E{"rarity", "common"})
+	case "rare":
+		filter = append(filter, bson.E{"rarity", "rare"})
+	}
+
+	if len(set) > 0 {
+		filter = append(filter, bson.E{"set", set})
+	}
+
+	cards, _ := coll.storage_find(filter, bson.D{{"name", 1}})
 
 	for _, card := range cards {
 		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")

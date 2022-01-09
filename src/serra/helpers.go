@@ -68,6 +68,8 @@ func find_set_by_code(coll *Collection, setcode string) (*Set, error) {
 func show_card_details(card *Card) error {
 	fmt.Printf("* %dx %s%s%s (%s/%s)\n", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber)
 	fmt.Printf("  Added: %s\n", stringToTime(card.SerraCreated))
+	fmt.Printf("  Rarity: %s\n", card.Rarity)
+	fmt.Printf("  Scryfall: %s\n", card.ScryfallURI)
 	fmt.Printf("  Current Value: %s%.2f EUR%s\n", Yellow, card.Prices.Eur, Reset)
 	fmt.Printf("  History:\n")
 	for _, e := range card.SerraPrices {
