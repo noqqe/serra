@@ -214,6 +214,10 @@ func ShowSet(setname string) error {
 	LogMessage(fmt.Sprintf("Rares: %.0f", rar[1]["count"]), "normal")
 	LogMessage(fmt.Sprintf("Uncommons: %.0f", rar[2]["count"]), "normal")
 	LogMessage(fmt.Sprintf("Commons: %.0f", rar[0]["count"]), "normal")
+	fmt.Printf("\n%sPrice History:%s\n", Pink, Reset)
+	for _, e := range sets[0].SerraPrices {
+		fmt.Printf("* %s %.2f EUR\n", stringToTime(e.Date), e.Value)
+	}
 
 	fmt.Printf("\n%sMost valuable cards%s\n", Pink, Reset)
 	for i := 0; i < 10; i++ {
@@ -231,35 +235,64 @@ func Update() error {
 
 	// update sets
 	setscoll := &Collection{client.Database("serra").Collection("sets")}
+	coll := &Collection{client.Database("serra").Collection("cards")}
 
 	sets, _ := fetch_sets()
 	for i, set := range sets.Data {
-		fmt.Printf("Updating (%d/%d): %s...\n", i+1, len(sets.Data), set.Name)
-		// TODO: lol, no errorhandling, no dup key handling. but its fine. for now.
 		setscoll.storage_add_set(&set)
-	}
+		cards, _ := coll.storage_find(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}})
 
-	// update cards
-	coll := &Collection{client.Database("serra").Collection("cards")}
-	cards, _ := coll.storage_find(bson.D{{}}, bson.D{{"_id", 1}})
-
-	for i, card := range cards {
-		fmt.Printf("Updating (%d/%d): %s (%s)...\n", i+1, len(cards), card.Name, card.SetName)
-
-		updated_card, err := fetch_card(fmt.Sprintf("%s/%s", card.Set, card.CollectorNumber))
-		if err != nil {
-			LogMessage(fmt.Sprintf("%v", err), "red")
+		// if no cards in collection for this set, skip it
+		if len(cards) == 0 {
 			continue
 		}
 
-		update := bson.M{
-			"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updated_card.Prices, "collectornumber": updated_card.CollectorNumber},
-			"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
-				"value": updated_card.Prices.Eur}},
+		fmt.Printf("Updating Set (%d/%d): %s (%s)...\n", i+1, len(sets.Data), set.Name, set.Code)
+
+		for y, card := range cards {
+			fmt.Printf("Updating Card %s (%d/%d): %s ...\n", card.SetName, y+1, len(cards), card.Name)
+
+			updated_card, err := fetch_card(fmt.Sprintf("%s/%s", card.Set, card.CollectorNumber))
+			if err != nil {
+				LogMessage(fmt.Sprintf("%v", err), "red")
+				continue
+			}
+
+			update := bson.M{
+				"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updated_card.Prices, "collectornumber": updated_card.CollectorNumber},
+				"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
+					"value": updated_card.Prices.Eur}},
+			}
+			coll.storage_update(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
 		}
 
-		coll.storage_update(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
+		// update set value sum
+
+		// calculate value summary
+		matchStage := bson.D{
+			{"$match", bson.D{
+				{"set", set.Code},
+			}},
+		}
+		groupStage := bson.D{
+			{"$group", bson.D{
+				{"_id", "$set"},
+				{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
+			}}}
+		setvalue, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
+
+		// do the update
+
+		set_update := bson.M{
+			"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now())},
+			"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
+				"value": setvalue[0]["value"]}},
+		}
+		fmt.Printf("Updating Set value: %s (%s) to %.02f EUR\n", set.Name, set.Code, setvalue[0]["value"])
+		setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
+		return nil
 	}
+
 	return nil
 }
 

@@ -131,21 +131,24 @@ type SetList struct {
 }
 
 type Set struct {
-	CardCount   int64  `json:"card_count" bson:"cardcount"`
-	Code        string `json:"code"`
-	Digital     bool   `json:"digital"`
-	FoilOnly    bool   `json:"foil_only"`
-	IconSvgURI  string `json:"icon_svg_uri"`
-	ID          string `json:"id" bson:"_id"`
-	Name        string `json:"name"`
-	NonfoilOnly bool   `json:"nonfoil_only"`
-	Object      string `json:"object"`
-	ReleasedAt  string `json:"released_at"`
-	ScryfallURI string `json:"scryfall_uri"`
-	SearchURI   string `json:"search_uri"`
-	SetType     string `json:"set_type"`
-	TcgplayerID int64  `json:"tcgplayer_id"`
-	URI         string `json:"uri"`
+	SerraPrices  []PriceEntry       `bson:"serra_prices"`
+	SerraCreated primitive.DateTime `bson:"serra_created"`
+	SerraUpdated primitive.DateTime `bson:"serra_updated"`
+	CardCount    int64              `json:"card_count" bson:"cardcount"`
+	Code         string             `json:"code"`
+	Digital      bool               `json:"digital"`
+	FoilOnly     bool               `json:"foil_only"`
+	IconSvgURI   string             `json:"icon_svg_uri"`
+	ID           string             `json:"id" bson:"_id"`
+	Name         string             `json:"name"`
+	NonfoilOnly  bool               `json:"nonfoil_only"`
+	Object       string             `json:"object"`
+	ReleasedAt   string             `json:"released_at"`
+	ScryfallURI  string             `json:"scryfall_uri"`
+	SearchURI    string             `json:"search_uri"`
+	SetType      string             `json:"set_type"`
+	TcgplayerID  int64              `json:"tcgplayer_id"`
+	URI          string             `json:"uri"`
 }
 
 func fetch_card(path string) (*Card, error) {
