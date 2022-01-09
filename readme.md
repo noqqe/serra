@@ -10,8 +10,7 @@
 
 * termui overview
 * add - do search for cards by name
-* `cards --rare` filter
-* rares / uncommon /common distrib in `stats`
+* set value in set
 
 # What its not
 
