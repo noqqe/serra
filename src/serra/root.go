@@ -173,16 +173,37 @@ func ShowSet(setname string) error {
 	}
 	stats, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
 
+	// set values
+	matchStage = bson.D{
+		{"$match", bson.D{
+			{"set", setname},
+		}},
+	}
+	groupStage = bson.D{
+		{"$group", bson.D{
+			{"_id", "$rarity"},
+			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+		}}}
+
+	sortStage := bson.D{
+		{"$sort", bson.D{
+			{"_id", 1},
+		}}}
+	rar, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage, sortStage})
+
 	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
 	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
 	LogMessage(fmt.Sprintf("Total Cards: %.0f", stats[0]["count"]), "normal")
 	LogMessage(fmt.Sprintf("Total Value: %.2f EUR", stats[0]["value"]), "normal")
 	LogMessage(fmt.Sprintf("Released: %s", sets[0].ReleasedAt), "normal")
+	LogMessage(fmt.Sprintf("Rares: %.0f", rar[1]["count"]), "normal")
+	LogMessage(fmt.Sprintf("Uncommons: %.0f", rar[2]["count"]), "normal")
+	LogMessage(fmt.Sprintf("Commons: %.0f", rar[0]["count"]), "normal")
 
-	LogMessage(fmt.Sprintf("\nMost valuable cards"), "purple")
+	fmt.Printf("\n%sMost valuable cards%s\n", Pink, Reset)
 	for i := 0; i < 10; i++ {
 		card := cards[i]
-		fmt.Printf("%dx %s (%s/%s) %.2f EUR\n", card.SerraCount, card.Name, sets[0].Code, card.CollectorNumber, card.Prices.Eur)
+		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f EUR%s\n", card.SerraCount, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.Prices.Eur, Reset)
 	}
 
 	return nil

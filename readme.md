@@ -7,15 +7,11 @@
 
 # Todo
 
-mvp
-
-* single view for card, with history
-* remove card (double exec to reduce count)
-
-optional
 
 * termui overview
 * add - do search for cards by name
+* `cards --rare` filter
+* rares / uncommon /common distrib in `stats`
 
 # What its not
 
