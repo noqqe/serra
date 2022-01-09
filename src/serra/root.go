@@ -292,8 +292,6 @@ func Update() error {
 		setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
 		return nil
 	}
-
-	return nil
 }
 
 func Stats() {
