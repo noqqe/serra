@@ -290,8 +290,8 @@ func Update() error {
 		}
 		fmt.Printf("Updating Set value: %s (%s) to %.02f EUR\n", set.Name, set.Code, setvalue[0]["value"])
 		setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
-		return nil
 	}
+	return nil
 }
 
 func Stats() {
