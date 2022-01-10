@@ -7,10 +7,12 @@
 
 # Todo
 
-
 * termui overview
 * add - do search for cards by name
-* set value in set
+* differences in prices in green and red
+* prices since the beginning
+* total prices for cards in searchquery
+* sort of cards in cards query
 
 # What its not
 
