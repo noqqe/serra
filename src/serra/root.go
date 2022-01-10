@@ -2,6 +2,7 @@ package serra
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -154,6 +155,56 @@ func Sets() {
 		fmt.Println()
 	}
 
+}
+
+func Missing(setname string) error {
+
+	client := storage_connect()
+	coll := &Collection{client.Database("serra").Collection("cards")}
+	defer storage_disconnect(client)
+
+	// fetch all cards in set
+	cards, err := coll.storage_find(bson.D{{"set", setname}}, bson.D{{"collectornumber", 1}})
+	if (err != nil) || len(cards) == 0 {
+		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
+		return err
+	}
+
+	// fetch set informations
+	setcoll := &Collection{client.Database("serra").Collection("sets")}
+	sets, _ := setcoll.storage_find_set(bson.D{{"code", setname}}, bson.D{{"_id", 1}})
+	set := sets[0]
+
+	LogMessage(fmt.Sprintf("Missing cards in %s", sets[0].Name), "green")
+	var i int64
+	// iterate over all cards in set
+	for i = 1; i < set.CardCount; i++ {
+		fmt.Printf("Checking usg/%d\n", i)
+		var found bool
+		found = false
+
+		// iterate over all cards in collection
+		for _, c := range cards {
+			found = false
+			// check if current card has collector number that we look for
+			if c.CollectorNumber == strconv.FormatInt(i, 16) {
+
+				// if yes, set found to true, and stop looking
+				found = true
+				break
+			}
+		}
+		if !found {
+			ncard, err := fetch_card(fmt.Sprintf("%s/%s", setname, strconv.FormatInt(i, 16)))
+			if err != nil {
+				continue
+			}
+
+			fmt.Printf("%s (%s)\n", ncard.Name, ncard.SetName)
+		}
+
+	}
+	return nil
 }
 
 func ShowSet(setname string) error {

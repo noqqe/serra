@@ -18,6 +18,7 @@ var opts struct {
 	Set     bool     `docopt:"set"`
 	Sets    bool     `docopt:"sets"`
 	Stats   bool     `docopt:"stats"`
+	Missing bool     `docopt:"missing"`
 	Update  bool     `docopt:"update"`
 	CardId  []string `docopt:"<cardid>"`
 	SetCode string   `docopt:"<setcode>,--set"`
@@ -35,6 +36,7 @@ Usage:
   serra remove <cardid>...
   serra cards [--rarity=<rarity>] [--set=<setcode>]
   serra card <cardid>...
+  serra missing <setcode>
   serra set <setcode>
   serra sets
   serra update
@@ -63,6 +65,8 @@ Options:
 		serra.ShowCard(opts.CardId)
 	} else if opts.Sets {
 		serra.Sets()
+	} else if opts.Missing {
+		serra.Missing(opts.SetCode)
 	} else if opts.Set {
 		serra.ShowSet(opts.SetCode)
 	} else if opts.Update {
