@@ -82,6 +82,7 @@ func Remove(cards []string) {
 
 func Cards(rarity, set string) {
 
+	var total float64
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storage_disconnect(client)
@@ -105,7 +106,10 @@ func Cards(rarity, set string) {
 
 	for _, card := range cards {
 		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")
+		total = total + card.Prices.Eur*float64(card.SerraCount)
 	}
+	fmt.Printf("\nTotal Value: %s%.2f EUR%s\n", Yellow, total, Reset)
+
 }
 
 func ShowCard(cardids []string) {
