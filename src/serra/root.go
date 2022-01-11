@@ -406,16 +406,52 @@ func Stats() {
 			{"_id", nil},
 			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
 			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+			{"rarity", bson.D{{"$sum", "$rarity"}}},
 			{"unique", bson.D{{"$sum", 1}}},
 		}},
 	}
 	stats, _ := coll.storage_aggregate(mongo.Pipeline{statsGroup})
+
+	rarityStage := bson.D{
+		{"$group", bson.D{
+			{"_id", "$rarity"},
+			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+		}}}
+
+	sortStage = bson.D{
+		{"$sort", bson.D{
+			{"_id", 1},
+		}}}
+	rar, _ := coll.storage_aggregate(mongo.Pipeline{rarityStage, sortStage})
+
+	// this is maybe the ugliest way someone could choose to verify, if a rarity type is missing
+	// [
+	// { _id: { rarity: 'common' }, count: 20 },
+	// { _id: { rarity: 'uncommon' }, count: 2 }
+	// ]
+	// if a result like this is there, 1 rarity type "rare" is not in the array. and needs to be
+	// initialized with 0, otherwise we get a panic
+	var rares, uncommons, commons float64
+	for _, r := range rar {
+		switch r["_id"] {
+		case "rare":
+			rares = r["count"].(float64)
+		case "uncommon":
+			uncommons = r["count"].(float64)
+		case "common":
+			commons = r["count"].(float64)
+		}
+	}
 
 	fmt.Printf("\n%sOverall %s\n", Green, Reset)
 	fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
 	fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
 	fmt.Printf("Total Value: %s%.2f%s\n", Pink, stats[0]["value"], Reset)
 
+	fmt.Printf("\n%sRarity%s\n", Green, Reset)
+	fmt.Printf("Rares: %s%.0f%s\n", Pink, rares, Reset)
+	fmt.Printf("Uncommons: %s%.0f%s\n", Yellow, uncommons, Reset)
+	fmt.Printf("Commons: %s%.0f%s\n", Purple, commons, Reset)
 	// LogMessage(fmt.Sprintf("Mana costs in Collection"), "green")
 	// groupStage = bson.D{
 	// 	{"$group", bson.D{
