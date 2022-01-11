@@ -289,8 +289,17 @@ func ShowSet(setname string) error {
 	LogMessage(fmt.Sprintf("Uncommons: %.0f", uncommons), "normal")
 	LogMessage(fmt.Sprintf("Commons: %.0f", commons), "normal")
 	fmt.Printf("\n%sPrice History:%s\n", Pink, Reset)
+
+	var before float64
 	for _, e := range sets[0].SerraPrices {
-		fmt.Printf("* %s %.2f EUR\n", stringToTime(e.Date), e.Value)
+		if e.Value > before {
+			fmt.Printf("* %s %s%.2f EUR%s\n", stringToTime(e.Date), Green, e.Value, Reset)
+		} else if e.Value < before {
+			fmt.Printf("* %s %s%.2f EUR%s\n", stringToTime(e.Date), Red, e.Value, Reset)
+		} else {
+			fmt.Printf("* %s %.2f EUR%s\n", stringToTime(e.Date), e.Value)
+		}
+		before = e.Value
 	}
 
 	fmt.Printf("\n%sMost valuable cards%s\n", Pink, Reset)

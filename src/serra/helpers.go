@@ -73,8 +73,16 @@ func show_card_details(card *Card) error {
 	fmt.Printf("  Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
 	fmt.Printf("  Current Value: %s%.2f EUR%s\n", Yellow, card.Prices.Eur, Reset)
 	fmt.Printf("  History:\n")
+	var before float64
 	for _, e := range card.SerraPrices {
-		fmt.Printf("  * %s %.2f EUR\n", stringToTime(e.Date), e.Value)
+		if e.Value > before {
+			fmt.Printf("  * %s %s%.2f EUR%s\n", stringToTime(e.Date), Green, e.Value, Reset)
+		} else if e.Value < before {
+			fmt.Printf("  * %s %s%.2f EUR%s\n", stringToTime(e.Date), Red, e.Value, Reset)
+		} else {
+			fmt.Printf("  * %s %.2f EUR\n", stringToTime(e.Date), e.Value)
+		}
+		before = e.Value
 	}
 	fmt.Println()
 	return nil
