@@ -9,10 +9,9 @@
 
 * termui overview
 * add - do search for cards by name
-* differences in prices in green and red
 * prices since the beginning
-* total prices for cards in searchquery
 * sort of cards in cards query
+* total card value column with history in mongodb
 
 # What its not
 
