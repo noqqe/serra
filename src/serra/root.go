@@ -180,33 +180,27 @@ func Missing(setname string) error {
 	set := sets[0]
 
 	LogMessage(fmt.Sprintf("Missing cards in %s", sets[0].Name), "green")
+
+	// generate set with all setnumbers
+	var complete_set []string
 	var i int64
-	// iterate over all cards in set
-	for i = 1; i < set.CardCount; i++ {
-		fmt.Printf("Checking usg/%d\n", i)
-		var found bool
-		found = false
+	for i = 1; i <= set.CardCount; i++ {
+		complete_set = append(complete_set, strconv.FormatInt(i, 10))
+	}
 
-		// iterate over all cards in collection
-		for _, c := range cards {
-			found = false
-			// check if current card has collector number that we look for
-			if c.CollectorNumber == strconv.FormatInt(i, 16) {
+	// iterate over all cards in collection
+	var in_collection []string
+	for _, c := range cards {
+		in_collection = append(in_collection, c.CollectorNumber)
+	}
 
-				// if yes, set found to true, and stop looking
-				found = true
-				break
-			}
+	misses := missing(in_collection, complete_set)
+	for _, m := range misses {
+		ncard, err := fetch_card(fmt.Sprintf("%s/%s", setname, m))
+		if err != nil {
+			continue
 		}
-		if !found {
-			ncard, err := fetch_card(fmt.Sprintf("%s/%s", setname, strconv.FormatInt(i, 16)))
-			if err != nil {
-				continue
-			}
-
-			fmt.Printf("%s (%s)\n", ncard.Name, ncard.SetName)
-		}
-
+		fmt.Printf("%s (%s)\n", ncard.Name, ncard.SetName)
 	}
 	return nil
 }
