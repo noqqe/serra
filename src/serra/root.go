@@ -80,7 +80,7 @@ func Remove(cards []string) {
 	}
 }
 
-func Cards(rarity, set string) {
+func Cards(rarity, set, sort string) {
 
 	var total float64
 	client := storage_connect()
@@ -98,11 +98,22 @@ func Cards(rarity, set string) {
 		filter = append(filter, bson.E{"rarity", "rare"})
 	}
 
+	var sortStage bson.D
+	switch sort {
+	case "value":
+		sortStage = bson.D{{"prices.eur", 1}}
+	case "collectornumber":
+		sortStage = bson.D{{"collectornumber", 1}}
+	case "name":
+		sortStage = bson.D{{"name", 1}}
+	}
+	fmt.Println(sortStage)
+
 	if len(set) > 0 {
 		filter = append(filter, bson.E{"set", set})
 	}
 
-	cards, _ := coll.storage_find(filter, bson.D{{"name", 1}})
+	cards, _ := coll.storage_find(filter, sortStage)
 
 	for _, card := range cards {
 		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")

@@ -23,6 +23,7 @@ var opts struct {
 	CardId  []string `docopt:"<cardid>"`
 	SetCode string   `docopt:"<setcode>,--set"`
 	Count   int64    `docopt:"--count"`
+	Sort    string   `docopt:"--sort"`
 	Rarity  string   `docopt:"--rarity"`
 }
 
@@ -34,7 +35,7 @@ func main() {
 Usage:
   serra add <cardid>... [--count=<number>]
   serra remove <cardid>...
-  serra cards [--rarity=<rarity>] [--set=<setcode>]
+  serra cards [--rarity=<rarity>] [--set=<setcode>] [--sort=<sort>]
   serra card <cardid>...
   serra missing <setcode>
   serra set <setcode>
@@ -60,7 +61,7 @@ Options:
 	} else if opts.Remove {
 		serra.Remove(opts.CardId)
 	} else if opts.Cards {
-		serra.Cards(opts.Rarity, opts.SetCode)
+		serra.Cards(opts.Rarity, opts.SetCode, opts.Sort)
 	} else if opts.Card {
 		serra.ShowCard(opts.CardId)
 	} else if opts.Sets {
