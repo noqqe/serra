@@ -106,8 +106,9 @@ func Cards(rarity, set, sort string) {
 		sortStage = bson.D{{"collectornumber", 1}}
 	case "name":
 		sortStage = bson.D{{"name", 1}}
+	default:
+		sortStage = bson.D{{"name", 1}}
 	}
-	fmt.Println(sortStage)
 
 	if len(set) > 0 {
 		filter = append(filter, bson.E{"set", set})
