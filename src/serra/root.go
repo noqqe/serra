@@ -400,27 +400,28 @@ func Update() error {
 
 func Stats() {
 
-	LogMessage(fmt.Sprintf("Color distribution in Collection"), "green")
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	totalcoll := &Collection{client.Database("serra").Collection("total")}
 	defer storage_disconnect(client)
 
-	groupStage := bson.D{
-		{"$group", bson.D{
-			{"_id", "$coloridentity"},
-			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-		}}}
+	// LogMessage(fmt.Sprintf("Color distribution in Collection"), "green")
+	// groupStage := bson.D{
+	// 	{"$group", bson.D{
+	// 		{"_id", "$coloridentity"},
+	// 		{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+	// 	}}}
 
 	sortStage := bson.D{
 		{"$sort", bson.D{
 			{"count", -1},
 		}}}
-	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
-	for _, set := range sets {
-		x, _ := set["_id"].(primitive.A)
-		s := []interface{}(x)
-		fmt.Printf("* %s %.0f\n", convert_mana_symbols(s), set["count"])
-	}
+	// sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
+	// for _, set := range sets {
+	// 	x, _ := set["_id"].(primitive.A)
+	// 	s := []interface{}(x)
+	// 	fmt.Printf("* %s %.0f\n", convert_mana_symbols(s), set["count"])
+	// }
 
 	statsGroup := bson.D{
 		{"$group", bson.D{
@@ -464,15 +465,31 @@ func Stats() {
 		}
 	}
 
-	fmt.Printf("\n%sOverall %s\n", Green, Reset)
+	fmt.Printf("\n%sCards %s\n", Green, Reset)
 	fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
 	fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
-	fmt.Printf("Total Value: %s%.2f%s\n", Pink, stats[0]["value"], Reset)
 
 	fmt.Printf("\n%sRarity%s\n", Green, Reset)
 	fmt.Printf("Rares: %s%.0f%s\n", Pink, rares, Reset)
 	fmt.Printf("Uncommons: %s%.0f%s\n", Yellow, uncommons, Reset)
 	fmt.Printf("Commons: %s%.0f%s\n", Purple, commons, Reset)
+
+	fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
+	fmt.Printf("Current: %s%.2f%s\n", Pink, stats[0]["value"], Reset)
+	total, _ := totalcoll.storage_find_total()
+
+	var before float64
+	fmt.Printf("History: \n")
+	for _, e := range total.Value {
+		if e.Value > before {
+			fmt.Printf("* %s %s%.2f EUR%s\n", stringToTime(e.Date), Green, e.Value, Reset)
+		} else if e.Value < before {
+			fmt.Printf("* %s %s%.2f EUR%s\n", stringToTime(e.Date), Red, e.Value, Reset)
+		} else {
+			fmt.Printf("* %s %.2f EUR\n", stringToTime(e.Date), e.Value)
+		}
+		before = e.Value
+	}
 	// LogMessage(fmt.Sprintf("Mana costs in Collection"), "green")
 	// groupStage = bson.D{
 	// 	{"$group", bson.D{

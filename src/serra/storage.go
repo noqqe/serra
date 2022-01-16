@@ -121,6 +121,18 @@ func (coll Collection) storage_find_set(filter, sort bson.D) ([]Set, error) {
 
 }
 
+func (coll Collection) storage_find_total() (Total, error) {
+
+	var total Total
+	err := coll.FindOne(context.TODO(), bson.D{{"_id", "1"}}).Decode(&total)
+
+	if err != nil {
+		return Total{}, err
+	}
+	return total, nil
+
+}
+
 func (coll Collection) storage_remove(filter bson.M) error {
 
 	_, err := coll.DeleteOne(context.TODO(), filter)
