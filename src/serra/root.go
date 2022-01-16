@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/schollz/progressbar/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -327,10 +328,8 @@ func Update() error {
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	totalcoll := &Collection{client.Database("serra").Collection("total")}
 
-	return nil
-
 	sets, _ := fetch_sets()
-	for i, set := range sets.Data {
+	for _, set := range sets.Data {
 		setscoll.storage_add_set(&set)
 		cards, _ := coll.storage_find(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}})
 
@@ -339,11 +338,12 @@ func Update() error {
 			continue
 		}
 
-		fmt.Printf("Updating Set (%d/%d): %s (%s)...\n", i+1, len(sets.Data), set.Name, set.Code)
-
-		for y, card := range cards {
-			fmt.Printf("Updating Card %s (%d/%d): %s ...\n", card.SetName, y+1, len(cards), card.Name)
-
+		bar := progressbar.NewOptions(len(cards),
+			progressbar.OptionSetWidth(80),
+			progressbar.OptionSetDescription(fmt.Sprintf("%s%s%s (%s%s%s, %s)", Pink, set.Name, Reset, Yellow, set.Code, Reset, set.ReleasedAt[0:4])),
+		)
+		for _, card := range cards {
+			bar.Add(1)
 			updated_card, err := fetch_card(fmt.Sprintf("%s/%s", card.Set, card.CollectorNumber))
 			if err != nil {
 				LogMessage(fmt.Sprintf("%v", err), "red")
@@ -379,7 +379,7 @@ func Update() error {
 			"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
 				"value": setvalue[0]["value"]}},
 		}
-		fmt.Printf("Updating Set value: %s (%s) to %.02f EUR\n", set.Name, set.Code, setvalue[0]["value"])
+		// fmt.Printf("Set %s%s%s (%s) is now worth %s%.02f EUR%s\n", Pink, set.Name, Reset, set.Code, Yellow, setvalue[0]["value"], Reset)
 		setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
 	}
 
@@ -392,7 +392,7 @@ func Update() error {
 		bson.D{{"$group", bson.D{{"_id", nil}, {"total", bson.D{{"$sum", "$totalValue.value"}}}}}},
 	}
 	ostats, _ := setscoll.storage_aggregate(overall_value)
-	fmt.Printf("Updating total value of collection to: %s%.02f EUR%s\n", Yellow, ostats[0]["total"].(float64), Reset)
+	fmt.Printf("%sUpdating total value of collection to: %s%.02f EUR%s\n", Green, Yellow, ostats[0]["total"].(float64), Reset)
 	totalcoll.storage_add_total(ostats[0]["total"].(float64))
 
 	return nil
