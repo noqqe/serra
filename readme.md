@@ -7,9 +7,11 @@
 
 # Todo
 
-* termui overview
 * prices since the beginning
-* total card value column with history in mongodb
+* calculate biggest gaining cards (Up XX %!)
+* display (+/-) % in sets overview
+* display (+/-) % in history views
+
 
 # What its not
 
