@@ -2,6 +2,7 @@ package serra
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -11,6 +12,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+type Total struct {
+	ID    string       `json:"id" bson:"_id"`
+	Value []PriceEntry `bson:"value"`
+}
 
 // https://siongui.github.io/2017/02/11/go-add-method-function-to-type-in-external-package/
 type Collection struct {
@@ -52,6 +58,33 @@ func (coll Collection) storage_add_set(set *Set) error {
 	}
 	return nil
 
+}
+
+func (coll Collection) storage_add_total(v float64) error {
+
+	// create total object if not exists...
+	coll.InsertOne(context.TODO(), Total{ID: "1", Value: []PriceEntry{}})
+
+	// update object as intended...
+	filter := bson.D{{"_id", "1"}}
+	update := bson.M{
+		"$push": bson.M{"value": bson.M{
+			"date":  primitive.NewDateTimeFromTime(time.Now()),
+			"value": v,
+		},
+		},
+	}
+
+	_, err := coll.UpdateOne(
+		context.Background(),
+		filter,
+		update,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
 }
 
 func (coll Collection) storage_find(filter, sort bson.D) ([]Card, error) {

@@ -8,9 +8,7 @@
 # Todo
 
 * termui overview
-* add - do search for cards by name
 * prices since the beginning
-* sort of cards in cards query
 * total card value column with history in mongodb
 
 # What its not
@@ -39,6 +37,9 @@ Color distribution
 
      db.cards.aggregate([{ $group: { _id: { color: "$colors" }, count: { $sum: 1 } } }])
 
+Calculate value of all sets
+
+    db.sets.aggregate({$match: {serra_prices: {$exists: true}}}, {$project: {name: 1, "totalValue": {$arrayElemAt: ["$serra_prices", -1]} }}, {$group: {_id: null, total: {$sum: "$totalValue.value" }}})
 
 # MongoDB Operations
 

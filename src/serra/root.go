@@ -325,6 +325,9 @@ func Update() error {
 	// update sets
 	setscoll := &Collection{client.Database("serra").Collection("sets")}
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	totalcoll := &Collection{client.Database("serra").Collection("total")}
+
+	return nil
 
 	sets, _ := fetch_sets()
 	for i, set := range sets.Data {
@@ -371,7 +374,6 @@ func Update() error {
 		setvalue, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
 
 		// do the update
-
 		set_update := bson.M{
 			"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now())},
 			"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
@@ -380,6 +382,19 @@ func Update() error {
 		fmt.Printf("Updating Set value: %s (%s) to %.02f EUR\n", set.Name, set.Code, setvalue[0]["value"])
 		setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
 	}
+
+	// calculate total summary over all sets
+	overall_value := mongo.Pipeline{
+		bson.D{{"$match",
+			bson.D{{"serra_prices", bson.D{{"$exists", true}}}}}},
+		bson.D{{"$project",
+			bson.D{{"name", true}, {"totalValue", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}},
+		bson.D{{"$group", bson.D{{"_id", nil}, {"total", bson.D{{"$sum", "$totalValue.value"}}}}}},
+	}
+	ostats, _ := setscoll.storage_aggregate(overall_value)
+	fmt.Printf("Updating total value of collection to: %s%.02f EUR%s\n", Yellow, ostats[0]["total"].(float64), Reset)
+	totalcoll.storage_add_total(ostats[0]["total"].(float64))
+
 	return nil
 }
 
