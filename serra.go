@@ -19,12 +19,14 @@ var opts struct {
 	Sets    bool     `docopt:"sets"`
 	Stats   bool     `docopt:"stats"`
 	Missing bool     `docopt:"missing"`
+	Raising bool     `docopt:"raising"`
 	Update  bool     `docopt:"update"`
 	CardId  []string `docopt:"<cardid>"`
 	SetCode string   `docopt:"<setcode>,--set"`
 	Count   int64    `docopt:"--count"`
 	Sort    string   `docopt:"--sort"`
 	Rarity  string   `docopt:"--rarity"`
+	Limit   float64  `docopt:"--limit"`
 }
 
 // Main Loop
@@ -37,6 +39,7 @@ Usage:
   serra remove <cardid>...
   serra cards [--rarity=<rarity>] [--set=<setcode>] [--sort=<sort>]
   serra card <cardid>...
+	serra raising [--limit=<limit>]
   serra missing <setcode>
   serra set <setcode>
   serra sets
@@ -68,6 +71,8 @@ Options:
 		serra.Sets()
 	} else if opts.Missing {
 		serra.Missing(opts.SetCode)
+	} else if opts.Raising {
+		serra.Raising(opts.Limit)
 	} else if opts.Set {
 		serra.ShowSet(opts.SetCode)
 	} else if opts.Update {

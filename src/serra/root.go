@@ -398,6 +398,69 @@ func Update() error {
 	return nil
 }
 
+func Raising(limit float64) error {
+
+	client := storage_connect()
+	coll := &Collection{client.Database("serra").Collection("cards")}
+	defer storage_disconnect(client)
+
+	// db.cards.aggregate({$project: {set: 1, collectornumber:1, name: 1, "old": {$arrayElemAt: ["$serra_prices.value", -2]}, "current": {$arrayElemAt: ["$serra_prices.value", -1]} }}, {$match: {old: {$gt: 2}}} ,{$project: {name: 1,set:1,collectornumber:1,current:1, "rate": {$subtract: [{$divide: ["$current", {$divide: ["$old", 100]}]}, 100]} }}, {$sort: { rate: -1}})
+	raise_pipeline := mongo.Pipeline{
+		bson.D{{"$project",
+			bson.D{
+				{"name", true},
+				{"set", true},
+				{"collectornumber", true},
+				{"old",
+					bson.D{{"$arrayElemAt",
+						bson.A{"$serra_prices.value", -2},
+					}},
+				},
+				{"current",
+					bson.D{{"$arrayElemAt",
+						bson.A{"$serra_prices.value", -1},
+					}},
+				},
+			},
+		}},
+		bson.D{{"$match",
+			bson.D{{"old", bson.D{{"$gt", limit}}}},
+		}},
+		bson.D{{"$project",
+			bson.D{
+				{"name", true},
+				{"set", true},
+				{"old", true},
+				{"current", true},
+				{"collectornumber", true},
+				{"rate",
+					bson.D{{"$subtract",
+						bson.A{
+							bson.D{{"$divide",
+								bson.A{"$current",
+									bson.D{{"$divide",
+										bson.A{"$old", 100},
+									}},
+								},
+							}},
+							100,
+						},
+					}},
+				},
+			},
+		}},
+		bson.D{{"$sort",
+			bson.D{{"rate", -1}}}},
+		bson.D{{"$limit", 20}},
+	}
+	raise, _ := coll.storage_aggregate(raise_pipeline)
+	for _, e := range raise {
+		fmt.Printf("%s+%.0f%%%s %s%s%s (%s/%s) (%.2f->%s%.2f EUR%s) \n", Green, e["rate"], Reset, Yellow, e["name"], Reset, e["set"], e["collectornumber"], e["old"], Green, e["current"], Reset)
+	}
+	return nil
+
+}
+
 func Stats() {
 
 	client := storage_connect()
