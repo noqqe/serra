@@ -398,7 +398,7 @@ func Update() error {
 	return nil
 }
 
-func Raising(limit float64) error {
+func Gains(limit float64, sort int) error {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
@@ -450,12 +450,22 @@ func Raising(limit float64) error {
 			},
 		}},
 		bson.D{{"$sort",
-			bson.D{{"rate", -1}}}},
+			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 20}},
 	}
 	raise, _ := coll.storage_aggregate(raise_pipeline)
+
+	// percentage coloring
+	var p_color string
+	if sort == 1 {
+		p_color = Red
+	} else {
+		p_color = Green
+	}
+
+	// print each card
 	for _, e := range raise {
-		fmt.Printf("%s%+.0f%%%s %s%s%s %s(%s/%s)%s (%.2f->%s%.2f EUR%s) \n", Green, e["rate"], Reset, Pink, e["name"], Reset, Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], Reset)
+		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f EUR%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], Reset)
 	}
 	return nil
 
