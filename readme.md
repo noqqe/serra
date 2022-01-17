@@ -55,4 +55,6 @@ Do a database dump
 
 Do a collection export to json
 
-    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c cards
+    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c cards > /backup/cards.json
+    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c sets > /backup/sets.json
+    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c total > /backup/total.json

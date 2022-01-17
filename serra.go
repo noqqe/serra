@@ -39,7 +39,7 @@ Usage:
   serra remove <cardid>...
   serra cards [--rarity=<rarity>] [--set=<setcode>] [--sort=<sort>]
   serra card <cardid>...
-	serra raising [--limit=<limit>]
+  serra raising [--limit=<limit>]
   serra missing <setcode>
   serra set <setcode>
   serra sets
