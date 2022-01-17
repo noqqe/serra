@@ -528,7 +528,7 @@ func Stats() {
 		}
 	}
 
-	fmt.Printf("\n%sCards %s\n", Green, Reset)
+	fmt.Printf("%sCards %s\n", Green, Reset)
 	fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
 	fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
 
