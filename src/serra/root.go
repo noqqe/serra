@@ -455,7 +455,7 @@ func Raising(limit float64) error {
 	}
 	raise, _ := coll.storage_aggregate(raise_pipeline)
 	for _, e := range raise {
-		fmt.Printf("%s+%.0f%%%s %s%s%s (%s/%s) (%.2f->%s%.2f EUR%s) \n", Green, e["rate"], Reset, Yellow, e["name"], Reset, e["set"], e["collectornumber"], e["old"], Green, e["current"], Reset)
+		fmt.Printf("%s+%.0f%%%s %s%s%s %s(%s/%s)%s (%.2f->%s%.2f EUR%s) \n", Green, e["rate"], Reset, Pink, e["name"], Reset, Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], Reset)
 	}
 	return nil
 
