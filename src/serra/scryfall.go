@@ -80,8 +80,12 @@ type Card struct {
 	OracleText    string        `json:"oracle_text"`
 	Oversized     bool          `json:"oversized"`
 	Prices        struct {
-		Eur     float64 `json:"eur,string"`
-		EurFoil float64 `json:"eur_foil,string"`
+		Eur       float64 `json:"eur,string"`
+		EurFoil   float64 `json:"eur_foil,string"`
+		Tix       float64 `json:"tix,string"`
+		Usd       float64 `json:"usd,string"`
+		UsdEtched float64 `json:"usd_etched,string"`
+		UsdFoil   float64 `json:"usd_foil,string"`
 	} `json:"prices"`
 	PrintedName     string `json:"printed_name"`
 	PrintedText     string `json:"printed_text"`
