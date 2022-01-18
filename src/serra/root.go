@@ -357,6 +357,7 @@ func Update() error {
 			}
 			coll.storage_update(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
 		}
+		fmt.Println()
 
 		// update set value sum
 
@@ -392,7 +393,7 @@ func Update() error {
 		bson.D{{"$group", bson.D{{"_id", nil}, {"total", bson.D{{"$sum", "$totalValue.value"}}}}}},
 	}
 	ostats, _ := setscoll.storage_aggregate(overall_value)
-	fmt.Printf("%sUpdating total value of collection to: %s%.02f EUR%s\n", Green, Yellow, ostats[0]["total"].(float64), Reset)
+	fmt.Printf("\n%sUpdating total value of collection to: %s%.02f EUR%s\n", Green, Yellow, ostats[0]["total"].(float64), Reset)
 	totalcoll.storage_add_total(ostats[0]["total"].(float64))
 
 	return nil
