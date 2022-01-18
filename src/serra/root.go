@@ -310,7 +310,15 @@ func ShowSet(setname string) error {
 	}
 
 	fmt.Printf("\n%sMost valuable cards%s\n", Pink, Reset)
-	for i := 0; i < 10; i++ {
+	ccards := 0
+	if len(cards) < 10 {
+		ccards = len(cards)
+
+	} else {
+		ccards = 10
+	}
+
+	for i := 0; i < ccards; i++ {
 		card := cards[i]
 		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f EUR%s\n", card.SerraCount, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.Prices.Eur, Reset)
 	}
