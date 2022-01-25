@@ -411,9 +411,9 @@ func Gains(limit float64, sort int) error {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	setcoll := &Collection{client.Database("serra").Collection("sets")}
 	defer storage_disconnect(client)
 
-	// db.cards.aggregate({$project: {set: 1, collectornumber:1, name: 1, "old": {$arrayElemAt: ["$serra_prices.value", -2]}, "current": {$arrayElemAt: ["$serra_prices.value", -1]} }}, {$match: {old: {$gt: 2}}} ,{$project: {name: 1,set:1,collectornumber:1,current:1, "rate": {$subtract: [{$divide: ["$current", {$divide: ["$old", 100]}]}, 100]} }}, {$sort: { rate: -1}})
 	raise_pipeline := mongo.Pipeline{
 		bson.D{{"$project",
 			bson.D{
@@ -464,6 +464,54 @@ func Gains(limit float64, sort int) error {
 	}
 	raise, _ := coll.storage_aggregate(raise_pipeline)
 
+	sraise_pipeline := mongo.Pipeline{
+		bson.D{{"$project",
+			bson.D{
+				{"name", true},
+				{"code", true},
+				{"old",
+					bson.D{{"$arrayElemAt",
+						bson.A{"$serra_prices.value", 0},
+					}},
+				},
+				{"current",
+					bson.D{{"$arrayElemAt",
+						bson.A{"$serra_prices.value", -1},
+					}},
+				},
+			},
+		}},
+		bson.D{{"$match",
+			bson.D{{"old", bson.D{{"$gt", limit}}}},
+		}},
+		bson.D{{"$project",
+			bson.D{
+				{"name", true},
+				{"code", true},
+				{"old", true},
+				{"current", true},
+				{"rate",
+					bson.D{{"$subtract",
+						bson.A{
+							bson.D{{"$divide",
+								bson.A{"$current",
+									bson.D{{"$divide",
+										bson.A{"$old", 100},
+									}},
+								},
+							}},
+							100,
+						},
+					}},
+				},
+			},
+		}},
+		bson.D{{"$sort",
+			bson.D{{"rate", sort}}}},
+		bson.D{{"$limit", 10}},
+	}
+	sraise, _ := setcoll.storage_aggregate(sraise_pipeline)
+
 	// percentage coloring
 	var p_color string
 	if sort == 1 {
@@ -472,9 +520,15 @@ func Gains(limit float64, sort int) error {
 		p_color = Green
 	}
 
+	fmt.Printf("%sCards%s\n", Purple, Reset)
 	// print each card
 	for _, e := range raise {
 		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f EUR%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], Reset)
+	}
+
+	fmt.Printf("\n%sSets%s\n", Purple, Reset)
+	for _, e := range sraise {
+		fmt.Printf("%s%+.0f%%%s %s %s(%s)%s (%.2f->%s%.2f EUR%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["code"], Reset, e["old"], Green, e["current"], Reset)
 	}
 	return nil
 
