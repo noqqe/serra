@@ -54,9 +54,11 @@ To add a card to your collection
 ## Cards
 
 Query all of your cards with filters
+
 ![](https://github.com/noqqe/serra/blob/main/imgs/cards.png)
 
 ## Sets
+
 List all your sets
 
 ![](https://github.com/noqqe/serra/blob/main/imgs/sets.png)
@@ -64,16 +66,19 @@ List all your sets
 ## Set
 
 Show details of a single set
+
 ![](https://github.com/noqqe/serra/blob/main/imgs/set.png)
 
 ## Stats
 
 Calculate some stats for all of your cards
+
 ![](https://github.com/noqqe/serra/blob/main/imgs/stats.png)
 
 ## Tops
 
 Show what cards/se gained most value
+
 ![](https://github.com/noqqe/serra/blob/main/imgs/tops.png)
 
 ## Update
