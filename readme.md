@@ -1,19 +1,30 @@
 # serra
 
-Serra is my personal Magic: The Gathering collection tool.
-It uses a MongoDB and [Scryfall](https://scryfall.com).
+Serra is my personal *Magic: The Gathering* collection tracker.
+
+It began as a holiday project in winter 2021/2022 because I was frustrated of
+Collection Tracker Websites that are:
+
+* Pain to use
+* Want ~$10 a month
+* Don't have the features I want
+
+So I started my own Collection Tracker using [Golang](https://golang.org),
+[MongoDB](https://mongodb.com) and [Scryfall](https://scryfall.com) to have
+an overview in what cards you own and what value they are.
 
 ## What Serra does
 
-* tracks prices
-* calculates statistics
-* shows what cards/sets do best in value development.
+* Tracks prices
+* Calculates statistics
+* Query/filter all of your cards
+* Shows what cards/sets do best in value development.
 
 ## What Serra does not
 
 * Does not give a shit about conditions (NM, M, GD...)
 * Does not track if card is foil or not (may come in the future)
-* Its not configurable to have Dollar/US Prices
+* Is not configurable to have Dollar/US Prices
 
 # Quickstart
 
@@ -47,7 +58,7 @@ Usage:
 
 ## Add
 
-To add a card to your collection
+To add a card to your collection.
 
 ![](https://github.com/noqqe/serra/blob/main/imgs/add.png)
 
@@ -86,6 +97,29 @@ Show what cards/se gained most value
 The update mechanism iterates over each card in your collection and fetches
 its price. After all cards you own in a set are updated, the set value will
 update. After all Sets are updated, the whole collection value is updated.
+
+## Adding all those cards, manually?
+
+Yes. While there are serveral OCR/Photo Scanners for mtg cards, I found they
+are not accurate enough. They guess Editions wrong, they have problems with
+blue/black cards and so on.
+
+I add my cards using a tiny shell wrapper, since they are sorted by editions
+anyways.
+
+```
+./add-card-wrapper.fish usg
+read> 17
+👼🏻 Serra 0.0.1
+
+Updating Card "Herald of Serra" amount to 2
+
+read> 18
+...
+```
+
+Its basically typing 2-3 digit numbers and hitting enter. I was way faster
+with this approach then Smartphone scanners.
 
 # Install
 
