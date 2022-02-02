@@ -49,32 +49,32 @@ Usage:
 
 To add a card to your collection
 
-![](https://github.com/noqqe/noqqe.de/blob/main/imgs/add.png)
+![](https://github.com/noqqe/serra/blob/main/imgs/add.png)
 
 ## Cards
 
 Query all of your cards with filters
-![](https://github.com/noqqe/noqqe.de/blob/main/imgs/cards.png)
+![](https://github.com/noqqe/serra/blob/main/imgs/cards.png)
 
 ## Sets
 List all your sets
 
-![](https://github.com/noqqe/noqqe.de/blob/main/imgs/sets.png)
+![](https://github.com/noqqe/serra/blob/main/imgs/sets.png)
 
 ## Set
 
 Show details of a single set
-![](https://github.com/noqqe/noqqe.de/blob/main/imgs/set.png)
+![](https://github.com/noqqe/serra/blob/main/imgs/set.png)
 
 ## Stats
 
 Calculate some stats for all of your cards
-![](https://github.com/noqqe/noqqe.de/blob/main/imgs/stats.png)
+![](https://github.com/noqqe/serra/blob/main/imgs/stats.png)
 
 ## Tops
 
 Show what cards/se gained most value
-![](https://github.com/noqqe/noqqe.de/blob/main/imgs/tops.png)
+![](https://github.com/noqqe/serra/blob/main/imgs/tops.png)
 
 ## Update
 
