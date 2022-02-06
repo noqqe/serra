@@ -126,15 +126,6 @@ with this approach then Smartphone scanners.
     go build .
     ./serra
 
-# Todo
-
-* prices since the beginning
-* calculate biggest gaining cards (Up XX %!)
-* display (+/-) % in sets overview
-* display (+/-) % in history views
-* Reserved List
-* Mythic
-
 # Cheatsheet Queries
 
 Find cards that increased prices
