@@ -213,7 +213,7 @@ func Missing(setname string) error {
 		if err != nil {
 			continue
 		}
-		fmt.Printf("%s (%s)\n", ncard.Name, ncard.SetName)
+		fmt.Printf("%.02f\t%s (%s)\n", ncard.Prices.Eur, ncard.Name, ncard.SetName)
 	}
 	return nil
 }
