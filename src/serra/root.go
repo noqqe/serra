@@ -268,33 +268,17 @@ func ShowSet(setname string) error {
 		}}}
 	rar, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage, sortStage})
 
-	// this is maybe the ugliest way someone could choose to verify, if a rarity type is missing
-	// [
-	// { _id: { rarity: 'common' }, count: 20 },
-	// { _id: { rarity: 'uncommon' }, count: 2 }
-	// ]
-	// if a result like this is there, 1 rarity type "rare" is not in the array. and needs to be
-	// initialized with 0, otherwise we get a panic
-	var rares, uncommons, commons float64
-	for _, r := range rar {
-		switch r["_id"] {
-		case "rare":
-			rares = r["count"].(float64)
-		case "uncommon":
-			uncommons = r["count"].(float64)
-		case "common":
-			commons = r["count"].(float64)
-		}
-	}
+	ri := convert_rarities(rar)
 
 	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
 	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
 	LogMessage(fmt.Sprintf("Total Cards: %.0f", stats[0]["count"]), "normal")
 	LogMessage(fmt.Sprintf("Total Value: %.2f EUR", stats[0]["value"]), "normal")
 	LogMessage(fmt.Sprintf("Released: %s", sets[0].ReleasedAt), "normal")
-	LogMessage(fmt.Sprintf("Rares: %.0f", rares), "normal")
-	LogMessage(fmt.Sprintf("Uncommons: %.0f", uncommons), "normal")
-	LogMessage(fmt.Sprintf("Commons: %.0f", commons), "normal")
+	LogMessage(fmt.Sprintf("Mythics: %.0f", ri.Mythics), "normal")
+	LogMessage(fmt.Sprintf("Rares: %.0f", ri.Rares), "normal")
+	LogMessage(fmt.Sprintf("Uncommons: %.0f", ri.Uncommons), "normal")
+	LogMessage(fmt.Sprintf("Commons: %.0f", ri.Commons), "normal")
 	fmt.Printf("\n%sPrice History:%s\n", Pink, Reset)
 
 	var before float64
@@ -581,34 +565,17 @@ func Stats() {
 			{"_id", 1},
 		}}}
 	rar, _ := coll.storage_aggregate(mongo.Pipeline{rarityStage, sortStage})
-
-	// this is maybe the ugliest way someone could choose to verify, if a rarity type is missing
-	// [
-	// { _id: { rarity: 'common' }, count: 20 },
-	// { _id: { rarity: 'uncommon' }, count: 2 }
-	// ]
-	// if a result like this is there, 1 rarity type "rare" is not in the array. and needs to be
-	// initialized with 0, otherwise we get a panic
-	var rares, uncommons, commons float64
-	for _, r := range rar {
-		switch r["_id"] {
-		case "rare":
-			rares = r["count"].(float64)
-		case "uncommon":
-			uncommons = r["count"].(float64)
-		case "common":
-			commons = r["count"].(float64)
-		}
-	}
+	ri := convert_rarities(rar)
 
 	fmt.Printf("%sCards %s\n", Green, Reset)
 	fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
 	fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
 
 	fmt.Printf("\n%sRarity%s\n", Green, Reset)
-	fmt.Printf("Rares: %s%.0f%s\n", Pink, rares, Reset)
-	fmt.Printf("Uncommons: %s%.0f%s\n", Yellow, uncommons, Reset)
-	fmt.Printf("Commons: %s%.0f%s\n", Purple, commons, Reset)
+	fmt.Printf("Mythics: %s%.0f%s\n", Pink, ri.Mythics, Reset)
+	fmt.Printf("Rares: %s%.0f%s\n", Pink, ri.Rares, Reset)
+	fmt.Printf("Uncommons: %s%.0f%s\n", Yellow, ri.Uncommons, Reset)
+	fmt.Printf("Commons: %s%.0f%s\n", Purple, ri.Commons, Reset)
 
 	fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
 	fmt.Printf("Current: %s%.2f%s\n", Pink, stats[0]["value"], Reset)

@@ -10,6 +10,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type Rarities struct {
+	Rares, Uncommons, Commons, Mythics float64
+}
+
 func modify_count_of_card(coll *Collection, c *Card, amount int64) error {
 
 	// find already existing card
@@ -129,5 +133,32 @@ func convert_mana_symbols(sym []interface{}) string {
 		}
 	}
 	return mana
+
+}
+
+func convert_rarities(rar []primitive.M) Rarities {
+
+	// this is maybe the ugliest way someone could choose to verify, if a rarity type is missing
+	// [
+	// { _id: { rarity: 'common' }, count: 20 },
+	// { _id: { rarity: 'uncommon' }, count: 2 }
+	// ]
+	// if a result like this is there, 1 rarity type "rare" is not in the array. and needs to be
+	// initialized with 0, otherwise we get a panic
+
+	var ri Rarities
+	for _, r := range rar {
+		switch r["_id"] {
+		case "rare":
+			ri.Rares = r["count"].(float64)
+		case "uncommon":
+			ri.Uncommons = r["count"].(float64)
+		case "common":
+			ri.Commons = r["count"].(float64)
+		case "mythic":
+			ri.Mythics = r["count"].(float64)
+		}
+	}
+	return ri
 
 }
