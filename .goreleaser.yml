@@ -34,7 +34,7 @@ brews:
   -
     # Name template of the recipe
     # Default to project name
-    name: archivar
+    name: serra
 
     # GOARM to specify which 32-bit arm version to use if there are multiple versions
     # from the build section. Brew formulas support atm only one 32-bit version.
@@ -69,11 +69,11 @@ brews:
 
     # Your app's homepage.
     # Default is empty.
-    homepage: "https://github.com/noqqe/archivar"
+    homepage: "https://github.com/noqqe/serra"
 
     # Your app's description.
     # Default is empty.
-    description: "archivar - I wrote a typing trainer to get into my ortholinear keyboard"
+    description: "serra - I wrote a typing trainer to get into my ortholinear keyboard"
 
     # SPDX identifier of your app's license.
     # Default is empty.
@@ -82,10 +82,10 @@ brews:
     # So you can `brew test` your formula.
     # Default is empty.
     test: |
-      system "#{bin}/archivar --version"
+      system "#{bin}/serra --version"
 
     # Custom install script for brew.
     # Default is 'bin.install "program"'.
     install: |
-      bin.install "archivar"
+      bin.install "serra"
 
