@@ -12,4 +12,7 @@ tasks:
     generates:
       - "./serra"
 
+  default:
+    cmds:
+      - task: build
 

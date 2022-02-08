@@ -7,3 +7,4 @@ _backup/*
 !_backup/.placeholder
 dist/
 add.log
+.task/**

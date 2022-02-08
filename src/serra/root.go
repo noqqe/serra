@@ -331,8 +331,17 @@ func Update() error {
 		}
 
 		bar := progressbar.NewOptions(len(cards),
-			progressbar.OptionSetWidth(80),
-			progressbar.OptionSetDescription(fmt.Sprintf("%s%s%s (%s%s%s, %s)", Pink, set.Name, Reset, Yellow, set.Code, Reset, set.ReleasedAt[0:4])),
+			progressbar.OptionSetWidth(50),
+			progressbar.OptionSetDescription(fmt.Sprintf("%s, %s%s%s\t", set.ReleasedAt[0:4], Yellow, set.Code, Reset)),
+			progressbar.OptionEnableColorCodes(true),
+			progressbar.OptionShowIts(),
+			progressbar.OptionSetTheme(progressbar.Theme{
+				Saucer:        "[green]=[reset]",
+				SaucerHead:    "[green]>[reset]",
+				SaucerPadding: " ",
+				BarStart:      "|",
+				BarEnd:        fmt.Sprintf("| %s%s%s", Pink, set.Name, Reset),
+			}),
 		)
 		for _, card := range cards {
 			bar.Add(1)
