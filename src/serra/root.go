@@ -280,18 +280,7 @@ func ShowSet(setname string) error {
 	LogMessage(fmt.Sprintf("Uncommons: %.0f", ri.Uncommons), "normal")
 	LogMessage(fmt.Sprintf("Commons: %.0f", ri.Commons), "normal")
 	fmt.Printf("\n%sPrice History:%s\n", Pink, Reset)
-
-	var before float64
-	for _, e := range sets[0].SerraPrices {
-		if e.Value > before {
-			fmt.Printf("* %s %s%.2f EUR%s\n", stringToTime(e.Date), Green, e.Value, Reset)
-		} else if e.Value < before {
-			fmt.Printf("* %s %s%.2f EUR%s\n", stringToTime(e.Date), Red, e.Value, Reset)
-		} else {
-			fmt.Printf("* %s %.2f EUR%s\n", stringToTime(e.Date), e.Value)
-		}
-		before = e.Value
-	}
+	print_price_history(sets[0].SerraPrices, "* ")
 
 	fmt.Printf("\n%sMost valuable cards%s\n", Pink, Reset)
 	ccards := 0
@@ -591,18 +580,9 @@ func Stats() {
 	fmt.Printf("Current: %s%.2f%s\n", Pink, stats[0]["value"], Reset)
 	total, _ := totalcoll.storage_find_total()
 
-	var before float64
 	fmt.Printf("History: \n")
-	for _, e := range total.Value {
-		if e.Value > before {
-			fmt.Printf("* %s %s%.2f EUR%s\n", stringToTime(e.Date), Green, e.Value, Reset)
-		} else if e.Value < before {
-			fmt.Printf("* %s %s%.2f EUR%s\n", stringToTime(e.Date), Red, e.Value, Reset)
-		} else {
-			fmt.Printf("* %s %.2f EUR\n", stringToTime(e.Date), e.Value)
-		}
-		before = e.Value
-	}
+	print_price_history(total.Value, "* ")
+
 	// LogMessage(fmt.Sprintf("Mana costs in Collection"), "green")
 	// groupStage = bson.D{
 	// 	{"$group", bson.D{

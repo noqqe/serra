@@ -90,23 +90,15 @@ func find_set_by_code(coll *Collection, setcode string) (*Set, error) {
 }
 
 func show_card_details(card *Card) error {
-	fmt.Printf("* %dx %s%s%s (%s/%s)\n", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber)
-	fmt.Printf("  Added: %s\n", stringToTime(card.SerraCreated))
-	fmt.Printf("  Rarity: %s\n", card.Rarity)
-	fmt.Printf("  Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
-	fmt.Printf("  Current Value: %s%.2f EUR%s\n", Yellow, card.Prices.Eur, Reset)
-	fmt.Printf("  History:\n")
-	var before float64
-	for _, e := range card.SerraPrices {
-		if e.Value > before {
-			fmt.Printf("  * %s %s%.2f EUR%s\n", stringToTime(e.Date), Green, e.Value, Reset)
-		} else if e.Value < before {
-			fmt.Printf("  * %s %s%.2f EUR%s\n", stringToTime(e.Date), Red, e.Value, Reset)
-		} else {
-			fmt.Printf("  * %s %.2f EUR\n", stringToTime(e.Date), e.Value)
-		}
-		before = e.Value
-	}
+	fmt.Printf("%s%s%s (%s/%s)\n", Purple, card.Name, Reset, card.Set, card.CollectorNumber)
+	fmt.Printf("Added: %s\n", stringToTime(card.SerraCreated))
+	fmt.Printf("Count: %dx\n", card.SerraCount)
+	fmt.Printf("Rarity: %s\n", card.Rarity)
+	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
+	fmt.Printf("Current Value: %s%.2f EUR%s\n", Yellow, card.Prices.Eur, Reset)
+
+	fmt.Printf("\n%sHistory%s\n", Green, Reset)
+	print_price_history(card.SerraPrices, "* ")
 	fmt.Println()
 	return nil
 }
@@ -167,4 +159,19 @@ func convert_rarities(rar []primitive.M) Rarities {
 	}
 	return ri
 
+}
+
+func print_price_history(prices []PriceEntry, prefix string) {
+
+	var before float64
+	for _, e := range prices {
+		if e.Value > before && before != 0 {
+			fmt.Printf("%s%s%s %.2f EUR%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Green, e.Value, Reset, (e.Value/before*100)-100)
+		} else if e.Value < before {
+			fmt.Printf("%s%s%s %.2f EUR%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Red, e.Value, Reset, (e.Value/before*100)-100)
+		} else {
+			fmt.Printf("%s%s %.2f EUR%s\n", prefix, stringToTime(e.Date), e.Value, Reset)
+		}
+		before = e.Value
+	}
 }
