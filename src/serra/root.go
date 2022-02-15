@@ -534,52 +534,53 @@ func Stats() {
 	totalcoll := &Collection{client.Database("serra").Collection("total")}
 	defer storage_disconnect(client)
 
-	// LogMessage(fmt.Sprintf("Color distribution in Collection"), "green")
-	// groupStage := bson.D{
-	// 	{"$group", bson.D{
-	// 		{"_id", "$coloridentity"},
-	// 		{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-	// 	}}}
-
-	sortStage := bson.D{
-		{"$sort", bson.D{
-			{"count", -1},
-		}}}
-	// sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
-	// for _, set := range sets {
-	// 	x, _ := set["_id"].(primitive.A)
-	// 	s := []interface{}(x)
-	// 	fmt.Printf("* %s %.0f\n", convert_mana_symbols(s), set["count"])
-	// }
-
-	statsGroup := bson.D{
-		{"$group", bson.D{
-			{"_id", nil},
-			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
-			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-			{"rarity", bson.D{{"$sum", "$rarity"}}},
-			{"unique", bson.D{{"$sum", 1}}},
-		}},
+	sets, _ := coll.storage_aggregate(mongo.Pipeline{
+		bson.D{
+			{"$match", bson.D{
+				{"coloridentity", bson.D{{"$size", 1}}}}}},
+		bson.D{
+			{"$group", bson.D{
+				{"_id", "$coloridentity"},
+				{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+			}}},
+		bson.D{
+			{"$sort", bson.D{
+				{"count", -1},
+			}}},
+	})
+	fmt.Printf("%sColors%s\n", Green, Reset)
+	for _, set := range sets {
+		x, _ := set["_id"].(primitive.A)
+		s := []interface{}(x)
+		fmt.Printf("%s: %s%.0f%s\n", convert_mana_symbols(s), Purple, set["count"], Reset)
 	}
-	stats, _ := coll.storage_aggregate(mongo.Pipeline{statsGroup})
 
-	rarityStage := bson.D{
-		{"$group", bson.D{
-			{"_id", "$rarity"},
-			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-		}}}
-
-	sortStage = bson.D{
-		{"$sort", bson.D{
-			{"_id", 1},
-		}}}
-	rar, _ := coll.storage_aggregate(mongo.Pipeline{rarityStage, sortStage})
-	ri := convert_rarities(rar)
-
-	fmt.Printf("%sCards %s\n", Green, Reset)
+	stats, _ := coll.storage_aggregate(mongo.Pipeline{
+		bson.D{
+			{"$group", bson.D{
+				{"_id", nil},
+				{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
+				{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+				{"rarity", bson.D{{"$sum", "$rarity"}}},
+				{"unique", bson.D{{"$sum", 1}}},
+			}}},
+	})
+	fmt.Printf("\n%sCards %s\n", Green, Reset)
 	fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
 	fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
 
+	rar, _ := coll.storage_aggregate(mongo.Pipeline{
+		bson.D{
+			{"$group", bson.D{
+				{"_id", "$rarity"},
+				{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+			}}},
+		bson.D{
+			{"$sort", bson.D{
+				{"_id", 1},
+			}}},
+	})
+	ri := convert_rarities(rar)
 	fmt.Printf("\n%sRarity%s\n", Green, Reset)
 	fmt.Printf("Mythics: %s%.0f%s\n", Pink, ri.Mythics, Reset)
 	fmt.Printf("Rares: %s%.0f%s\n", Pink, ri.Rares, Reset)
