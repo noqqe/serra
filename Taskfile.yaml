@@ -5,7 +5,7 @@ version: '3'
 tasks:
   build:
     cmds:
-      - go build -v serra.go
+      - go build -ldflags "-X main.buildstamp=`date -u '+%F'` -X main.githash=`git rev-parse HEAD` -X main.version=git"  -v serra.go
     sources:
       - "src/serra/**/*.go"
       - "serra.go"

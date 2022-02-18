@@ -8,8 +8,6 @@ import (
 	"github.com/noqqe/serra/src/serra"
 )
 
-//[--count:1 <card>:[mmq/1] <set>:<nil> add:true cards:false remove:false set:false sets:false stats:false update:false]
-
 var opts struct {
 	Add     bool     `docopt:"add"`
 	Remove  bool     `docopt:"remove"`
