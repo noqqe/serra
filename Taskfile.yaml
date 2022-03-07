@@ -5,7 +5,7 @@ version: '3'
 tasks:
   build:
     cmds:
-      - go build -ldflags "-X serra.version=`git describe --tags`"  -v serra.go
+      - go build -ldflags "-X github.com/noqqe/serra/src/serra.Version=`git describe --tags`"  -v serra.go
     sources:
       - "src/serra/**/*.go"
       - "serra.go"

@@ -3,7 +3,7 @@ package serra
 import "fmt"
 
 var (
-	Icon        = "\U0001F47C\U0001F3FB" // baby angel serra
+	Icon        = "\U0001F9D9\U0001F3FC"
 	Reset       = "\033[0m"
 	Background  = "\033[38;5;59m"
 	CurrentLine = "\033[38;5;60m"
@@ -19,7 +19,7 @@ var (
 )
 
 func Banner() {
-	LogMessage(fmt.Sprintf("%s Serra %v\n", Icon, version), "green")
+	LogMessage(fmt.Sprintf("%s Serra %v\n", Icon, Version), "green")
 }
 
 // Colored output on commandline
