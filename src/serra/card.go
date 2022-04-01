@@ -12,6 +12,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&rarity, "rarity", "r", "", "Filter by rarity of cards (mythic, rare, uncommon, common)")
 	cardCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
 	cardCmd.Flags().StringVarP(&sort, "sort", "s", "name", "How to sort cards (value/number/name)")
+	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
 	rootCmd.AddCommand(cardCmd)
 }
 
@@ -25,7 +26,7 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			Cards(rarity, set, sort)
+			Cards(rarity, set, sort, name)
 		} else {
 			ShowCard(cards)
 		}
@@ -49,7 +50,7 @@ func ShowCard(cardids []string) {
 	}
 }
 
-func Cards(rarity, set, sort string) {
+func Cards(rarity, set, sort, name string) {
 
 	var total float64
 	client := storage_connect()
@@ -81,6 +82,10 @@ func Cards(rarity, set, sort string) {
 
 	if len(set) > 0 {
 		filter = append(filter, bson.E{"set", set})
+	}
+
+	if len(name) > 0 {
+		filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + name + ".*"}, {"$options", "i"}}})
 	}
 
 	cards, _ := coll.storage_find(filter, sortStage)

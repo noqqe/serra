@@ -10,6 +10,7 @@ import (
 var Version = "unknown"
 var count int64
 var limit float64
+var name string
 var rarity, set, sort string
 
 var rootCmd = &cobra.Command{
