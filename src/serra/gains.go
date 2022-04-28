@@ -2,6 +2,7 @@ package serra
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,7 +13,9 @@ func init() {
 	rootCmd.AddCommand(topsCmd)
 	rootCmd.AddCommand(flopsCmd)
 	topsCmd.Flags().Float64VarP(&limit, "limit", "l", 0, "Minimum card price to be shown in analysis")
+	topsCmd.Flags().StringVarP(&since, "since", "s", "0", "Since when should the gains be calculated")
 	flopsCmd.Flags().Float64VarP(&limit, "limit", "l", 0, "Minimum card price to be shown in analysis")
+	flopsCmd.Flags().StringVarP(&since, "since", "s", "0", "Since when should the losses be calculated")
 }
 
 var topsCmd = &cobra.Command{
@@ -21,7 +24,7 @@ var topsCmd = &cobra.Command{
 	Short:         "What cards gained most value",
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		Gains(limit, -1)
+		Gains(limit, -1, since)
 		return nil
 	},
 }
@@ -32,17 +35,19 @@ var flopsCmd = &cobra.Command{
 	Short:         "What cards lost most value",
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		Gains(limit, 1)
+		Gains(limit, 1, since)
 		return nil
 	},
 }
 
-func Gains(limit float64, sort int) error {
+func Gains(limit float64, sort int, since string) error {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	setcoll := &Collection{client.Database("serra").Collection("sets")}
 	defer storage_disconnect(client)
+
+	old, _ := strconv.Atoi(since)
 
 	raise_pipeline := mongo.Pipeline{
 		bson.D{{"$project",
@@ -52,7 +57,7 @@ func Gains(limit float64, sort int) error {
 				{"collectornumber", true},
 				{"old",
 					bson.D{{"$arrayElemAt",
-						bson.A{"$serra_prices.value", 0},
+						bson.A{"$serra_prices.value", old},
 					}},
 				},
 				{"current",
@@ -101,7 +106,7 @@ func Gains(limit float64, sort int) error {
 				{"code", true},
 				{"old",
 					bson.D{{"$arrayElemAt",
-						bson.A{"$serra_prices.value", 0},
+						bson.A{"$serra_prices.value", old},
 					}},
 				},
 				{"current",
