@@ -110,7 +110,7 @@ var updateCmd = &cobra.Command{
 		// calculate total summary over all sets
 		overall_value := mongo.Pipeline{
 			bson.D{{"$match",
-				bson.D{{"serra_prices", bson.D{{"$exists", true}}}}}},
+				bson.D{{"serra_prices", bson.D{{"$type", "array"}}}}}},
 			bson.D{{"$project",
 				bson.D{{"name", true}, {"totalValue", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}},
 			bson.D{{"$group", bson.D{{"_id", nil}, {"total", bson.D{{"$sum", "$totalValue.value"}}}}}},
