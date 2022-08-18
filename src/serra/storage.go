@@ -50,13 +50,13 @@ func (coll Collection) storage_add(card *Card) error {
 
 }
 
-func (coll Collection) storage_add_set(set *Set) error {
+func (coll Collection) storage_add_set(set *Set) (*mongo.InsertOneResult, error) {
 
-	_, err := coll.InsertOne(context.TODO(), set)
+	id, err := coll.InsertOne(context.TODO(), set)
 	if err != nil {
-		return err
+		return id, err
 	}
-	return nil
+	return &mongo.InsertOneResult{}, nil
 
 }
 

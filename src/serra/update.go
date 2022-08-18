@@ -41,6 +41,17 @@ var updateCmd = &cobra.Command{
 				continue
 			}
 
+			// Workaround for:
+			// "The field 'serra_prices' must be an array but is of type null in document"
+			// I dont know why I need to initialize this array alement as an empty array, but $push does
+			// not work on null fields.
+			if len(set.SerraPrices) == 0 {
+				set_init := bson.M{
+					"$set": bson.M{"serra_prices": bson.A{}},
+				}
+				setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_init)
+			}
+
 			bar := progressbar.NewOptions(len(cards),
 				progressbar.OptionSetWidth(50),
 				progressbar.OptionSetDescription(fmt.Sprintf("%s, %s%s%s\t", set.ReleasedAt[0:4], Yellow, set.Code, Reset)),
