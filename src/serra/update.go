@@ -33,23 +33,17 @@ var updateCmd = &cobra.Command{
 
 		sets, _ := fetch_sets()
 		for _, set := range sets.Data {
+
+			// When downloading new sets, PriceList needs to be initialized
+			// This query silently fails if set was already downloaded. Not nice but ok for now.
+			set.SerraPrices = []PriceEntry{}
 			setscoll.storage_add_set(&set)
+
 			cards, _ := coll.storage_find(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}})
 
 			// if no cards in collection for this set, skip it
 			if len(cards) == 0 {
 				continue
-			}
-
-			// Workaround for:
-			// "The field 'serra_prices' must be an array but is of type null in document"
-			// I dont know why I need to initialize this array alement as an empty array, but $push does
-			// not work on null fields.
-			if len(set.SerraPrices) == 0 {
-				set_init := bson.M{
-					"$set": bson.M{"serra_prices": bson.A{}},
-				}
-				setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_init)
 			}
 
 			bar := progressbar.NewOptions(len(cards),
