@@ -14,8 +14,9 @@ builds:
       - windows
       - darwin
       - openbsd
+    ldflags:
+      - -X github.com/noqqe/serra/src/serra.Version={{.Tag}}
     flags:
-      - -ldflags "-X github.com/noqqe/serra/src/serra.Version={{.Tag}}"
       - -v
 archives:
   - replacements:
