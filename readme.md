@@ -88,15 +88,23 @@ Calculate some stats for all of your cards
 
 ## Tops
 
-Show what cards/se gained most value
+Show what cards/set gained most value
 
 ![](https://github.com/noqqe/serra/blob/main/imgs/tops.png)
+
+## Flops
+
+Show what cards/set lost most value
+
+![](https://github.com/noqqe/serra/blob/main/imgs/flops.png)
 
 ## Update
 
 The update mechanism iterates over each card in your collection and fetches
 its price. After all cards you own in a set are updated, the set value will
 update. After all Sets are updated, the whole collection value is updated.
+
+![](https://github.com/noqqe/serra/blob/main/imgs/update.png)
 
 ## Adding all those cards, manually?
 
@@ -121,12 +129,14 @@ read> 18
 Its basically typing 2-3 digit numbers and hitting enter. I was way faster
 with this approach then Smartphone scanners.
 
-# Install
+# Development
+
+## Install
 
     go build .
     ./serra
 
-# Cheatsheet Queries
+## Cheatsheet Queries
 
 Find cards that increased prices
 
@@ -155,7 +165,7 @@ Calculate what cards gained most value in percent
 
     db.cards.aggregate({$project: {set: 1, collectornumber:1, name: 1, "old": {$arrayElemAt: ["$serra_prices.value", -2]}, "current": {$arrayElemAt: ["$serra_prices.value", -1]} }}, {$match: {old: {$gt: 2}}} ,{$project: {name: 1,set:1,collectornumber:1,current:1, "rate": {$subtract: [{$divide: ["$current", {$divide: ["$old", 100]}]}, 100]} }}, {$sort: { rate: -1}})
 
-# MongoDB Operations
+## MongoDB Operations
 
 A few commands that do backups and exports of your data inside of the docker
 container.

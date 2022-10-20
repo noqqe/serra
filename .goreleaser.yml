@@ -11,12 +11,14 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
+      - windows
       - darwin
       - openbsd
 archives:
   - replacements:
       darwin: Darwin
       linux: Linux
+      windows: Windows
       openbsd: OpenBSD
       386: i386
       amd64: x86_64
@@ -73,7 +75,7 @@ brews:
 
     # Your app's description.
     # Default is empty.
-    description: "serra - I wrote a typing trainer to get into my ortholinear keyboard"
+    description: "serra - Personal Magic: The Gathering Collection Tracker "
 
     # SPDX identifier of your app's license.
     # Default is empty.

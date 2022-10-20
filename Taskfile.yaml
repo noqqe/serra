@@ -12,6 +12,14 @@ tasks:
     generates:
       - "./serra"
 
+  release:
+    interactive: true
+    cmds:
+      - git tag | tail -5
+      - read -p "Version v1.1.1 " version ; git tag $version
+      - git push --tags
+      - goreleaser release --rm-dist
+
   default:
     cmds:
       - task: build
