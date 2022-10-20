@@ -14,6 +14,9 @@ builds:
       - windows
       - darwin
       - openbsd
+    flags:
+      - -ldflags "-X github.com/noqqe/serra/src/serra.Version=`git describe --tags`"
+      - -v
 archives:
   - replacements:
       darwin: Darwin
