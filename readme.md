@@ -28,11 +28,21 @@ an overview in what cards you own and what value they are.
 
 # Quickstart
 
-Spin up a MongoDB (you can use docker-compose)
+on macOS you can use
+
+    brew install noqqe/tap/veilig
+
+on Linux/BSD/Windows you can download binaries from
+
+    https://github.com/noqqe/serra/releases
+
+After that you need to spin up a MongoDB yourself or use the docker-compose
+setup included in this Repo:
 
     docker-compose up -d
+    export MONGODB_URI='mongodb://root:root@localhost:27017'
 
-Add a card
+After that, you can add a card
 
     ./serra add usg/17
 
@@ -40,6 +50,7 @@ Start exploring :) (the more cards you add, the more fun it is)
 
 # Usage
 
+The overall usage is described in `--help` text. But below are some examples.
 ```
 ./serra
 Usage:
@@ -118,8 +129,6 @@ anyways.
 ```
 ./add-card-wrapper.fish usg
 read> 17
-👼🏻 Serra 0.0.1
-
 Updating Card "Herald of Serra" amount to 2
 
 read> 18
