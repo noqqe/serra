@@ -30,7 +30,7 @@ an overview in what cards you own and what value they are.
 
 on macOS you can use
 
-    brew install noqqe/tap/veilig
+    brew install noqqe/tap/serra
 
 on Linux/BSD/Windows you can download binaries from
 
