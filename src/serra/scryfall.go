@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -156,6 +157,12 @@ type Set struct {
 }
 
 func fetch_card(path string) (*Card, error) {
+
+	if !strings.Contains(path, "/") {
+		err := errors.New(fmt.Sprintf("Card must follow format <set>/<number>, for example: ath/15"))
+		return &Card{}, err
+	}
+
 	// TODO better URL Building...
 	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/", path))
 	if err != nil {
