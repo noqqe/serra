@@ -13,6 +13,7 @@ var limit float64
 var name string
 var since string
 var rarity, set, sort string
+var unique bool
 
 var rootCmd = &cobra.Command{
 	Version:               Version,
