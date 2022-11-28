@@ -9,6 +9,7 @@ import (
 
 func init() {
 	addCmd.Flags().Int64VarP(&count, "count", "c", 1, "Amount of cards to add")
+	addCmd.Flags().BoolVarP(&unique, "unique", "u", false, "Only add card if not existent yet")
 	rootCmd.AddCommand(addCmd)
 }
 
@@ -39,6 +40,12 @@ var addCmd = &cobra.Command{
 
 			// If duplicate key, increase count of card
 			if mongo.IsDuplicateKeyError(err) {
+
+				if unique {
+					LogMessage(fmt.Sprintf("Not adding \"%s\" to Collection because it already exists.", c.Name), "red")
+					continue
+				}
+
 				modify_count_of_card(coll, c, count)
 				continue
 			}
