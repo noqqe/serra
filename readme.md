@@ -174,6 +174,10 @@ Calculate what cards gained most value in percent
 
     db.cards.aggregate({$project: {set: 1, collectornumber:1, name: 1, "old": {$arrayElemAt: ["$serra_prices.value", -2]}, "current": {$arrayElemAt: ["$serra_prices.value", -1]} }}, {$match: {old: {$gt: 2}}} ,{$project: {name: 1,set:1,collectornumber:1,current:1, "rate": {$subtract: [{$divide: ["$current", {$divide: ["$old", 100]}]}, 100]} }}, {$sort: { rate: -1}})
 
+Show when cards where added per month of the year
+
+    db.cards.aggregate({ $project: { month: { $month: "$serra_created" }, year: { $year: "$serra_created" }, name: 1 } }, { $group: { _id: { month: "$month", year: "$year" }, count: { $sum: 1 } } })
+
 ## MongoDB Operations
 
 A few commands that do backups and exports of your data inside of the docker
