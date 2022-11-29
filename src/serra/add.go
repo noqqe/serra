@@ -42,7 +42,7 @@ var addCmd = &cobra.Command{
 			if mongo.IsDuplicateKeyError(err) {
 
 				if unique {
-					LogMessage(fmt.Sprintf("Not adding \"%s\" to Collection because it already exists.", c.Name), "red")
+					LogMessage(fmt.Sprintf("Not adding \"%s\" (%s, %.2f Eur) to Collection because it already exists.", c.Name, c.Rarity, c.Prices.Eur), "red")
 					continue
 				}
 
@@ -57,7 +57,7 @@ var addCmd = &cobra.Command{
 			}
 
 			// Give feedback of successfully added card
-			LogMessage(fmt.Sprintf("%dx \"%s\" (%.2f Eur) added to Collection.", c.SerraCount, c.Name, c.Prices.Eur), "green")
+			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f Eur) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.Prices.Eur), "green")
 		}
 		storage_disconnect(client)
 		return nil
