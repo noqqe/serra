@@ -9,6 +9,7 @@ import (
 )
 
 func init() {
+	setCmd.Flags().StringVarP(&sort, "sort", "s", "release", "How to sort cards (release/value)")
 	rootCmd.AddCommand(setCmd)
 }
 
@@ -47,10 +48,20 @@ func Sets() {
 			{"release", bson.D{{"$last", "$releasedat"}}},
 		}},
 	}
-	sortStage := bson.D{
-		{"$sort", bson.D{
-			{"release", 1},
-		}}}
+
+	var sortStage bson.D
+	switch sort {
+	case "release":
+		sortStage = bson.D{
+			{"$sort", bson.D{
+				{"release", 1},
+			}}}
+	case "value":
+		sortStage = bson.D{
+			{"$sort", bson.D{
+				{"value", 1},
+			}}}
+	}
 
 	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
 	for _, set := range sets {
