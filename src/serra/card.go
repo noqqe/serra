@@ -11,7 +11,7 @@ import (
 func init() {
 	cardCmd.Flags().StringVarP(&rarity, "rarity", "r", "", "Filter by rarity of cards (mythic, rare, uncommon, common)")
 	cardCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
-	cardCmd.Flags().StringVarP(&sort, "sort", "s", "name", "How to sort cards (value/number/name)")
+	cardCmd.Flags().StringVarP(&sort, "sort", "s", "name", "How to sort cards (value/number/name/added)")
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
 	rootCmd.AddCommand(cardCmd)
 }
@@ -76,6 +76,8 @@ func Cards(rarity, set, sort, name string) {
 		sortStage = bson.D{{"collectornumber", 1}}
 	case "name":
 		sortStage = bson.D{{"name", 1}}
+	case "added":
+		sortStage = bson.D{{"serra_created", 1}}
 	default:
 		sortStage = bson.D{{"name", 1}}
 	}
