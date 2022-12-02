@@ -2,9 +2,10 @@ package serra
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func init() {
@@ -27,37 +28,43 @@ var addCmd = &cobra.Command{
 
 		// Loop over different cards
 		for _, card := range cards {
-			// Fetch card from scryfall
-			c, err := fetch_card(card)
-			if err != nil {
-				LogMessage(fmt.Sprintf("%v", err), "red")
-				continue
-			}
 
-			// Write card to mongodb
-			c.SerraCount = count
-			err = coll.storage_add(c)
+			// Check if card is already in collection
+			co, _ := coll.storage_find(bson.D{{"set", strings.Split(card, "/")[0]}, {"collectornumber", strings.Split(card, "/")[1]}}, bson.D{})
 
-			// If duplicate key, increase count of card
-			if mongo.IsDuplicateKeyError(err) {
+			if len(co) >= 1 {
+				c := co[0]
 
 				if unique {
 					LogMessage(fmt.Sprintf("Not adding \"%s\" (%s, %.2f Eur) to Collection because it already exists.", c.Name, c.Rarity, c.Prices.Eur), "red")
 					continue
 				}
 
-				modify_count_of_card(coll, c, count)
-				continue
-			}
+				modify_count_of_card(coll, &c, count)
+				// Give feedback of successfully added card
+				LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f Eur) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.Prices.Eur), "green")
 
-			// If error, print error and continue
-			if err != nil {
-				LogMessage(fmt.Sprintf("%v", err), "red")
-				continue
-			}
+				// If card is not already in collection, fetching from scyfall
+			} else {
 
-			// Give feedback of successfully added card
-			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f Eur) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.Prices.Eur), "green")
+				// Fetch card from scryfall
+				c, err := fetch_card(card)
+				if err != nil {
+					LogMessage(fmt.Sprintf("%v", err), "red")
+					continue
+				}
+
+				// Write card to mongodb
+				c.SerraCount = count
+				err = coll.storage_add(c)
+				if err != nil {
+					LogMessage(fmt.Sprintf("%v", err), "red")
+					continue
+				}
+
+				// Give feedback of successfully added card
+				LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f Eur) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.Prices.Eur), "green")
+			}
 		}
 		storage_disconnect(client)
 		return nil
