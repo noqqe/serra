@@ -55,8 +55,7 @@ func (coll Collection) storage_add_set(set *Set) (*mongo.InsertOneResult, error)
 
 	id, err := coll.InsertOne(context.TODO(), set)
 	if err != nil {
-		LogMessage("Could not add set due to connection errors to database", "red")
-		os.Exit(1)
+		return id, err
 	}
 	return id, err
 
