@@ -32,7 +32,8 @@ func storage_connect() *mongo.Client {
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		panic(err)
+		LogMessage(fmt.Sprintf("Could not connect to mongodb at %s", uri), "red")
+		os.Exit(1)
 	}
 
 	return client
@@ -54,9 +55,10 @@ func (coll Collection) storage_add_set(set *Set) (*mongo.InsertOneResult, error)
 
 	id, err := coll.InsertOne(context.TODO(), set)
 	if err != nil {
-		return id, err
+		LogMessage("Could not add set due to connection errors to database", "red")
+		os.Exit(1)
 	}
-	return &mongo.InsertOneResult{}, nil
+	return id, err
 
 }
 
@@ -92,7 +94,8 @@ func (coll Collection) storage_find(filter, sort bson.D) ([]Card, error) {
 	opts := options.Find().SetSort(sort)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
-		log.Fatal(err)
+		LogMessage("Could not query data due to connection errors to database", "red")
+		os.Exit(1)
 	}
 
 	var results []Card
@@ -109,7 +112,8 @@ func (coll Collection) storage_find_set(filter, sort bson.D) ([]Set, error) {
 	opts := options.Find().SetSort(sort)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
-		log.Fatal(err)
+		LogMessage("Could not query set data due to connection errors to database", "red")
+		os.Exit(1)
 	}
 
 	var results []Set
@@ -127,7 +131,8 @@ func (coll Collection) storage_find_total() (Total, error) {
 	err := coll.FindOne(context.TODO(), bson.D{{"_id", "1"}}).Decode(&total)
 
 	if err != nil {
-		return Total{}, err
+		LogMessage("Could not query total data due to connection errors to database", "red")
+		os.Exit(1)
 	}
 	return total, nil
 
@@ -137,8 +142,8 @@ func (coll Collection) storage_remove(filter bson.M) error {
 
 	_, err := coll.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		log.Fatal(err)
-		return err
+		LogMessage("Could remove card data due to connection errors to database", "red")
+		os.Exit(1)
 	}
 	return nil
 
@@ -153,7 +158,8 @@ func (coll Collection) storage_aggregate(pipeline mongo.Pipeline) ([]primitive.M
 		pipeline,
 		opts)
 	if err != nil {
-		log.Fatal(err)
+		LogMessage("Could not aggregate data due to connection errors to database", "red")
+		os.Exit(1)
 	}
 
 	// Get a list of all returned documents and print them out.
@@ -175,8 +181,8 @@ func (coll Collection) storage_update(filter, update bson.M) error {
 		update,
 	)
 	if err != nil {
-		log.Fatal(err)
-		return err
+		LogMessage("Could not update data due to connection errors to database", "red")
+		os.Exit(1)
 	}
 
 	return nil
