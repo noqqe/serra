@@ -165,13 +165,26 @@ func print_price_history(prices []PriceEntry, prefix string) {
 
 	var before float64
 	for _, e := range prices {
-		if e.Value > before && before != 0 {
-			fmt.Printf("%s%s%s %.2f EUR%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Green, e.Value, Reset, (e.Value/before*100)-100)
-		} else if e.Value < before {
-			fmt.Printf("%s%s%s %.2f EUR%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Red, e.Value, Reset, (e.Value/before*100)-100)
+
+		// TODO: Make currency configurable
+		value := e.Eur
+		if value > before && before != 0 {
+			fmt.Printf("%s%s%s %.2f EUR%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Green, value, Reset, (value/before*100)-100)
+		} else if value < before {
+			fmt.Printf("%s%s%s %.2f EUR%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Red, value, Reset, (value/before*100)-100)
 		} else {
-			fmt.Printf("%s%s %.2f EUR%s\n", prefix, stringToTime(e.Date), e.Value, Reset)
+			fmt.Printf("%s%s %.2f EUR%s\n", prefix, stringToTime(e.Date), value, Reset)
 		}
-		before = e.Value
+		before = value
 	}
+}
+
+// Sometimes its exhausting dealing with those types...
+// Usecase: price can be 3.14 or nil
+func toFloat(p interface{}) float64 {
+	fmt.Printf("%v\n", p)
+	if p != nil {
+		return float64(p.(float64))
+	}
+	return float64(0)
 }

@@ -2,6 +2,7 @@ package serra
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/schollz/progressbar/v3"
@@ -67,10 +68,11 @@ var updateCmd = &cobra.Command{
 					continue
 				}
 
+				updated_card.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
+
 				update := bson.M{
-					"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updated_card.Prices, "collectornumber": updated_card.CollectorNumber},
-					"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
-						"value": updated_card.Prices.Eur}},
+					"$set":  bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updated_card.Prices, "collectornumber": updated_card.CollectorNumber},
+					"$push": bson.M{"serra_prices": updated_card.Prices},
 				}
 				coll.storage_update(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
 			}
@@ -84,22 +86,46 @@ var updateCmd = &cobra.Command{
 					{"set", set.Code},
 				}},
 			}
+			// Eur       float64            `json:"eur,string"`
+			// EurFoil   float64            `json:"eur_foil,string"`
+			// Tix       float64            `json:"tix,string"`
+			// Usd       float64            `json:"usd,string"`
+			// UsdEtched float64            `json:"usd_etched,string"`
+			// UsdFoil   float64            `json:"usd_foil,string"`
 			groupStage := bson.D{
 				{"$group", bson.D{
 					{"_id", "$set"},
-					{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
+					{"eur", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}}}},
+					{"eurfoil", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eurfoil", "$serra_count_foil"}}}}}}}},
+					{"usd", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.usd", "$serra_count_foil"}}}}}}}},
+					{"usdetched", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.usdetched", "$serra_count_etched"}}}}}}}},
+					{"usdfoil", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.usd", "$serra_count_foil"}}}}}}}},
 				}}}
-			setvalue, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
+			setvalue, err := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
+			if err != nil {
+				LogMessage(fmt.Sprintf("%s", err), "red")
+			}
+
+			p := PriceEntry{}
+			s := setvalue[0]
+
+			p.Date = primitive.NewDateTimeFromTime(time.Now())
+			p.Eur = toFloat(s["eur"])
+			p.EurFoil = toFloat(s["eurfoil"])
+			p.Usd = toFloat(s["usd"])
+			p.UsdEtched = toFloat(s["usdetched"])
+			p.UsdFoil = toFloat(s["usdfoil"])
 
 			// do the update
 			set_update := bson.M{
-				"$set": bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now())},
-				"$push": bson.M{"serra_prices": bson.M{"date": primitive.NewDateTimeFromTime(time.Now()),
-					"value": setvalue[0]["value"]}},
+				"$set":  bson.M{"serra_updated": p.Date},
+				"$push": bson.M{"serra_prices": p},
 			}
 			// fmt.Printf("Set %s%s%s (%s) is now worth %s%.02f EUR%s\n", Pink, set.Name, Reset, set.Code, Yellow, setvalue[0]["value"], Reset)
 			setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
 		}
+
+		os.Exit(1)
 
 		// calculate total summary over all sets
 		overall_value := mongo.Pipeline{

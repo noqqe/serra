@@ -16,10 +16,12 @@ import (
 
 type Card struct {
 	// Added by Serra
-	SerraCount   int64              `bson:"serra_count"`
-	SerraPrices  []PriceEntry       `bson:"serra_prices"`
-	SerraCreated primitive.DateTime `bson:"serra_created"`
-	SerraUpdated primitive.DateTime `bson:"serra_updated"`
+	SerraCount       int64              `bson:"serra_count"`
+	SerraCountFoil   int64              `bson:"serra_count_foil"`
+	SerraCountEtched int64              `bson:"serra_count_etched"`
+	SerraPrices      []PriceEntry       `bson:"serra_prices"`
+	SerraCreated     primitive.DateTime `bson:"serra_created"`
+	SerraUpdated     primitive.DateTime `bson:"serra_updated"`
 
 	Artist          string   `json:"artist"`
 	ArtistIds       []string `json:"artist_ids"`
@@ -72,27 +74,20 @@ type Card struct {
 		Standard        string `json:"standard"`
 		Vintage         string `json:"vintage"`
 	} `json:"legalities"`
-	ManaCost      string        `json:"mana_cost"`
-	MultiverseIds []interface{} `json:"multiverse_ids"`
-	Name          string        `json:"name"`
-	Nonfoil       bool          `json:"nonfoil"`
-	Object        string        `json:"object"`
-	OracleID      string        `json:"oracle_id"`
-	OracleText    string        `json:"oracle_text"`
-	Oversized     bool          `json:"oversized"`
-	Prices        struct {
-		Eur       float64 `json:"eur,string"`
-		EurFoil   float64 `json:"eur_foil,string"`
-		Tix       float64 `json:"tix,string"`
-		Usd       float64 `json:"usd,string"`
-		UsdEtched float64 `json:"usd_etched,string"`
-		UsdFoil   float64 `json:"usd_foil,string"`
-	} `json:"prices"`
-	PrintedName     string `json:"printed_name"`
-	PrintedText     string `json:"printed_text"`
-	PrintedTypeLine string `json:"printed_type_line"`
-	PrintsSearchURI string `json:"prints_search_uri"`
-	Promo           bool   `json:"promo"`
+	ManaCost        string        `json:"mana_cost"`
+	MultiverseIds   []interface{} `json:"multiverse_ids"`
+	Name            string        `json:"name"`
+	Nonfoil         bool          `json:"nonfoil"`
+	Object          string        `json:"object"`
+	OracleID        string        `json:"oracle_id"`
+	OracleText      string        `json:"oracle_text"`
+	Oversized       bool          `json:"oversized"`
+	Prices          PriceEntry    `json:"prices"`
+	PrintedName     string        `json:"printed_name"`
+	PrintedText     string        `json:"printed_text"`
+	PrintedTypeLine string        `json:"printed_type_line"`
+	PrintsSearchURI string        `json:"prints_search_uri"`
+	Promo           bool          `json:"promo"`
 	PurchaseUris    struct {
 		Cardhoarder string `json:"cardhoarder"`
 		Cardmarket  string `json:"cardmarket"`
@@ -125,8 +120,13 @@ type Card struct {
 }
 
 type PriceEntry struct {
-	Date  primitive.DateTime `bson:"date"`
-	Value float64            `bson:"value"`
+	Date      primitive.DateTime `bson:"date"`
+	Eur       float64            `json:"eur,string"`
+	EurFoil   float64            `json:"eur_foil,string"`
+	Tix       float64            `json:"tix,string"`
+	Usd       float64            `json:"usd,string"`
+	UsdEtched float64            `json:"usd_etched,string"`
+	UsdFoil   float64            `json:"usd_foil,string"`
 }
 
 // Sets
@@ -191,7 +191,8 @@ func fetch_card(path string) (*Card, error) {
 	val.SerraCreated = primitive.NewDateTimeFromTime(time.Now())
 
 	// Increase Price
-	val.SerraPrices = append(val.SerraPrices, PriceEntry{primitive.NewDateTimeFromTime(time.Now()), val.Prices.Eur})
+	val.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
+	val.SerraPrices = append(val.SerraPrices, val.Prices)
 
 	return val, nil
 }
