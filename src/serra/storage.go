@@ -61,20 +61,14 @@ func (coll Collection) storage_add_set(set *Set) (*mongo.InsertOneResult, error)
 
 }
 
-func (coll Collection) storage_add_total(v float64) error {
+func (coll Collection) storage_add_total(p PriceEntry) error {
 
 	// create total object if not exists...
 	coll.InsertOne(context.TODO(), Total{ID: "1", Value: []PriceEntry{}})
 
 	// update object as intended...
 	filter := bson.D{{"_id", "1"}}
-	update := bson.M{
-		"$push": bson.M{"value": bson.M{
-			"date":  primitive.NewDateTimeFromTime(time.Now()),
-			"value": v,
-		},
-		},
-	}
+	update := bson.M{"$push": bson.M{"value": p}}
 
 	_, err := coll.UpdateOne(
 		context.Background(),

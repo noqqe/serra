@@ -52,12 +52,16 @@ var statsCmd = &cobra.Command{
 					{"_id", nil},
 					{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
 					{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+					{"count_foil", bson.D{{"$sum", "$serra_count_foil"}}},
+					{"count_etched", bson.D{{"$sum", "$serra_count_etched"}}},
 					{"rarity", bson.D{{"$sum", "$rarity"}}},
 					{"unique", bson.D{{"$sum", 1}}},
 				}}},
 		})
 		fmt.Printf("\n%sCards %s\n", Green, Reset)
 		fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
+		fmt.Printf("Total Foil Cards: %s%.0f%s\n", Purple, stats[0]["count_foil"], Reset)
+		fmt.Printf("Total Etched Cards: %s%.0f%s\n", Purple, stats[0]["count_foil"], Reset)
 		fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
 
 		rar, _ := coll.storage_aggregate(mongo.Pipeline{

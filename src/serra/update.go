@@ -2,7 +2,6 @@ package serra
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -32,6 +31,23 @@ var updateCmd = &cobra.Command{
 		setscoll := &Collection{client.Database("serra").Collection("sets")}
 		coll := &Collection{client.Database("serra").Collection("cards")}
 		totalcoll := &Collection{client.Database("serra").Collection("total")}
+
+		projectStage := bson.D{{"$project",
+			bson.D{
+				{"serra_count", true},
+				{"serra_count_foil", true},
+				{"serra_count_etched", true},
+				{"set", true},
+				{"last_price", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}}
+		groupStage := bson.D{
+			{"$group", bson.D{
+				{"_id", ""},
+				{"eur", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur", "$serra_count"}}}}}},
+				{"eurfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur_foil", "$serra_count_foil"}}}}}},
+				{"usd", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd", "$serra_count"}}}}}},
+				{"usdetched", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_etched", "$serra_count_etched"}}}}}},
+				{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
+			}}}
 
 		sets, _ := fetch_sets()
 		for _, set := range sets.Data {
@@ -82,25 +98,7 @@ var updateCmd = &cobra.Command{
 			// update set value sum
 
 			// calculate value summary
-			matchStage := bson.D{
-				{"$match", bson.D{
-					{"set", set.Code}}}}
-			projectStage := bson.D{{"$project",
-				bson.D{
-					{"serra_count", true},
-					{"serra_count_foil", true},
-					{"serra_count_etched", true},
-					{"set", true},
-					{"last_price", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}}
-			groupStage := bson.D{
-				{"$group", bson.D{
-					{"_id", "$set"},
-					{"eur", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur", "$serra_count"}}}}}},
-					{"eurfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur_foil", "$serra_count_foil"}}}}}},
-					{"usd", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd", "$serra_count_foil"}}}}}},
-					{"usdetched", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_etched", "$serra_count_etched"}}}}}},
-					{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
-				}}}
+			matchStage := bson.D{{"$match", bson.D{{"set", set.Code}}}}
 			setvalue, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, projectStage, groupStage})
 
 			p := PriceEntry{}
@@ -120,19 +118,15 @@ var updateCmd = &cobra.Command{
 			setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
 		}
 
-		os.Exit(1)
+		totalvalue, _ := coll.storage_aggregate(mongo.Pipeline{projectStage, groupStage})
 
-		// calculate total summary over all sets
-		overall_value := mongo.Pipeline{
-			bson.D{{"$match",
-				bson.D{{"serra_prices", bson.D{{"$type", "array"}}}}}},
-			bson.D{{"$project",
-				bson.D{{"name", true}, {"totalValue", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}},
-			bson.D{{"$group", bson.D{{"_id", nil}, {"total", bson.D{{"$sum", "$totalValue.value"}}}}}},
-		}
-		ostats, _ := setscoll.storage_aggregate(overall_value)
-		fmt.Printf("\n%sUpdating total value of collection to: %s%.02f EUR%s\n", Green, Yellow, ostats[0]["total"].(float64), Reset)
-		totalcoll.storage_add_total(ostats[0]["total"].(float64))
+		t := PriceEntry{}
+		t.Date = primitive.NewDateTimeFromTime(time.Now())
+		mapstructure.Decode(totalvalue[0], &t)
+
+		// TODO: eur value chooser
+		fmt.Printf("\n%sUpdating total value of collection to: %s%.02f EUR%s\n", Green, Yellow, totalvalue[0]["eur"], Reset)
+		totalcoll.storage_add_total(t)
 
 		return nil
 	},
