@@ -71,10 +71,10 @@ func Cards(rarity, set, sort, name string) {
 	var sortStage bson.D
 	switch sort {
 	case "value":
-		if getCurrency() == "USD" {
-			sortStage = bson.D{{"prices.usd", 1}}
-		} else {
+		if getCurrency() == "EUR" {
 			sortStage = bson.D{{"prices.eur", 1}}
+		} else {
+			sortStage = bson.D{{"prices.usd", 1}}
 		}
 	case "number":
 		sortStage = bson.D{{"collectornumber", 1}}
