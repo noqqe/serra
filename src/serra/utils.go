@@ -18,10 +18,6 @@ var (
 	Yellow      = "\033[38;5;229m"
 )
 
-func Banner() {
-	LogMessage(fmt.Sprintf("%s Serra %v\n", Icon, Version), "green")
-}
-
 // Colored output on commandline
 func LogMessage(message string, color string) {
 	if color == "red" {
