@@ -60,8 +60,8 @@ var statsCmd = &cobra.Command{
 		})
 		fmt.Printf("\n%sCards %s\n", Green, Reset)
 		fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
-		fmt.Printf("Total Foil Cards: %s%.0f%s\n", Purple, stats[0]["count_foil"], Reset)
-		fmt.Printf("Total Etched Cards: %s%.0f%s\n", Purple, stats[0]["count_etched"], Reset)
+		fmt.Printf("Total Foil Cards: %s%d%s\n", Purple, stats[0]["count_foil"], Reset)
+		fmt.Printf("Total Etched Cards: %s%d%s\n", Purple, stats[0]["count_etched"], Reset)
 		fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
 
 		rar, _ := coll.storage_aggregate(mongo.Pipeline{
