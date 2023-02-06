@@ -95,7 +95,7 @@ func show_card_details(card *Card) error {
 	fmt.Printf("Count: %dx\n", card.SerraCount)
 	fmt.Printf("Rarity: %s\n", card.Rarity)
 	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
-	fmt.Printf("Current Value: %s%.2f EUR%s\n", Yellow, card.Prices.Eur, Reset)
+	fmt.Printf("Current Value: %s%.2f %s%s\n", Yellow, card.getValue(), getCurrency(), Reset)
 
 	fmt.Printf("\n%sHistory%s\n", Green, Reset)
 	print_price_history(card.SerraPrices, "* ")
@@ -167,13 +167,17 @@ func print_price_history(prices []PriceEntry, prefix string) {
 	for _, e := range prices {
 
 		// TODO: Make currency configurable
-		value := e.Eur
+		value := e.Usd
+		if getCurrency() == "EUR" {
+			value = e.Eur
+		}
+
 		if value > before && before != 0 {
-			fmt.Printf("%s%s%s %.2f EUR%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Green, value, Reset, (value/before*100)-100)
+			fmt.Printf("%s%s%s %.2f %s%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Green, value, getCurrency(), Reset, (value/before*100)-100)
 		} else if value < before {
-			fmt.Printf("%s%s%s %.2f EUR%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Red, value, Reset, (value/before*100)-100)
+			fmt.Printf("%s%s%s %.2f %s%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Red, value, getCurrency(), Reset, (value/before*100)-100)
 		} else {
-			fmt.Printf("%s%s %.2f EUR%s\n", prefix, stringToTime(e.Date), value, Reset)
+			fmt.Printf("%s%s %.2f %s%s\n", prefix, stringToTime(e.Date), value, getCurrency(), Reset)
 		}
 		before = value
 	}

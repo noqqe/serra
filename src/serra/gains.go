@@ -49,6 +49,7 @@ func Gains(limit float64, sort int, since string) error {
 
 	old, _ := strconv.Atoi(since)
 
+	// TODO redo this calculation
 	raise_pipeline := mongo.Pipeline{
 		bson.D{{"$project",
 			bson.D{

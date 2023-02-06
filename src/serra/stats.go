@@ -50,7 +50,7 @@ var statsCmd = &cobra.Command{
 			bson.D{
 				{"$group", bson.D{
 					{"_id", nil},
-					{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}},
+					{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(), "$serra_count"}}}}}},
 					{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
 					{"count_foil", bson.D{{"$sum", "$serra_count_foil"}}},
 					{"count_etched", bson.D{{"$sum", "$serra_count_etched"}}},
@@ -83,7 +83,7 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("Commons: %s%.0f%s\n", Purple, ri.Commons, Reset)
 
 		fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
-		fmt.Printf("Current: %s%.2f%s\n", Pink, stats[0]["value"], Reset)
+		fmt.Printf("Current: %s%.2f %s%s\n", Pink, stats[0]["value"], getCurrency(), Reset)
 		total, _ := totalcoll.storage_find_total()
 
 		fmt.Printf("History: \n")

@@ -119,6 +119,14 @@ type Card struct {
 	Variation      bool   `json:"variation"`
 }
 
+// Getter for currency specific value
+func (c Card) getValue() float64 {
+	if getCurrency() == "EUR" {
+		return c.Prices.Eur
+	}
+	return c.Prices.Usd
+}
+
 type PriceEntry struct {
 	Date      primitive.DateTime `bson:"date"`
 	Eur       float64            `json:"eur,string" bson:"eur,float64"`

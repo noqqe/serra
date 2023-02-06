@@ -23,13 +23,22 @@ type Collection struct {
 	*mongo.Collection
 }
 
+// Returns configured human readable name for
+// the configured currency of the user
+func getCurrencyField() string {
+	switch os.Getenv("SERRA_CURRENCY") {
+	case "EUR":
+		return "$prices.eur"
+	case "USD":
+		return "$prices.usd"
+	}
+	// default
+	return "$prices.usd"
+}
+
 func storage_connect() *mongo.Client {
 
-	uri := os.Getenv("MONGODB_URI")
-	if uri == "" {
-		log.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://docs.mongodb.com/drivers/go/current/usage-examples/#environment-variable")
-	}
-
+	uri := getMongoDBURI()
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
 		LogMessage(fmt.Sprintf("Could not connect to mongodb at %s", uri), "red")
@@ -37,6 +46,7 @@ func storage_connect() *mongo.Client {
 	}
 
 	return client
+
 }
 
 func (coll Collection) storage_add(card *Card) error {

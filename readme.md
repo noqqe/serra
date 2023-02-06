@@ -41,6 +41,7 @@ setup included in this Repo:
 
     docker-compose up -d
     export MONGODB_URI='mongodb://root:root@localhost:27017'
+    export SERRA_CURRENCY=USD # or EUR
 
 After that, you can add a card
 

@@ -71,7 +71,11 @@ func Cards(rarity, set, sort, name string) {
 	var sortStage bson.D
 	switch sort {
 	case "value":
-		sortStage = bson.D{{"prices.eur", 1}}
+		if getCurrency() == "USD" {
+			sortStage = bson.D{{"prices.usd", 1}}
+		} else {
+			sortStage = bson.D{{"prices.eur", 1}}
+		}
 	case "number":
 		sortStage = bson.D{{"collectornumber", 1}}
 	case "name":
@@ -93,9 +97,9 @@ func Cards(rarity, set, sort, name string) {
 	cards, _ := coll.storage_find(filter, sortStage)
 
 	for _, card := range cards {
-		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f EUR%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.Prices.Eur, Reset), "normal")
-		total = total + card.Prices.Eur*float64(card.SerraCount)
+		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f %s%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Reset), "normal")
+		total = total + card.getValue()*float64(card.SerraCount)
 	}
-	fmt.Printf("\nTotal Value: %s%.2f EUR%s\n", Yellow, total, Reset)
+	fmt.Printf("\nTotal Value: %s%.2f %s%s\n", Yellow, total, getCurrency(), Reset)
 
 }
