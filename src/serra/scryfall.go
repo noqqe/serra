@@ -121,12 +121,12 @@ type Card struct {
 
 type PriceEntry struct {
 	Date      primitive.DateTime `bson:"date"`
-	Eur       float64            `json:"eur,string"`
-	EurFoil   float64            `json:"eur_foil,string"`
-	Tix       float64            `json:"tix,string"`
-	Usd       float64            `json:"usd,string"`
-	UsdEtched float64            `json:"usd_etched,string"`
-	UsdFoil   float64            `json:"usd_foil,string"`
+	Eur       float64            `json:"eur,string" bson:"eur,float64"`
+	EurFoil   float64            `json:"eur_foil,string" bson:"eur_foil,float64"`
+	Tix       float64            `json:"tix,string" bson:"tix,float64"`
+	Usd       float64            `json:"usd,string" bson:"usd,float64"`
+	UsdEtched float64            `json:"usd_etched,string" bson:"usd_etched,float64"`
+	UsdFoil   float64            `json:"usd_foil,string" bson:"usd_foil,float64"`
 }
 
 // Sets

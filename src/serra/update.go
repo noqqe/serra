@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
@@ -83,38 +84,32 @@ var updateCmd = &cobra.Command{
 			// calculate value summary
 			matchStage := bson.D{
 				{"$match", bson.D{
-					{"set", set.Code},
-				}},
-			}
-			// Eur       float64            `json:"eur,string"`
-			// EurFoil   float64            `json:"eur_foil,string"`
-			// Tix       float64            `json:"tix,string"`
-			// Usd       float64            `json:"usd,string"`
-			// UsdEtched float64            `json:"usd_etched,string"`
-			// UsdFoil   float64            `json:"usd_foil,string"`
+					{"set", set.Code}}}}
+			projectStage := bson.D{{"$project",
+				bson.D{
+					{"serra_count", true},
+					{"serra_count_foil", true},
+					{"serra_count_etched", true},
+					{"set", true},
+					{"last_price", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}}
 			groupStage := bson.D{
 				{"$group", bson.D{
 					{"_id", "$set"},
-					{"eur", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eur", "$serra_count"}}}}}}}},
-					{"eurfoil", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.eurfoil", "$serra_count_foil"}}}}}}}},
-					{"usd", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.usd", "$serra_count_foil"}}}}}}}},
-					{"usdetched", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.usdetched", "$serra_count_etched"}}}}}}}},
-					{"usdfoil", bson.D{{"$toDouble", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$prices.usd", "$serra_count_foil"}}}}}}}},
+					{"eur", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur", "$serra_count"}}}}}},
+					{"eurfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur_foil", "$serra_count_foil"}}}}}},
+					{"usd", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd", "$serra_count_foil"}}}}}},
+					{"usdetched", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_etched", "$serra_count_etched"}}}}}},
+					{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
 				}}}
-			setvalue, err := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
-			if err != nil {
-				LogMessage(fmt.Sprintf("%s", err), "red")
-			}
+			setvalue, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, projectStage, groupStage})
 
 			p := PriceEntry{}
 			s := setvalue[0]
 
 			p.Date = primitive.NewDateTimeFromTime(time.Now())
-			p.Eur = toFloat(s["eur"])
-			p.EurFoil = toFloat(s["eurfoil"])
-			p.Usd = toFloat(s["usd"])
-			p.UsdEtched = toFloat(s["usdetched"])
-			p.UsdFoil = toFloat(s["usdfoil"])
+
+			// fill struct PriceEntry with map from mongoresult
+			mapstructure.Decode(s, &p)
 
 			// do the update
 			set_update := bson.M{

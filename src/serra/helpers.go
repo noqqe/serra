@@ -178,13 +178,3 @@ func print_price_history(prices []PriceEntry, prefix string) {
 		before = value
 	}
 }
-
-// Sometimes its exhausting dealing with those types...
-// Usecase: price can be 3.14 or nil
-func toFloat(p interface{}) float64 {
-	fmt.Printf("%v\n", p)
-	if p != nil {
-		return float64(p.(float64))
-	}
-	return float64(0)
-}

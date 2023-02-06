@@ -150,13 +150,13 @@ func (coll Collection) storage_remove(filter bson.M) error {
 
 func (coll Collection) storage_aggregate(pipeline mongo.Pipeline) ([]primitive.M, error) {
 
-	// db.cards.aggregate([ {$group: { _id: "$setname", sum: { $sum: "$prices.eur"}}}])
-	opts := options.Aggregate().SetMaxTime(2 * time.Second)
+	opts := options.Aggregate()
 	cursor, err := coll.Aggregate(
 		context.TODO(),
 		pipeline,
 		opts)
 	if err != nil {
+		LogMessage(fmt.Sprintf("%v", err), "red")
 		LogMessage("Could not aggregate data due to connection errors to database", "red")
 		os.Exit(1)
 	}
