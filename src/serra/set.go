@@ -80,8 +80,12 @@ func ShowSet(setname string) error {
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storage_disconnect(client)
 
-	// fetch all cards in set
-	cards, err := coll.storage_find(bson.D{{"set", setname}}, bson.D{{getCurrencyField(), -1}})
+	// fetch all cards in set ordered by currently used currency
+	cardSortCurrency := bson.D{{"prices.usd", -1}}
+	if getCurrency() == "EUR" {
+		cardSortCurrency = bson.D{{"prices.eur", -1}}
+	}
+	cards, err := coll.storage_find(bson.D{{"set", setname}}, cardSortCurrency)
 	if (err != nil) || len(cards) == 0 {
 		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
 		return err
@@ -106,7 +110,7 @@ func ShowSet(setname string) error {
 	}
 	stats, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
 
-	// set values
+	// set rarities
 	matchStage = bson.D{
 		{"$match", bson.D{
 			{"set", setname},
@@ -125,12 +129,11 @@ func ShowSet(setname string) error {
 	rar, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage, sortStage})
 
 	ri := convert_rarities(rar)
-	c := getCurrency()
 
 	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
 	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
 	LogMessage(fmt.Sprintf("Total Cards: %.0f", stats[0]["count"]), "normal")
-	LogMessage(fmt.Sprintf("Total Value: %.2f %s", stats[0]["value"], c), "normal")
+	LogMessage(fmt.Sprintf("Total Value: %.2f %s", stats[0]["value"], getCurrency()), "normal")
 	LogMessage(fmt.Sprintf("Released: %s", sets[0].ReleasedAt), "normal")
 	LogMessage(fmt.Sprintf("Mythics: %.0f", ri.Mythics), "normal")
 	LogMessage(fmt.Sprintf("Rares: %.0f", ri.Rares), "normal")
@@ -151,7 +154,7 @@ func ShowSet(setname string) error {
 
 	for i := 0; i < ccards; i++ {
 		card := cards[i]
-		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f %s%s\n", card.SerraCount, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(), c, Reset)
+		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f %s%s\n", card.SerraCount, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Reset)
 	}
 
 	return nil
