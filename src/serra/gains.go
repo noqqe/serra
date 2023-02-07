@@ -49,7 +49,11 @@ func Gains(limit float64, sort int, since string) error {
 
 	old, _ := strconv.Atoi(since)
 
-	// TODO redo this calculation
+	currencyField := "$serra_prices.usd"
+	if getCurrency() == "EUR" {
+		currencyField = "$serra_prices.eur"
+	}
+
 	raise_pipeline := mongo.Pipeline{
 		bson.D{{"$project",
 			bson.D{
@@ -58,12 +62,12 @@ func Gains(limit float64, sort int, since string) error {
 				{"collectornumber", true},
 				{"old",
 					bson.D{{"$arrayElemAt",
-						bson.A{"$serra_prices.value", old},
+						bson.A{currencyField, old},
 					}},
 				},
 				{"current",
 					bson.D{{"$arrayElemAt",
-						bson.A{"$serra_prices.value", -1},
+						bson.A{currencyField, -1},
 					}},
 				},
 			},
@@ -107,12 +111,12 @@ func Gains(limit float64, sort int, since string) error {
 				{"code", true},
 				{"old",
 					bson.D{{"$arrayElemAt",
-						bson.A{"$serra_prices.value", old},
+						bson.A{currencyField, old},
 					}},
 				},
 				{"current",
 					bson.D{{"$arrayElemAt",
-						bson.A{"$serra_prices.value", -1},
+						bson.A{currencyField, -1},
 					}},
 				},
 			},
@@ -159,12 +163,12 @@ func Gains(limit float64, sort int, since string) error {
 	fmt.Printf("%sCards%s\n", Purple, Reset)
 	// print each card
 	for _, e := range raise {
-		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f EUR%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], Reset)
+		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f %s%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
 	}
 
 	fmt.Printf("\n%sSets%s\n", Purple, Reset)
 	for _, e := range sraise {
-		fmt.Printf("%s%+.0f%%%s %s %s(%s)%s (%.2f->%s%.2f EUR%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["code"], Reset, e["old"], Green, e["current"], Reset)
+		fmt.Printf("%s%+.0f%%%s %s %s(%s)%s (%.2f->%s%.2f %s%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["code"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
 	}
 	return nil
 

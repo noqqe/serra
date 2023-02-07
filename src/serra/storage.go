@@ -31,9 +31,9 @@ func getCurrencyField() string {
 		return "$prices.eur"
 	case "USD":
 		return "$prices.usd"
+	default:
+		return "$prices.usd"
 	}
-	// default
-	return "$prices.usd"
 }
 
 func storage_connect() *mongo.Client {
