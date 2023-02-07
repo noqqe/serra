@@ -58,7 +58,7 @@ cards you dont own (yet) :)`,
 			if err != nil {
 				continue
 			}
-			fmt.Printf("%.02f\t%s (%s)\n", ncard.Prices.Eur, ncard.Name, ncard.SetName)
+			fmt.Printf("%.02f %s\t%s (%s)\n", ncard.getValue(), getCurrency(), ncard.Name, ncard.SetName)
 		}
 		return nil
 	},

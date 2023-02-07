@@ -38,7 +38,7 @@ var removeCmd = &cobra.Command{
 				modify_count_of_card(coll, c, -1)
 			} else {
 				coll.storage_remove(bson.M{"_id": c.ID})
-				LogMessage(fmt.Sprintf("\"%s\" (%.2f Eur) removed from the Collection.", c.Name, c.Prices.Eur), "green")
+				LogMessage(fmt.Sprintf("\"%s\" (%.2f %s) removed from the Collection.", c.Name, c.getValue(), getCurrency()), "green")
 			}
 
 		}

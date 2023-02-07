@@ -36,13 +36,13 @@ var addCmd = &cobra.Command{
 				c := co[0]
 
 				if unique {
-					LogMessage(fmt.Sprintf("Not adding \"%s\" (%s, %.2f Eur) to Collection because it already exists.", c.Name, c.Rarity, c.Prices.Eur), "red")
+					LogMessage(fmt.Sprintf("Not adding \"%s\" (%s, %.2f %s) to Collection because it already exists.", c.Name, c.Rarity, c.getValue(), getCurrency()), "red")
 					continue
 				}
 
 				modify_count_of_card(coll, &c, count)
 				// Give feedback of successfully added card
-				LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f Eur) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.Prices.Eur), "green")
+				LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f %s) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.getValue(), getCurrency()), "green")
 
 				// If card is not already in collection, fetching from scyfall
 			} else {
@@ -63,7 +63,7 @@ var addCmd = &cobra.Command{
 				}
 
 				// Give feedback of successfully added card
-				LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f Eur) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.Prices.Eur), "green")
+				LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f %s) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.getValue(), getCurrency()), "green")
 			}
 		}
 		storage_disconnect(client)
