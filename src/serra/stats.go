@@ -58,11 +58,24 @@ var statsCmd = &cobra.Command{
 					{"unique", bson.D{{"$sum", 1}}},
 				}}},
 		})
+
 		fmt.Printf("\n%sCards %s\n", Green, Reset)
-		fmt.Printf("Total Cards: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
-		fmt.Printf("Total Foil Cards: %s%d%s\n", Purple, stats[0]["count_foil"], Reset)
-		fmt.Printf("Total Etched Cards: %s%d%s\n", Purple, stats[0]["count_etched"], Reset)
-		fmt.Printf("Unique Cards: %s%d%s\n", Purple, stats[0]["unique"], Reset)
+		fmt.Printf("Total: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
+		fmt.Printf("Unique: %s%d%s\n", Purple, stats[0]["unique"], Reset)
+		fmt.Printf("Foil: %s%d%s\n", Purple, stats[0]["count_foil"], Reset)
+		fmt.Printf("Etched: %s%d%s\n", Purple, stats[0]["count_etched"], Reset)
+
+		reserved, _ := coll.storage_aggregate(mongo.Pipeline{
+			bson.D{
+				{"$match", bson.D{
+					{"reserved", true}}}},
+			bson.D{
+				{"$group", bson.D{
+					{"_id", nil},
+					{"count", bson.D{{"$sum", 1}}},
+				}}},
+		})
+		fmt.Printf("Reserved List: %s%d%s\n", Yellow, reserved[0]["count"], Reset)
 
 		rar, _ := coll.storage_aggregate(mongo.Pipeline{
 			bson.D{

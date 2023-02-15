@@ -173,9 +173,9 @@ func print_price_history(prices []PriceEntry, prefix string) {
 		}
 
 		if value > before && before != 0 {
-			fmt.Printf("%s%s%s %.2f %s%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Green, value, getCurrency(), Reset, (value/before*100)-100)
+			fmt.Printf("%s%s%s %.2f %s%s (%+.2f%%, %+.2f %s)\n", prefix, stringToTime(e.Date), Green, value, getCurrency(), Reset, (value/before*100)-100, value-before, getCurrency())
 		} else if value < before {
-			fmt.Printf("%s%s%s %.2f %s%s (%+.2f%%)\n", prefix, stringToTime(e.Date), Red, value, getCurrency(), Reset, (value/before*100)-100)
+			fmt.Printf("%s%s%s %.2f %s%s (%+.2f%%, %+.2f %s)\n", prefix, stringToTime(e.Date), Red, value, getCurrency(), Reset, (value/before*100)-100, value-before, getCurrency())
 		} else {
 			fmt.Printf("%s%s %.2f %s%s\n", prefix, stringToTime(e.Date), value, getCurrency(), Reset)
 		}
