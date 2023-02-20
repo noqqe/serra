@@ -14,6 +14,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&sort, "sort", "s", "name", "How to sort cards (value/number/name/added)")
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
 	cardCmd.Flags().StringVarP(&oracle, "oracle", "o", "", "Contains string in card text")
+	cardCmd.Flags().StringVarP(&cardType, "type", "t", "", "Contains string in card type line")
 	rootCmd.AddCommand(cardCmd)
 }
 
@@ -27,7 +28,7 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			Cards(rarity, set, sort, name, oracle)
+			Cards(rarity, set, sort, name, oracle, cardType)
 		} else {
 			ShowCard(cards)
 		}
@@ -51,7 +52,7 @@ func ShowCard(cardids []string) {
 	}
 }
 
-func Cards(rarity, set, sort, name, oracle string) {
+func Cards(rarity, set, sort, name, oracle, cardType string) {
 
 	var total float64
 	client := storage_connect()
@@ -97,6 +98,10 @@ func Cards(rarity, set, sort, name, oracle string) {
 
 	if len(oracle) > 0 {
 		filter = append(filter, bson.E{"oracletext", bson.D{{"$regex", ".*" + oracle + ".*"}, {"$options", "i"}}})
+	}
+
+	if len(cardType) > 0 {
+		filter = append(filter, bson.E{"typeline", bson.D{{"$regex", ".*" + cardType + ".*"}, {"$options", "i"}}})
 	}
 
 	cards, _ := coll.storage_find(filter, sortStage)

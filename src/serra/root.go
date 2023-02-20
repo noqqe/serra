@@ -8,14 +8,16 @@ import (
 )
 
 var Version = "unknown"
+
 var count int64
 var limit float64
 var name string
-var since string
+var oracle string
 var rarity string
 var set string
+var since string
 var sort string
-var oracle string
+var cardType string
 var unique bool
 
 var rootCmd = &cobra.Command{
