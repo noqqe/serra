@@ -3,6 +3,7 @@ module github.com/noqqe/serra
 go 1.14
 
 require (
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/schollz/progressbar/v3 v3.8.5
 	github.com/spf13/cobra v1.3.0

@@ -11,6 +11,7 @@ var Version = "unknown"
 
 var count int64
 var limit float64
+var interactive bool
 var name string
 var oracle string
 var rarity string
