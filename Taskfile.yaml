@@ -18,7 +18,7 @@ tasks:
       - git tag | tail -5
       - read -p "Version v1.1.1 " version ; git tag $version
       - git push --tags
-      - goreleaser release --rm-dist
+      - goreleaser release --clean
 
   default:
     cmds:
