@@ -28,7 +28,8 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			Cards(rarity, set, sort, name, oracle, cardType)
+			card_list := Cards(rarity, set, sort, name, oracle, cardType)
+			show_card_list(card_list)
 		} else {
 			ShowCard(cards)
 		}
@@ -52,9 +53,8 @@ func ShowCard(cardids []string) {
 	}
 }
 
-func Cards(rarity, set, sort, name, oracle, cardType string) {
+func Cards(rarity, set, sort, name, oracle, cardType string) []Card {
 
-	var total float64
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storage_disconnect(client)
@@ -106,10 +106,30 @@ func Cards(rarity, set, sort, name, oracle, cardType string) {
 
 	cards, _ := coll.storage_find(filter, sortStage)
 
+	return cards
+}
+
+func show_card_list(cards []Card) {
+
+	var total float64
 	for _, card := range cards {
 		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f %s%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Reset), "normal")
 		total = total + card.getValue()*float64(card.SerraCount)
 	}
 	fmt.Printf("\nTotal Value: %s%.2f %s%s\n", Yellow, total, getCurrency(), Reset)
 
+}
+
+func show_card_details(card *Card) error {
+	fmt.Printf("%s%s%s (%s/%s)\n", Purple, card.Name, Reset, card.Set, card.CollectorNumber)
+	fmt.Printf("Added: %s\n", stringToTime(card.SerraCreated))
+	fmt.Printf("Count: %dx\n", card.SerraCount)
+	fmt.Printf("Rarity: %s\n", card.Rarity)
+	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
+	fmt.Printf("Current Value: %s%.2f %s%s\n", Yellow, card.getValue(), getCurrency(), Reset)
+
+	fmt.Printf("\n%sHistory%s\n", Green, Reset)
+	print_price_history(card.SerraPrices, "* ")
+	fmt.Println()
+	return nil
 }
