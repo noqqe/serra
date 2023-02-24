@@ -3,7 +3,6 @@ package serra
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -87,20 +86,6 @@ func find_set_by_code(coll *Collection, setcode string) (*Set, error) {
 	}
 
 	return &stored_sets[0], nil
-}
-
-func show_card_details(card *Card) error {
-	fmt.Printf("%s%s%s (%s/%s)\n", Purple, card.Name, Reset, card.Set, card.CollectorNumber)
-	fmt.Printf("Added: %s\n", stringToTime(card.SerraCreated))
-	fmt.Printf("Count: %dx\n", card.SerraCount)
-	fmt.Printf("Rarity: %s\n", card.Rarity)
-	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
-	fmt.Printf("Current Value: %s%.2f %s%s\n", Yellow, card.getValue(), getCurrency(), Reset)
-
-	fmt.Printf("\n%sHistory%s\n", Green, Reset)
-	print_price_history(card.SerraPrices, "* ")
-	fmt.Println()
-	return nil
 }
 
 func convert_mana_symbols(sym []interface{}) string {
