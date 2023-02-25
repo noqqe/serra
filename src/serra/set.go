@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -23,7 +24,8 @@ otherwise you'll get a list of sets as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, set []string) error {
 		if len(set) == 0 {
-			Sets()
+			setList := Sets(sort)
+			show_set_list(setList)
 		} else {
 			ShowSet(set[0])
 		}
@@ -31,11 +33,10 @@ otherwise you'll get a list of sets as a search result.`,
 	},
 }
 
-func Sets() {
+func Sets(sort string) []primitive.M {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	setscoll := &Collection{client.Database("serra").Collection("sets")}
 	defer storage_disconnect(client)
 
 	groupStage := bson.D{
@@ -64,6 +65,15 @@ func Sets() {
 	}
 
 	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
+	return sets
+
+}
+
+func show_set_list(sets []primitive.M) {
+
+	client := storage_connect()
+	setscoll := &Collection{client.Database("serra").Collection("sets")}
+
 	for _, set := range sets {
 		setobj, _ := find_set_by_code(setscoll, set["code"].(string))
 		fmt.Printf("* %s %s%s%s (%s%s%s)\n", set["release"].(string)[0:4], Purple, set["_id"], Reset, Cyan, set["code"], Reset)
@@ -71,7 +81,6 @@ func Sets() {
 		fmt.Printf("  Value: %s%.2f %s%s\n", Pink, set["value"], getCurrency(), Reset)
 		fmt.Println()
 	}
-
 }
 
 func ShowSet(setname string) error {

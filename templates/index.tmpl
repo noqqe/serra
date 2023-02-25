@@ -32,15 +32,16 @@
 
         <!-- Left side -->
         <div class="level-left">
-
           <div class="level-item">
             <div class="field">
               <label class="label">Set</label>
               <div class="control">
-                <div class="select">
-                  <select>
-                    <option>Mercadian Masks</option>
-                    <option>Urzas Saga</option>
+                <div class="select is-primary">
+                  <select name="set" id="set" form="searchform">
+                    <option></option>
+                    {{range .sets}}
+                    <option value="{{ index . "code" }}">{{ index . "_id" }} ({{ index . "count" }})</option>
+                    {{end}}
                   </select>
                 </div>
               </div>
@@ -51,7 +52,7 @@
             <div class="field">
               <label class="label">Name</label>
               <div class="control">
-                <input class="input" type="text" placeholder="Tolarian Academy">
+                <input form="searchform" name="name" class="input" id="name" type="text" placeholder="Tolarian Academy">
               </div>
             </div>
           </div>
@@ -59,7 +60,9 @@
 
         <!-- Right side -->
         <div class="level-right">
-          <p class="level-item"><a class="button is-primary">Search</a></p>
+          <form action="/" id="searchform">
+            <input class="button is-primary" type="submit" value="Search">
+          </form>
         </div>
       </nav>
 
@@ -90,7 +93,7 @@
           </tr>
         </tfoot>
         <tbody>
-        {{range .cards}}
+          {{range .cards}}
           <tr>
             <td>{{.SerraCount}}</td>
             <td><strong>{{.Name }}</strong></td>
@@ -101,7 +104,7 @@
             <td>{{.Prices.Eur}}</td>
             <td>{{.Prices.EurFoil}}</td>
           </tr>
-        {{end}}
+          {{end}}
         </tbody>
       </table>
     </div>
