@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
 </head>
 
+
+
 <body>
 
   <!-- Site Title -->
@@ -114,5 +116,17 @@
   </section>
 
 </body>
+
+
+<!-- Select set from last search -->
+<script>
+  function getParam(paramName) {
+    return decodeURI(
+      (RegExp(paramName + '=' + '(.+?)(&|$)').exec(location.search) || [, null])[1]
+    );
+  }
+  var selectedVal = getParam("set");
+  document.getElementById("set").value = selectedVal;
+</script>
 
 </html>
