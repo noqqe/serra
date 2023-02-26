@@ -26,6 +26,7 @@ var webCmd = &cobra.Command{
 type Query struct {
 	Name string `form:"name"`
 	Set  string `form:"set"`
+	Sort string `form:"sort"`
 }
 
 func startWeb() error {
@@ -45,7 +46,7 @@ func landingPage(c *gin.Context) {
 
 	var query Query
 	if c.ShouldBind(&query) == nil {
-		cards := Cards("", query.Set, "", query.Name, "", "")
+		cards := Cards("", query.Set, query.Sort, query.Name, "", "")
 		sets := Sets("release")
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title": "Serraaaa",

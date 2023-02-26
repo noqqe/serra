@@ -34,6 +34,7 @@
 
         <!-- Left side -->
         <div class="level-left">
+
           <div class="level-item">
             <div class="field">
               <label class="label">Set</label>
@@ -59,6 +60,21 @@
             </div>
           </div>
         </div>
+
+          <div class="level-item">
+            <div class="field">
+              <label class="label">Sort</label>
+              <div class="control">
+                <div class="select is-primary">
+                  <select name="sort" id="sort" form="searchform">
+                    <option value="name" selected>Name</option>
+                    <option value="value">Value</option>
+                    <option value="number">Collector Number</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
 
         <!-- Right side -->
         <div class="level-right">
@@ -125,8 +141,11 @@
       (RegExp(paramName + '=' + '(.+?)(&|$)').exec(location.search) || [, null])[1]
     );
   }
-  var selectedVal = getParam("set");
-  document.getElementById("set").value = selectedVal;
+  var selectedSetVal = getParam("set");
+  document.getElementById("set").value = selectedSetVal;
+
+  var selectedSortVal = getParam("sort");
+  document.getElementById("sort").value = selectedSortVal;
 </script>
 
 </html>
