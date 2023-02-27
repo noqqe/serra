@@ -19,8 +19,8 @@ tasks:
       - read -p "Version v1.1.1 " version ; git tag $version
       - git push --tags
       - goreleaser release --clean
-      - docker build . -t docker.io/noqqe/serra:`git describe --tags`
-      - docker push docker.io/noqqe/serra:`git describe --tags`
+      - docker build . -t ghcr.io/noqqe/serra:`git describe --tags`
+      - docker push ghcr.io/noqqe/serra:`git describe --tags`
 
   default:
     cmds:
