@@ -34,14 +34,13 @@
 
         <!-- Left side -->
         <div class="level-left">
-
           <div class="level-item">
             <div class="field">
               <label class="label">Set</label>
               <div class="control">
                 <div class="select is-primary">
                   <select name="set" id="set" form="searchform">
-                    <option></option>
+                    <option value="">-</option>
                     {{range .sets}}
                     <option value="{{ index . "code" }}">{{ printf "%.25s" (index . "_id") }} ({{ index . "count" }})</option>
                     {{end}}
@@ -94,6 +93,7 @@
             <th>Type</th>
             <th><abbr title="Set Code">Set</abbr></th>
             <th><abbr title="Collector Number">C</abbr></th>
+            <th><abbr title="Rarity">Rar</abbr></th>
             <th><abbr title="Price">$</abbr></th>
             <th><abbr title="Price Foil">$*</abbr></th>
             <th><abbr title="Price Eur">€</abbr></th>
@@ -107,6 +107,7 @@
             <th>Type</th>
             <th><abbr title="Set Code">Set</abbr></th>
             <th><abbr title="Collector Number">C</abbr></th>
+            <th><abbr title="Rarity">Rar</abbr></th>
             <th><abbr title="Price">$</abbr></th>
             <th><abbr title="Price Foil">$*</abbr></th>
             <th><abbr title="Price Eur">€</abbr></th>
@@ -121,6 +122,7 @@
             <td>{{.TypeLine}}</td>
             <td>{{.Set}}</td>
             <td>{{.CollectorNumber}}</td>
+            <td>{{.Rarity}}</td>
             <td>{{.Prices.Usd}}</td>
             <td>{{.Prices.UsdFoil}}</td>
             <td>{{.Prices.Eur}}</td>
@@ -129,7 +131,8 @@
           {{end}}
         </tbody>
       </table>
-    </div>
+
+</div>
   </section>
 
 </body>
