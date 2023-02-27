@@ -9,23 +9,23 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
 
 <style>
-.tooltip {
+.cardpreview {
     position: relative;
     display: inline-block;
     border-bottom: 1px dotted black;
 }
 
-.tooltip .tooltiptext {
+.cardpreview .cardpreviewtext {
     visibility: hidden;
     width: 300px;
     color: #fff;
 
-    /* Position the tooltip */
+    /* Position the cardpreview */
     position: absolute;
     z-index: 1;
 }
 
-.tooltip:hover .tooltiptext {
+.cardpreview:hover .cardpreviewtext {
     visibility: visible;
 }
 </style>
@@ -141,8 +141,8 @@
           <tr>
             <td>{{.SerraCount}}</td>
             <td>
-<div class="tooltip"><strong>{{.Name }}</strong>
-  <span class="tooltiptext">
+<div class="cardpreview"><strong>{{.Name }}</strong>
+  <span class="cardpreviewtext">
       <img src="{{ .ImageUris.Normal }}" alt="" />
   </span>
 </div>
