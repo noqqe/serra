@@ -7,6 +7,28 @@
   <title>Serra</title>
   <!-- <link rel="stylesheet" href="https://unpkg.com/bulma-dracula"> -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
+<style>
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 300px;
+    color: #fff;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+</style>
 </head>
 
 
@@ -118,7 +140,13 @@
           {{range .cards}}
           <tr>
             <td>{{.SerraCount}}</td>
-            <td><strong>{{.Name }}</strong></td>
+            <td>
+<div class="tooltip"><strong>{{.Name }}</strong>
+  <span class="tooltiptext">
+      <img src="{{ .ImageUris.Normal }}" alt="" />
+  </span>
+</div>
+</td>
             <td>{{.TypeLine}}</td>
             <td>{{.Set}}</td>
             <td>{{.CollectorNumber}}</td>
