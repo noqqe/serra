@@ -38,18 +38,18 @@
 <body>
 
   <!-- Site Title -->
-  <section class="section">
-    <div class="container">
-      <div class="block">
-        <h1 class="title is-1">
-          Serra
-        </h1>
+  <div class="container">
+  <section class="hero is-primary">
+      <div class="hero-body">
+        <p class="title">
+            {{ .title }}
+        </p>
         <p class="subtitle">
           <i>Magic: The Gathering</i> Collection
         </p>
       </div>
-    </div>
   </section>
+  </div>
 
   <!-- Nav Bar -->
   <section class="section">
@@ -183,4 +183,14 @@
   document.getElementById("sort").value = selectedSortVal;
 </script>
 
+  <div class="container">
+<footer class="footer">
+  <div class="content has-text-centered">
+    <p>
+      <strong>Serra</strong> Version {{ .version }} by <a href="https://noqqe.de">noqqe</a>.
+      <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
+    </p>
+  </div>
+</footer>
+  </div>
 </html>

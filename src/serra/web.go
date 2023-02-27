@@ -49,9 +49,10 @@ func landingPage(c *gin.Context) {
 		cards := Cards("", query.Set, query.Sort, query.Name, "", "")
 		sets := Sets("release")
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"title": "Serraaaa",
-			"cards": cards,
-			"sets":  sets,
+			"title":   "Serra",
+			"cards":   cards,
+			"sets":    sets,
+			"version": Version,
 		})
 	}
 }
