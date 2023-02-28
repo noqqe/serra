@@ -105,7 +105,7 @@
                 <select name="set" id="set" form="searchform">
                   <option value="">-</option>
                   {{range .sets}}
-                  <option value="{{ index . " code" }}">{{ printf "%.25s" (index . "_id") }} ({{ index . "count" }})
+                  <option value="{{ index . "code" }}">{{ printf "%.25s" (index . "_id") }} ({{ index . "count" }})
                   </option>
                   {{end}}
                 </select>
