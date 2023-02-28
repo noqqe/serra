@@ -30,167 +30,203 @@
       visibility: visible;
       display: inline-block;
     }
+
+   @media only screen and (max-width: 900px) {
+     .level-item {
+       justify-content: unset
+     }
+
+      table#cards td {
+         display: none;
+      }
+      table#cards th {
+         display: none;
+      }
+      table#cards th:nth-child(1) {
+         display: revert;
+      }
+      table#cards th:nth-child(2) {
+         display: revert;
+      }
+      table#cards th:nth-child(4) {
+         display: revert;
+      }
+      table#cards th:nth-child(5) {
+         display: revert;
+      }
+      table#cards th:nth-child(9) {
+         display: revert;
+      }
+
+      table#cards td:nth-child(1) {
+         display: revert;
+      }
+      table#cards td:nth-child(2) {
+         display: revert;
+      }
+      table#cards td:nth-child(4) {
+         display: revert;
+      }
+      table#cards td:nth-child(5) {
+         display: revert;
+      }
+      table#cards td:nth-child(9) {
+         display: revert;
+      }
+    }
   </style>
 </head>
-
-
 
 <body>
 
   <!-- Site Title -->
-  <div class="container">
   <section class="hero is-primary">
-      <div class="hero-body">
-        <p class="title">
-            {{ .title }}
-        </p>
-        <p class="subtitle">
-          <i>Magic: The Gathering</i> Collection
-        </p>
-      </div>
-  </section>
-  </div>
-
-  <!-- Nav Bar -->
-  <section class="section">
-    <div class="container">
-      <nav class="level">
-
-        <!-- Left side -->
-        <div class="level-left">
-          <div class="level-item">
-            <div class="field">
-              <label class="label">Set</label>
-              <div class="control">
-                <div class="select is-primary">
-                  <select name="set" id="set" form="searchform">
-                    <option value="">-</option>
-                    {{range .sets}}
-                    <option value="{{ index . "code" }}">{{ printf "%.25s" (index . "_id") }} ({{ index . "count" }})
-                    </option>
-                    {{end}}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="level-item">
-            <div class="field">
-              <label class="label">Name</label>
-              <div class="control">
-                <input form="searchform" name="name" class="input" id="name" type="text" placeholder="Tolarian Academy">
-              </div>
-            </div>
-          </div>
-
-          <div class="level-item">
-            <div class="field">
-              <label class="label">Sort</label>
-              <div class="control">
-                <div class="select is-primary">
-                  <select name="sort" id="sort" form="searchform">
-                    <option value="name" selected>Name</option>
-                    <option value="value">Value</option>
-                    <option value="number">Collector Number</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Right side -->
-        <div class="level-right">
-          <form action="/" id="searchform">
-            <input class="button is-primary" type="submit" value="Search">
-          </form>
-        </div>
-      </nav>
-
-      <!-- Results Table -->
-      <table class="table is-fullwidth">
-        <thead>
-          <tr>
-            <th><abbr title="Amount">#</abbr></th>
-            <th>Name</th>
-            <th>Type</th>
-            <th><abbr title="Set Code">Set</abbr></th>
-            <th><abbr title="Collector Number">C</abbr></th>
-            <th><abbr title="Rarity">Rar</abbr></th>
-            <th><abbr title="Price">$</abbr></th>
-            <th><abbr title="Price Foil">$*</abbr></th>
-            <th><abbr title="Price Eur">€</abbr></th>
-            <th><abbr title="Price Eur Foil">€*</abbr></th>
-          </tr>
-        </thead>
-        <tfoot>
-          <tr>
-            <th><abbr title="Amount">#</abbr></th>
-            <th>Name</th>
-            <th>Type</th>
-            <th><abbr title="Set Code">Set</abbr></th>
-            <th><abbr title="Collector Number">C</abbr></th>
-            <th><abbr title="Rarity">Rar</abbr></th>
-            <th><abbr title="Price">$</abbr></th>
-            <th><abbr title="Price Foil">$*</abbr></th>
-            <th><abbr title="Price Eur">€</abbr></th>
-            <th><abbr title="Price Eur Foil">€*</abbr></th>
-          </tr>
-        </tfoot>
-        <tbody>
-          {{range .cards}}
-          <tr>
-            <td>{{.SerraCount}}</td>
-            <td>
-              <div class="cardpreview"><strong>{{.Name }}</strong>
-                <span class="cardpreviewtext">
-                  <img loading="lazy" src="{{ .ImageUris.Normal }}" alt="" />
-                </span>
-              </div>
-            </td>
-            <td>{{.TypeLine}}</td>
-            <td>{{.Set}}</td>
-            <td>{{.CollectorNumber}}</td>
-            <td>{{.Rarity}}</td>
-            <td>{{.Prices.Usd}}</td>
-            <td>{{.Prices.UsdFoil}}</td>
-            <td>{{.Prices.Eur}}</td>
-            <td>{{.Prices.EurFoil}}</td>
-          </tr>
-          {{end}}
-        </tbody>
-      </table>
-
+    <div class="hero-body">
+      <p class="title">
+        {{ .title }}
+      </p>
+      <p class="subtitle">
+        <i>Magic: The Gathering</i> Collection
+      </p>
     </div>
   </section>
 
+  <!-- Nav Bar -->
+  <section class="section">
+    <nav class="level">
+
+      <!-- Left side -->
+      <div class="level-left">
+        <div class="level-item">
+          <div class="field">
+            <label class="label">Set</label>
+            <div class="control">
+              <div class="select is-primary">
+                <select name="set" id="set" form="searchform">
+                  <option value="">-</option>
+                  {{range .sets}}
+                  <option value="{{ index . " code" }}">{{ printf "%.25s" (index . "_id") }} ({{ index . "count" }})
+                  </option>
+                  {{end}}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="level-item">
+          <div class="field">
+            <label class="label">Name</label>
+            <div class="control">
+              <input form="searchform" name="name" class="input" id="name" type="text" placeholder="Tolarian Academy">
+            </div>
+          </div>
+        </div>
+
+        <div class="level-item">
+          <div class="field">
+            <label class="label">Sort</label>
+            <div class="control">
+              <div class="select is-primary">
+                <select name="sort" id="sort" form="searchform">
+                  <option value="name" selected>Name</option>
+                  <option value="value">Value</option>
+                  <option value="number">Collector Number</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right side -->
+      <div class="level-right">
+        <form action="/" id="searchform">
+          <input class="button is-primary" type="submit" value="Search">
+        </form>
+      </div>
+    </nav>
+
+    <!-- Results Table -->
+    <table id="cards" class="table is-fullwidth">
+      <thead>
+        <tr>
+          <th><abbr title="Amount">#</abbr></th>
+          <th>Name</th>
+          <th>Type</th>
+          <th><abbr title="Set Code">Set</abbr></th>
+          <th><abbr title="Collector Number">C</abbr></th>
+          <th><abbr title="Rarity">Rar</abbr></th>
+          <th><abbr title="Price">$</abbr></th>
+          <th><abbr title="Price Foil">$*</abbr></th>
+          <th><abbr title="Price Eur">€</abbr></th>
+          <th><abbr title="Price Eur Foil">€*</abbr></th>
+        </tr>
+      </thead>
+      <tfoot>
+        <tr>
+          <th><abbr title="Amount">#</abbr></th>
+          <th>Name</th>
+          <th>Type</th>
+          <th><abbr title="Set Code">Set</abbr></th>
+          <th><abbr title="Collector Number">C</abbr></th>
+          <th><abbr title="Rarity">Rar</abbr></th>
+          <th><abbr title="Price">$</abbr></th>
+          <th><abbr title="Price Foil">$*</abbr></th>
+          <th><abbr title="Price Eur">€</abbr></th>
+          <th><abbr title="Price Eur Foil">€*</abbr></th>
+        </tr>
+      </tfoot>
+      <tbody>
+        {{range .cards}}
+        <tr>
+          <td>{{.SerraCount}}</td>
+          <td>
+            <div class="cardpreview"><strong>{{.Name }}</strong>
+              <span class="cardpreviewtext">
+                <img loading="lazy" src="{{ .ImageUris.Normal }}" alt="" />
+              </span>
+            </div>
+          </td>
+          <td>{{.TypeLine}}</td>
+          <td>{{.Set}}</td>
+          <td>{{.CollectorNumber}}</td>
+          <td>{{.Rarity}}</td>
+          <td>{{.Prices.Usd}}</td>
+          <td>{{.Prices.UsdFoil}}</td>
+          <td>{{.Prices.Eur}}</td>
+          <td>{{.Prices.EurFoil}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+
+  </section>
+
+  <!-- Select set from last search -->
+  <script>
+    function getParam(paramName) {
+      return decodeURI(
+        (RegExp(paramName + '=' + '(.+?)(&|$)').exec(location.search) || [, null])[1]
+      );
+    }
+    var selectedSetVal = getParam("set");
+    document.getElementById("set").value = selectedSetVal;
+
+    var selectedSortVal = getParam("sort");
+    document.getElementById("sort").value = selectedSortVal;
+  </script>
+
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p>
+        <strong>Serra</strong> Version {{ .version }} by <a href="https://noqqe.de">noqqe</a>.
+        <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
+      </p>
+    </div>
+  </footer>
+
 </body>
 
-
-<!-- Select set from last search -->
-<script>
-  function getParam(paramName) {
-    return decodeURI(
-      (RegExp(paramName + '=' + '(.+?)(&|$)').exec(location.search) || [, null])[1]
-    );
-  }
-  var selectedSetVal = getParam("set");
-  document.getElementById("set").value = selectedSetVal;
-
-  var selectedSortVal = getParam("sort");
-  document.getElementById("sort").value = selectedSortVal;
-</script>
-
-  <div class="container">
-<footer class="footer">
-  <div class="content has-text-centered">
-    <p>
-      <strong>Serra</strong> Version {{ .version }} by <a href="https://noqqe.de">noqqe</a>.
-      <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
-    </p>
-  </div>
-</footer>
-  </div>
 </html>
