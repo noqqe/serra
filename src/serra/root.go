@@ -17,7 +17,7 @@ var oracle string
 var rarity string
 var set string
 var since string
-var sort string
+var sortby string
 var cardType string
 var unique bool
 
