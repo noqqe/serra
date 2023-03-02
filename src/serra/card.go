@@ -45,6 +45,11 @@ func ShowCard(cardids []string) {
 
 	for _, v := range cardids {
 
+		if len(strings.Split(v, "/")) < 2 || strings.Split(v, "/")[1] == "" {
+			LogMessage(fmt.Sprintf("Invalid card %s", v), "red")
+			continue
+		}
+
 		cards, _ := coll.storage_find(bson.D{{"set", strings.Split(v, "/")[0]}, {"collectornumber", strings.Split(v, "/")[1]}}, bson.D{{"name", 1}})
 
 		for _, card := range cards {
