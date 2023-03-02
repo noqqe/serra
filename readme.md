@@ -11,20 +11,22 @@ Collection Tracker Websites that are:
 
 So I started my own Collection Tracker using [Golang](https://golang.org),
 [MongoDB](https://mongodb.com) and [Scryfall](https://scryfall.com) to have
-an overview in what cards you own and what value they are.
+an overview in what cards you own and what value they have.
 
-## What Serra does
+**What Serra does**
 
 * Tracks prices
 * Calculates statistics
 * Query/filter all of your cards
 * Shows what cards/sets do best in value development.
 
-## What Serra does not
+**What Serra does not**
 
 * Does not give a shit about conditions (NM, M, GD...)
 
 # Quickstart
+
+### Install Binaries
 
 on macOS you can use
 
@@ -34,16 +36,26 @@ on Linux/BSD/Windows you can download binaries from
 
     https://github.com/noqqe/serra/releases
 
-After that you need to spin up a MongoDB yourself or use the docker-compose
-setup included in this Repo:
+### Spin up Database
+
+To run serra, a MongoDB Database is required. The best way is to setup one by yourself. Any way it connects is fine. 
+    
+
+You can also use the docker-compose setup included in this Repo:
 
     docker-compose up -d
+
+### Configure the Database
+
+Configure `serra` via Environment variables
+
     export MONGODB_URI='mongodb://root:root@localhost:27017'
     export SERRA_CURRENCY=USD # or EUR
 
 After that, you can add a card
 
     ./serra add usg/17
+    ./serra update
 
 Start exploring :) (the more cards you add, the more fun it is)
 
@@ -51,19 +63,28 @@ Start exploring :) (the more cards you add, the more fun it is)
 
 The overall usage is described in `--help` text. But below are some examples.
 ```
-./serra
 Usage:
-  serra add <cardid>... [--count=<number>]
-  serra remove <cardid>...
-  serra cards [--rarity=<rarity>] [--set=<setcode>] [--sort=<sort>]
-  serra card <cardid>...
-  serra tops [--limit=<limit>]
-  serra flops [--limit=<limit>]
-  serra missing <setcode>
-  serra set <setcode>
-  serra sets
-  serra update
-  serra stats
+  serra [command]
+
+Available Commands:
+  add         Add a card to your collection
+  card        Search & show cards from your collection
+  completion  Generate the autocompletion script for the specified shell
+  flops       What cards lost most value
+  help        Help about any command
+  missing     Display missing cards from a set
+  remove      Remove a card from your collection
+  set         Search & show sets from your collection
+  stats       Shows statistics of the collection
+  tops        What cards gained most value
+  update      Update card values from scryfall
+  web         Startup web interface
+
+Flags:
+  -h, --help      help for serra
+  -v, --version   version for serra
+
+Use "serra [command] --help" for more information about a command.
 ```
 
 ## Add
@@ -122,16 +143,17 @@ Yes. While there are serveral OCR/Photo Scanners for mtg cards, I found they
 are not accurate enough. They guess Editions wrong, they have problems with
 blue/black cards and so on.
 
-I add my cards using a tiny shell wrapper, since they are sorted by editions
+I add my cards the `add --interactive` feature, since they are sorted by editions
 anyways.
 
 ```
-./add-card-wrapper.fish usg
-read> 17
-Updating Card "Herald of Serra" amount to 2
-
-read> 18
-...
+> ./serra add --interactive --unique --set one
+one> 1
+1x "Against All Odds" (uncommon, 0.06 USD) added to Collection.
+one> 1
+Not adding "Against All Odds" (uncommon, 0.06 USD) to Collection because it already exists.
+one> 3
+1x "Apostle of Invasion" (uncommon, 0.03 USD) added to Collection.
 ```
 
 Its basically typing 2-3 digit numbers and hitting enter. I was way faster
