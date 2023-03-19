@@ -50,7 +50,8 @@ var statsCmd = &cobra.Command{
 			bson.D{
 				{"$group", bson.D{
 					{"_id", nil},
-					{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(), "$serra_count"}}}}}},
+					{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(false), "$serra_count"}}}}}},
+					{"value_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(true), "$serra_count_foil"}}}}}},
 					{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
 					{"count_foil", bson.D{{"$sum", "$serra_count_foil"}}},
 					{"count_etched", bson.D{{"$sum", "$serra_count_etched"}}},
@@ -96,7 +97,18 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("Commons: %s%.0f%s\n", Purple, ri.Commons, Reset)
 
 		fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
-		fmt.Printf("Current: %s%.2f %s%s\n", Pink, stats[0]["value"], getCurrency(), Reset)
+		nf_value, err := getFloat64(stats[0]["value"])
+		if err != nil {
+			LogMessage(fmt.Sprintf("Error: %v", err), "red")
+			nf_value = 0
+		}
+		foil_value, err := getFloat64(stats[0]["value_foil"])
+		if err != nil {
+			LogMessage(fmt.Sprintf("Error: %v", err), "red")
+			foil_value = 0
+		}
+		total_value := nf_value + foil_value
+		fmt.Printf("Current: %s%.2f %s%s\n", Pink, total_value, getCurrency(), Reset)
 		total, _ := totalcoll.storage_find_total()
 
 		fmt.Printf("History: \n")

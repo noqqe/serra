@@ -118,8 +118,9 @@ func show_card_list(cards []Card) {
 
 	var total float64
 	for _, card := range cards {
-		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f %s%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Reset), "normal")
-		total = total + card.getValue()*float64(card.SerraCount)
+		LogMessage(fmt.Sprintf("* %dx Non-Foil %s%s%s (%s/%s) %s%.2f %s%s", card.SerraCount, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset), "normal")
+		LogMessage(fmt.Sprintf("* %dx Foil %s%s%s (%s/%s) %s%.2f %s%s", card.SerraCountFoil, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(true), getCurrency(), Reset), "normal")
+		total = total + card.getValue(false)*float64(card.SerraCount) + card.getValue(true)*float64(card.SerraCountFoil)
 	}
 	fmt.Printf("\nTotal Value: %s%.2f %s%s\n", Yellow, total, getCurrency(), Reset)
 
@@ -131,7 +132,7 @@ func show_card_details(card *Card) error {
 	fmt.Printf("Count: %dx\n", card.SerraCount)
 	fmt.Printf("Rarity: %s\n", card.Rarity)
 	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
-	fmt.Printf("Current Value: %s%.2f %s%s\n", Yellow, card.getValue(), getCurrency(), Reset)
+	fmt.Printf("Current Value: Non-Foil %s%.2f %s%s Foil %s%.2f %s%s\n", Yellow, card.getValue(false), getCurrency(), Reset, Yellow, card.getValue(true), getCurrency(), Reset)
 
 	fmt.Printf("\n%sHistory%s\n", Green, Reset)
 	print_price_history(card.SerraPrices, "* ")

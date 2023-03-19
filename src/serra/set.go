@@ -42,7 +42,8 @@ func Sets(sort string) []primitive.M {
 	groupStage := bson.D{
 		{"$group", bson.D{
 			{"_id", "$setname"},
-			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(), "$serra_count"}}}}}},
+			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(false), "$serra_count"}}}}}},
+			{"value_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(true), "$serra_count_foil"}}}}}},
 			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
 			{"unique", bson.D{{"$sum", 1}}},
 			{"code", bson.D{{"$last", "$set"}}},
@@ -113,7 +114,8 @@ func ShowSet(setname string) error {
 	groupStage := bson.D{
 		{"$group", bson.D{
 			{"_id", "$setname"},
-			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(), "$serra_count"}}}}}},
+			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(false), "$serra_count"}}}}}},
+			{"value_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(true), "$serra_count_foil"}}}}}},
 			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
 		}},
 	}
@@ -142,7 +144,18 @@ func ShowSet(setname string) error {
 	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
 	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
 	LogMessage(fmt.Sprintf("Total Cards: %.0f", stats[0]["count"]), "normal")
-	LogMessage(fmt.Sprintf("Total Value: %.2f %s", stats[0]["value"], getCurrency()), "normal")
+	nf_value, err := getFloat64(stats[0]["value"])
+	if err != nil {
+		LogMessage(fmt.Sprintf("Error: %v", err), "red")
+		nf_value = 0
+	}
+	foil_value, err := getFloat64(stats[0]["value_foil"])
+	if err != nil {
+		LogMessage(fmt.Sprintf("Error: %v", err), "red")
+		foil_value = 0
+	}
+	total_value := nf_value + foil_value
+	LogMessage(fmt.Sprintf("Total Value: %.2f %s", total_value, getCurrency()), "normal")
 	LogMessage(fmt.Sprintf("Released: %s", sets[0].ReleasedAt), "normal")
 	LogMessage(fmt.Sprintf("Mythics: %.0f", ri.Mythics), "normal")
 	LogMessage(fmt.Sprintf("Rares: %.0f", ri.Rares), "normal")
@@ -163,7 +176,8 @@ func ShowSet(setname string) error {
 
 	for i := 0; i < ccards; i++ {
 		card := cards[i]
-		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f %s%s\n", card.SerraCount, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Reset)
+		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f %s%s\n", card.SerraCount, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset)
+		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f %s%s\n", card.SerraCountFoil, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(true), getCurrency(), Reset)
 	}
 
 	return nil
