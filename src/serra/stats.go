@@ -75,7 +75,12 @@ var statsCmd = &cobra.Command{
 					{"count", bson.D{{"$sum", 1}}},
 				}}},
 		})
-		fmt.Printf("Reserved List: %s%d%s\n", Yellow, reserved[0]["count"], Reset)
+
+		var count_reserved float64
+		if len(reserved) > 0 {
+			count_reserved = reserved[0]["count"].(float64)
+		}
+		fmt.Printf("Reserved List: %s%.0f%s\n", Yellow, count_reserved, Reset)
 
 		rar, _ := coll.storage_aggregate(mongo.Pipeline{
 			bson.D{
