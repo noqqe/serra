@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"time"
+	"unicode"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -166,7 +168,6 @@ func print_price_history(prices []PriceEntry, prefix string) {
 	var before float64
 	for _, e := range prices {
 
-		// TODO: Make currency configurable
 		value := e.Usd
 		if getCurrency() == "EUR" {
 			value = e.Eur
@@ -204,4 +205,15 @@ func getFloat64(unknown interface{}) (float64, error) {
 	default:
 		return math.NaN(), errors.New("Non-numeric type could not be converted to float")
 	}
+}
+
+func filterForDigits(str string) int {
+	var numStr string
+	for _, c := range str {
+		if unicode.IsDigit(c) {
+			numStr += string(c)
+		}
+	}
+	s, _ := strconv.Atoi(numStr)
+	return s
 }

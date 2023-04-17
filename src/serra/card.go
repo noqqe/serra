@@ -2,6 +2,7 @@ package serra
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -110,6 +111,14 @@ func Cards(rarity, set, sortby, name, oracle, cardType string) []Card {
 	}
 
 	cards, _ := coll.storage_find(filter, sortStage)
+
+	// This is needed because collectornumbers are strings (ie. "23a") but still we
+	// want it to be sorted numerically ... 1,2,3,10,11,100.
+	if sortby == "number" {
+		sort.Slice(cards, func(i, j int) bool {
+			return filterForDigits(cards[i].CollectorNumber) < filterForDigits(cards[j].CollectorNumber)
+		})
+	}
 
 	return cards
 }
