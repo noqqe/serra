@@ -3,7 +3,9 @@ package serra
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
+	"unicode"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -166,4 +168,15 @@ func print_price_history(prices []PriceEntry, prefix string) {
 		}
 		before = value
 	}
+}
+
+func filterForDigits(str string) int {
+	var numStr string
+	for _, c := range str {
+		if unicode.IsDigit(c) {
+			numStr += string(c)
+		}
+	}
+	s, _ := strconv.Atoi(numStr)
+	return s
 }
