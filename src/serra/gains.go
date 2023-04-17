@@ -2,7 +2,6 @@ package serra
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,9 +12,11 @@ func init() {
 	rootCmd.AddCommand(topsCmd)
 	rootCmd.AddCommand(flopsCmd)
 	topsCmd.Flags().Float64VarP(&limit, "limit", "l", 0, "Minimum card price to be shown in analysis")
-	topsCmd.Flags().StringVarP(&since, "since", "s", "0", "Since when should the gains be calculated")
+	topsCmd.Flags().BoolVarP(&sinceLastUpdate, "since-last-update", "u", false, "Show gains since last update")
+	topsCmd.Flags().BoolVarP(&sinceBeginning, "since-beginning", "b", true, "Show gains since beginning of records")
 	flopsCmd.Flags().Float64VarP(&limit, "limit", "l", 0, "Minimum card price to be shown in analysis")
-	flopsCmd.Flags().StringVarP(&since, "since", "s", "0", "Since when should the losses be calculated")
+	flopsCmd.Flags().BoolVarP(&sinceLastUpdate, "since-last-update", "u", false, "Show losses since last update")
+	flopsCmd.Flags().BoolVarP(&sinceBeginning, "since-beginning", "b", true, "Show losses since beginning of records")
 }
 
 var topsCmd = &cobra.Command{
@@ -24,7 +25,7 @@ var topsCmd = &cobra.Command{
 	Short:         "What cards gained most value",
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		Gains(limit, -1, since)
+		Gains(limit, -1)
 		return nil
 	},
 }
@@ -35,19 +36,25 @@ var flopsCmd = &cobra.Command{
 	Short:         "What cards lost most value",
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		Gains(limit, 1, since)
+		Gains(limit, 1)
 		return nil
 	},
 }
 
-func Gains(limit float64, sort int, since string) error {
+func Gains(limit float64, sort int) error {
 
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	setcoll := &Collection{client.Database("serra").Collection("sets")}
 	defer storage_disconnect(client)
 
-	old, _ := strconv.Atoi(since)
+	var old int
+	if sinceBeginning {
+		old = 0
+	}
+	if sinceLastUpdate {
+		old = -2
+	}
 
 	currencyField := "$serra_prices.usd"
 	if getCurrency() == "EUR" {
