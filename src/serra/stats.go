@@ -57,12 +57,19 @@ var statsCmd = &cobra.Command{
 					{"count_etched", bson.D{{"$sum", "$serra_count_etched"}}},
 					{"rarity", bson.D{{"$sum", "$rarity"}}},
 					{"unique", bson.D{{"$sum", 1}}},
-				}}},
+				}},
+			},
+			bson.D{
+				{"$addFields", bson.D{
+					{"count_all", bson.D{{"$sum", bson.A{"$count", "$count_foil", "$count_etched"}}}},
+				}},
+			},
 		})
 
 		fmt.Printf("\n%sCards %s\n", Green, Reset)
-		fmt.Printf("Total: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
+		fmt.Printf("Total: %s%.0f%s\n", Yellow, stats[0]["count_all"], Reset)
 		fmt.Printf("Unique: %s%d%s\n", Purple, stats[0]["unique"], Reset)
+		fmt.Printf("Normal: %s%.0f%s\n", Purple, stats[0]["count"], Reset)
 		fmt.Printf("Foil: %s%d%s\n", Purple, stats[0]["count_foil"], Reset)
 		fmt.Printf("Etched: %s%d%s\n", Purple, stats[0]["count_etched"], Reset)
 
