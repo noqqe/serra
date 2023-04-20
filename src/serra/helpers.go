@@ -184,29 +184,6 @@ func print_price_history(prices []PriceEntry, prefix string) {
 	}
 }
 
-func getFloat64(unknown interface{}) (float64, error) {
-	switch i := unknown.(type) {
-	case float64:
-		return i, nil
-	case float32:
-		return float64(i), nil
-	case int64:
-		return float64(i), nil
-	case int32:
-		return float64(i), nil
-	case int:
-		return float64(i), nil
-	case uint64:
-		return float64(i), nil
-	case uint32:
-		return float64(i), nil
-	case uint:
-		return float64(i), nil
-	default:
-		return math.NaN(), errors.New("Non-numeric type could not be converted to float")
-	}
-}
-
 func filterForDigits(str string) int {
 	var numStr string
 	for _, c := range str {
