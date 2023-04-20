@@ -163,14 +163,22 @@ func convert_rarities(rar []primitive.M) Rarities {
 
 }
 
-func print_price_history(prices []PriceEntry, prefix string) {
+func print_price_history(prices []PriceEntry, prefix string, total bool) {
 
 	var before float64
 	for _, e := range prices {
 
-		value := e.Usd
-		if getCurrency() == "EUR" {
-			value = e.Eur
+		var value float64
+		if total {
+			value = e.Usd + e.UsdFoil + e.UsdEtched
+			if getCurrency() == "EUR" {
+				value = e.Eur + e.EurFoil
+			}
+		} else {
+			value = e.Usd
+			if getCurrency() == "EUR" {
+				value = e.Eur
+			}
 		}
 
 		if value > before && before != 0 {

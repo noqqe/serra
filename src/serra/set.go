@@ -162,7 +162,7 @@ func ShowSet(setname string) error {
 	LogMessage(fmt.Sprintf("Uncommons: %.0f", ri.Uncommons), "normal")
 	LogMessage(fmt.Sprintf("Commons: %.0f", ri.Commons), "normal")
 	fmt.Printf("\n%sPrice History:%s\n", Pink, Reset)
-	print_price_history(sets[0].SerraPrices, "* ")
+	print_price_history(sets[0].SerraPrices, "* ", true)
 
 	fmt.Printf("\n%sMost valuable cards%s\n", Pink, Reset)
 

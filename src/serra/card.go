@@ -152,7 +152,7 @@ func show_card_details(card *Card) error {
 	}
 
 	fmt.Printf("\n%sHistory%s\n", Green, Reset)
-	print_price_history(card.SerraPrices, "* ")
+	print_price_history(card.SerraPrices, "* ", false)
 	fmt.Println()
 	return nil
 }
