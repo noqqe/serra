@@ -84,11 +84,11 @@ var statsCmd = &cobra.Command{
 				}}},
 		})
 
-		var count_reserved float64
+		var count_reserved int32
 		if len(reserved) > 0 {
-			count_reserved = reserved[0]["count"].(float64)
+			count_reserved = reserved[0]["count"].(int32)
 		}
-		fmt.Printf("Reserved List: %s%.0f%s\n", Yellow, count_reserved, Reset)
+		fmt.Printf("Reserved List: %s%d%s\n", Yellow, count_reserved, Reset)
 
 		rar, _ := coll.storage_aggregate(mongo.Pipeline{
 			bson.D{
