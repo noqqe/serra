@@ -21,6 +21,7 @@ var sinceLastUpdate bool
 var sortby string
 var cardType string
 var unique bool
+var foil bool
 
 var rootCmd = &cobra.Command{
 	Version:               Version,

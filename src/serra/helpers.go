@@ -3,6 +3,7 @@ package serra
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 	"unicode"
@@ -15,7 +16,7 @@ type Rarities struct {
 	Rares, Uncommons, Commons, Mythics float64
 }
 
-func modify_count_of_card(coll *Collection, c *Card, amount int64) error {
+func modify_count_of_card(coll *Collection, c *Card, amount int64, foil bool) error {
 
 	// find already existing card
 	sort := bson.D{{"_id", 1}}
@@ -28,12 +29,26 @@ func modify_count_of_card(coll *Collection, c *Card, amount int64) error {
 
 	// update card amount
 	update_filter := bson.M{"_id": bson.M{"$eq": c.ID}}
-	update := bson.M{
-		"$set": bson.M{"serra_count": stored_card.SerraCount + amount},
+	var update bson.M
+	if foil {
+		update = bson.M{
+			"$set": bson.M{"serra_count_foil": stored_card.SerraCountFoil + amount},
+		}
+	} else {
+		update = bson.M{
+			"$set": bson.M{"serra_count": stored_card.SerraCount + amount},
+		}
 	}
+
 	coll.storage_update(update_filter, update)
 
-	LogMessage(fmt.Sprintf("Updating Card \"%s\" amount to %d", stored_card.Name, stored_card.SerraCount+amount), "purple")
+	var total int64
+	if foil {
+		total = stored_card.SerraCountFoil + amount
+	} else {
+		total = stored_card.SerraCount + amount
+	}
+	LogMessage(fmt.Sprintf("Updating Card \"%s\" amount to %d", stored_card.Name, total), "purple")
 	return nil
 }
 
@@ -148,15 +163,22 @@ func convert_rarities(rar []primitive.M) Rarities {
 
 }
 
-func print_price_history(prices []PriceEntry, prefix string) {
+func print_price_history(prices []PriceEntry, prefix string, total bool) {
 
 	var before float64
 	for _, e := range prices {
 
-		// TODO: Make currency configurable
-		value := e.Usd
-		if getCurrency() == "EUR" {
-			value = e.Eur
+		var value float64
+		if total {
+			value = e.Usd + e.UsdFoil + e.UsdEtched
+			if getCurrency() == "EUR" {
+				value = e.Eur + e.EurFoil
+			}
+		} else {
+			value = e.Usd
+			if getCurrency() == "EUR" {
+				value = e.Eur
+			}
 		}
 
 		if value > before && before != 0 {
@@ -179,4 +201,27 @@ func filterForDigits(str string) int {
 	}
 	s, _ := strconv.Atoi(numStr)
 	return s
+}
+
+func getFloat64(unknown interface{}) (float64, error) {
+	switch i := unknown.(type) {
+	case float64:
+		return i, nil
+	case float32:
+		return float64(i), nil
+	case int64:
+		return float64(i), nil
+	case int32:
+		return float64(i), nil
+	case int:
+		return float64(i), nil
+	case uint64:
+		return float64(i), nil
+	case uint32:
+		return float64(i), nil
+	case uint:
+		return float64(i), nil
+	default:
+		return math.NaN(), errors.New("Non-numeric type could not be converted to float")
+	}
 }

@@ -50,18 +50,26 @@ var statsCmd = &cobra.Command{
 			bson.D{
 				{"$group", bson.D{
 					{"_id", nil},
-					{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(), "$serra_count"}}}}}},
+					{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(false), "$serra_count"}}}}}},
+					{"value_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(true), "$serra_count_foil"}}}}}},
 					{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
 					{"count_foil", bson.D{{"$sum", "$serra_count_foil"}}},
 					{"count_etched", bson.D{{"$sum", "$serra_count_etched"}}},
 					{"rarity", bson.D{{"$sum", "$rarity"}}},
 					{"unique", bson.D{{"$sum", 1}}},
-				}}},
+				}},
+			},
+			bson.D{
+				{"$addFields", bson.D{
+					{"count_all", bson.D{{"$sum", bson.A{"$count", "$count_foil", "$count_etched"}}}},
+				}},
+			},
 		})
 
 		fmt.Printf("\n%sCards %s\n", Green, Reset)
-		fmt.Printf("Total: %s%.0f%s\n", Yellow, stats[0]["count"], Reset)
+		fmt.Printf("Total: %s%.0f%s\n", Yellow, stats[0]["count_all"], Reset)
 		fmt.Printf("Unique: %s%d%s\n", Purple, stats[0]["unique"], Reset)
+		fmt.Printf("Normal: %s%.0f%s\n", Purple, stats[0]["count"], Reset)
 		fmt.Printf("Foil: %s%d%s\n", Purple, stats[0]["count_foil"], Reset)
 		fmt.Printf("Etched: %s%d%s\n", Purple, stats[0]["count_etched"], Reset)
 
@@ -76,11 +84,11 @@ var statsCmd = &cobra.Command{
 				}}},
 		})
 
-		var count_reserved float64
+		var count_reserved int32
 		if len(reserved) > 0 {
-			count_reserved = reserved[0]["count"].(float64)
+			count_reserved = reserved[0]["count"].(int32)
 		}
-		fmt.Printf("Reserved List: %s%.0f%s\n", Yellow, count_reserved, Reset)
+		fmt.Printf("Reserved List: %s%d%s\n", Yellow, count_reserved, Reset)
 
 		rar, _ := coll.storage_aggregate(mongo.Pipeline{
 			bson.D{
@@ -101,11 +109,24 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("Commons: %s%.0f%s\n", Purple, ri.Commons, Reset)
 
 		fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
-		fmt.Printf("Current: %s%.2f %s%s\n", Pink, stats[0]["value"], getCurrency(), Reset)
+		nf_value, err := getFloat64(stats[0]["value"])
+		if err != nil {
+			LogMessage(fmt.Sprintf("Error: %v", err), "red")
+			nf_value = 0
+		}
+		foil_value, err := getFloat64(stats[0]["value_foil"])
+		if err != nil {
+			LogMessage(fmt.Sprintf("Error: %v", err), "red")
+			foil_value = 0
+		}
+		total_value := nf_value + foil_value
+		fmt.Printf("Total: %s%.2f %s%s\n", Pink, total_value, getCurrency(), Reset)
+		fmt.Printf("Normal: %s%.2f %s%s\n", Pink, nf_value, getCurrency(), Reset)
+		fmt.Printf("Foils: %s%.2f %s%s\n", Pink, foil_value, getCurrency(), Reset)
 		total, _ := totalcoll.storage_find_total()
 
 		fmt.Printf("History: \n")
-		print_price_history(total.Value, "* ")
+		print_price_history(total.Value, "* ", true)
 		return nil
 	},
 }

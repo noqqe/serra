@@ -15,6 +15,7 @@ func init() {
 	addCmd.Flags().BoolVarP(&unique, "unique", "u", false, "Only add card if not existent yet")
 	addCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Spin up interactive terminal")
 	addCmd.Flags().StringVarP(&set, "set", "s", "", "Filter by set code (usg/mmq/vow)")
+	addCmd.Flags().BoolVarP(&foil, "foil", "f", false, "Add foil variant of card")
 	rootCmd.AddCommand(addCmd)
 }
 
@@ -78,13 +79,20 @@ func addCards(cards []string, unique bool, count int64) error {
 			c := co[0]
 
 			if unique {
-				LogMessage(fmt.Sprintf("Not adding \"%s\" (%s, %.2f %s) to Collection because it already exists.", c.Name, c.Rarity, c.getValue(), getCurrency()), "red")
+				LogMessage(fmt.Sprintf("Not adding \"%s\" (%s, %.2f %s) to Collection because it already exists.", c.Name, c.Rarity, c.getValue(foil), getCurrency()), "red")
 				continue
 			}
 
-			modify_count_of_card(coll, &c, count)
+			modify_count_of_card(coll, &c, count, foil)
+
+			var total int64 = 0
+			if foil {
+				total = c.SerraCountFoil + count
+			} else {
+				total = c.SerraCount + count
+			}
 			// Give feedback of successfully added card
-			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f %s) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.getValue(), getCurrency()), "green")
+			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f %s) added to Collection.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "green")
 
 			// If card is not already in collection, fetching from scyfall
 		} else {
@@ -97,7 +105,14 @@ func addCards(cards []string, unique bool, count int64) error {
 			}
 
 			// Write card to mongodb
-			c.SerraCount = count
+			var total int64 = 0
+			if foil {
+				c.SerraCountFoil = count
+				total = c.SerraCountFoil
+			} else {
+				c.SerraCount = count
+				total = c.SerraCount
+			}
 			err = coll.storage_add(c)
 			if err != nil {
 				LogMessage(fmt.Sprintf("%v", err), "red")
@@ -105,7 +120,7 @@ func addCards(cards []string, unique bool, count int64) error {
 			}
 
 			// Give feedback of successfully added card
-			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f %s) added to Collection.", c.SerraCount, c.Name, c.Rarity, c.getValue(), getCurrency()), "green")
+			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f %s) added to Collection.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "green")
 		}
 	}
 	storage_disconnect(client)

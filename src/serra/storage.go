@@ -25,13 +25,22 @@ type Collection struct {
 
 // Returns configured human readable name for
 // the configured currency of the user
-func getCurrencyField() string {
+func getCurrencyField(foil bool) string {
 	switch os.Getenv("SERRA_CURRENCY") {
 	case "EUR":
+		if foil {
+			return "$prices.eur_foil"
+		}
 		return "$prices.eur"
 	case "USD":
+		if foil {
+			return "$prices.usd_foil"
+		}
 		return "$prices.usd"
 	default:
+		if foil {
+			return "$prices.usd_foil"
+		}
 		return "$prices.usd"
 	}
 }
