@@ -137,21 +137,16 @@ func show_card_list(cards []Card) {
 func show_card_details(card *Card) error {
 	fmt.Printf("%s%s%s (%s/%s)\n", Purple, card.Name, Reset, card.Set, card.CollectorNumber)
 	fmt.Printf("Added: %s\n", stringToTime(card.SerraCreated))
-	fmt.Printf("Count Normal: %dx\n", card.SerraCount)
-	if card.SerraCountFoil > 0 {
-		fmt.Printf("Count Foil: %dx\n", card.SerraCountFoil)
-	}
-	if card.SerraCountEtched > 0 {
-		fmt.Printf("Count Etched: %dx\n", card.SerraCountFoil)
-	}
 	fmt.Printf("Rarity: %s\n", card.Rarity)
 	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
-	fmt.Printf("Current Value: %s%.2f %s%s\n", Yellow, card.getValue(false), getCurrency(), Reset)
+
+	fmt.Printf("\n%sCurrent Value%s\n", Green, Reset)
+	fmt.Printf("* Normal: %dx %s%.2f %s%s\n", card.SerraCount, Yellow, card.getValue(false), getCurrency(), Reset)
 	if card.SerraCountFoil > 0 {
-		fmt.Printf("Foil Value: %s%.2f %s%s\n", Yellow, card.getValue(true), getCurrency(), Reset)
+		fmt.Printf("* Foil: %dx %s%.2f %s%s\n", card.SerraCountFoil, Yellow, card.getValue(true), getCurrency(), Reset)
 	}
 
-	fmt.Printf("\n%sHistory%s\n", Green, Reset)
+	fmt.Printf("\n%sValue History%s\n", Green, Reset)
 	print_price_history(card.SerraPrices, "* ", false)
 	fmt.Println()
 	return nil
