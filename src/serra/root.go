@@ -7,22 +7,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version = "unknown"
-
-var count int64
-var detail bool
-var limit float64
-var interactive bool
-var name string
-var oracle string
-var rarity string
-var set string
-var sinceBeginning bool
-var sinceLastUpdate bool
-var sortby string
-var cardType string
-var unique bool
-var foil bool
+var (
+	Version         = "unknown"
+	count           int64
+	detail          bool
+	limit           float64
+	interactive     bool
+	name            string
+	oracle          string
+	rarity          string
+	set             string
+	sinceBeginning  bool
+	sinceLastUpdate bool
+	sortby          string
+	cardType        string
+	unique          bool
+	foil            bool
+	address         string
+	port            uint64
+)
 
 var rootCmd = &cobra.Command{
 	Version:               Version,
