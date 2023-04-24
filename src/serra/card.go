@@ -40,13 +40,11 @@ otherwise you'll get a list of cards as a search result.`,
 }
 
 func ShowCard(cardids []string) {
-
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storage_disconnect(client)
 
 	for _, v := range cardids {
-
 		if len(strings.Split(v, "/")) < 2 || strings.Split(v, "/")[1] == "" {
 			LogMessage(fmt.Sprintf("Invalid card %s", v), "red")
 			continue
@@ -61,7 +59,6 @@ func ShowCard(cardids []string) {
 }
 
 func Cards(rarity, set, sortby, name, oracle, cardType string) []Card {
-
 	client := storage_connect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storage_disconnect(client)

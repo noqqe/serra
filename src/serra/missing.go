@@ -2,6 +2,7 @@ package serra
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -20,7 +21,6 @@ var missingCmd = &cobra.Command{
 cards you dont own (yet) :)`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, setname []string) error {
-
 		client := storage_connect()
 		coll := &Collection{client.Database("serra").Collection("cards")}
 		defer storage_disconnect(client)
@@ -53,13 +53,29 @@ cards you dont own (yet) :)`,
 		}
 
 		misses := missing(in_collection, complete_set)
+
+		// Fetch all missing cards
+		missingCards := []*Card{}
 		for _, m := range misses {
-			ncard, err := fetch_card(fmt.Sprintf("%s/%s", setname[0], m))
+			card, err := fetchCard(fmt.Sprintf("%s/%s", setname[0], m))
 			if err != nil {
 				continue
 			}
-			fmt.Printf("%.02f %s\t%s (%s)\n", ncard.getValue(false), getCurrency(), ncard.Name, ncard.SetName)
+
+			missingCards = append(missingCards, card)
 		}
+
+		// Sort the missing cards by ID
+		sort.Slice(missingCards, func(i, j int) bool {
+			id1, _ := strconv.Atoi(missingCards[i].CollectorNumber)
+			id2, _ := strconv.Atoi(missingCards[j].CollectorNumber)
+			return id1 < id2
+		})
+
+		for _, card := range missingCards {
+			fmt.Printf("[%s] %.02f %s\t%s (%s)\n", card.CollectorNumber, card.getValue(false), getCurrency(), card.Name, card.SetName)
+		}
+
 		return nil
 	},
 }

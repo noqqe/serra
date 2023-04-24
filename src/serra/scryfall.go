@@ -3,7 +3,6 @@ package serra
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -28,7 +27,7 @@ type Card struct {
 	Booster         bool     `json:"booster"`
 	BorderColor     string   `json:"border_color"`
 	CardBackID      string   `json:"card_back_id"`
-	Cmc             int64    `json:"cmc"`
+	Cmc             float64  `json:"cmc"`
 	CollectorNumber string   `json:"collector_number"`
 	ColorIdentity   []string `json:"color_identity"`
 	Colors          []string `json:"colors"`
@@ -170,11 +169,9 @@ type Set struct {
 	URI          string             `json:"uri"`
 }
 
-func fetch_card(path string) (*Card, error) {
-
+func fetchCard(path string) (*Card, error) {
 	if !strings.Contains(path, "/") {
-		err := errors.New(fmt.Sprintf("Card must follow format <set>/<number>, for example: ath/15"))
-		return &Card{}, err
+		return &Card{}, fmt.Errorf("Card must follow format <set>/<number>, for example: ath/15")
 	}
 
 	// TODO better URL Building...
@@ -185,21 +182,24 @@ func fetch_card(path string) (*Card, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("Error: %s not found", path))
-		return &Card{}, err
+		return &Card{}, fmt.Errorf("Card %s not found", path)
 	}
 
 	//We Read the response body on the line below.
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("%s", err)
 		return &Card{}, err
 	}
 
 	r := bytes.NewReader(body)
 	decoder := json.NewDecoder(r)
 	val := &Card{}
+
 	err = decoder.Decode(val)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	// Set created Time
 	val.SerraCreated = primitive.NewDateTimeFromTime(time.Now())
@@ -213,15 +213,14 @@ func fetch_card(path string) (*Card, error) {
 
 func fetch_sets() (*SetList, error) {
 	// TODO better URL Building...
-	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/sets"))
+	resp, err := http.Get("https://api.scryfall.com/sets")
 	if err != nil {
 		log.Fatalln(err)
 		return &SetList{}, err
 	}
 
 	if resp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("Error: /sets not found"))
-		return &SetList{}, err
+		return &SetList{}, fmt.Errorf("/sets not found")
 	}
 
 	//We Read the response body on the line below.
@@ -234,7 +233,11 @@ func fetch_sets() (*SetList, error) {
 	r := bytes.NewReader(body)
 	decoder := json.NewDecoder(r)
 	val := &SetList{}
+
 	err = decoder.Decode(val)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	return val, nil
 }

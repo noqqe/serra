@@ -96,9 +96,8 @@ func addCards(cards []string, unique bool, count int64) error {
 
 			// If card is not already in collection, fetching from scyfall
 		} else {
-
 			// Fetch card from scryfall
-			c, err := fetch_card(card)
+			c, err := fetchCard(card)
 			if err != nil {
 				LogMessage(fmt.Sprintf("%v", err), "red")
 				continue
