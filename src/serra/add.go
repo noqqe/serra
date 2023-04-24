@@ -3,6 +3,7 @@ package serra
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -26,7 +27,6 @@ var addCmd = &cobra.Command{
 	Long:          "Adds a card from scryfall to your collection. Amount can be modified using flags",
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
-
 		if interactive {
 			addCardsInteractive(unique, set)
 		} else {
@@ -37,7 +37,6 @@ var addCmd = &cobra.Command{
 }
 
 func addCardsInteractive(unique bool, set string) {
-
 	if len(set) == 0 {
 		LogMessage("Error: --set must be given in interactive mode", "red")
 		os.Exit(1)
@@ -57,7 +56,25 @@ func addCardsInteractive(unique bool, set string) {
 
 		// construct card input for addCards
 		card := []string{}
-		card = append(card, fmt.Sprintf("%s/%s", set, strings.TrimSpace(line)))
+
+		// Detect if input contains a dash, if it does it means the user wants to add a range of cards
+		if strings.Contains(line, "-") {
+			// Split input into two parts
+			parts := strings.Split(line, "-")
+			// Check if both parts are numbers
+			if _, err := strconv.Atoi(parts[0]); err == nil {
+				if _, err = strconv.Atoi(parts[1]); err == nil {
+					// Loop over range and add each card to card slice
+					start, _ := strconv.Atoi(parts[0])
+					end, _ := strconv.Atoi(parts[1])
+					for i := start; i <= end; i++ {
+						card = append(card, fmt.Sprintf("%s/%d", set, i))
+					}
+				}
+			}
+		} else {
+			card = append(card, fmt.Sprintf("%s/%s", set, strings.TrimSpace(line)))
+		}
 
 		addCards(card, unique, count)
 	}
@@ -71,7 +88,6 @@ func addCards(cards []string, unique bool, count int64) error {
 
 	// Loop over different cards
 	for _, card := range cards {
-
 		// Check if card is already in collection
 		co, _ := coll.storage_find(bson.D{{"set", strings.Split(card, "/")[0]}, {"collectornumber", strings.Split(card, "/")[1]}}, bson.D{})
 
