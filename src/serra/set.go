@@ -176,8 +176,7 @@ func ShowSet(setname string) error {
 
 	for i := 0; i < ccards; i++ {
 		card := cards[i]
-		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f %s%s\n", card.SerraCount, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset)
-		fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f %s%s\n", card.SerraCountFoil, Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(true), getCurrency(), Reset)
+		fmt.Printf("* %s%s%s (%s/%s) %s%.2f %s%s\n", Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset)
 	}
 
 	return nil
