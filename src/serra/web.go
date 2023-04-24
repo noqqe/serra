@@ -2,12 +2,15 @@ package serra
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 )
 
 func init() {
+	webCmd.Flags().StringVarP(&address, "address", "a", "0.0.0.0", "Address to listen on")
+	webCmd.Flags().Uint64VarP(&port, "port", "p", 8080, "Port to listen on")
 	rootCmd.AddCommand(webCmd)
 }
 
@@ -30,20 +33,18 @@ type Query struct {
 }
 
 func startWeb() error {
-
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*.tmpl")
 	router.Static("/assets", "./assets")
 
-	// Landing Page
+	// Landing page
 	router.GET("/", landingPage)
 
-	router.Run(":8080")
+	router.Run(address + ":" + strconv.FormatUint(port, 10))
 	return nil
 }
 
 func landingPage(c *gin.Context) {
-
 	var query Query
 	if c.ShouldBind(&query) == nil {
 		cards := Cards("", query.Set, query.Sort, query.Name, "", "")
