@@ -16,6 +16,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
 	cardCmd.Flags().StringVarP(&oracle, "oracle", "o", "", "Contains string in card text")
 	cardCmd.Flags().StringVarP(&cardType, "type", "t", "", "Contains string in card type line")
+	cardCmd.Flags().BoolVarP(&detail, "detail", "d", true, "Show details for cards (url)")
 	rootCmd.AddCommand(cardCmd)
 }
 
@@ -30,7 +31,7 @@ otherwise you'll get a list of cards as a search result.`,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
 			card_list := Cards(rarity, set, sortby, name, oracle, cardType)
-			show_card_list(card_list)
+			show_card_list(card_list, detail)
 		} else {
 			ShowCard(cards)
 		}
@@ -123,13 +124,21 @@ func Cards(rarity, set, sortby, name, oracle, cardType string) []Card {
 	return cards
 }
 
-func show_card_list(cards []Card) {
+func show_card_list(cards []Card, detail bool) {
 
 	var total float64
-	for _, card := range cards {
-		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f%s%s", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset), "normal")
-		total = total + card.getValue(false)*float64(card.SerraCount) + card.getValue(true)*float64(card.SerraCountFoil)
+	if detail {
+		for _, card := range cards {
+			fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f%s %s %s %s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Background, strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1), Reset)
+			total = total + card.getValue(false)*float64(card.SerraCount) + card.getValue(true)*float64(card.SerraCountFoil)
+		}
+	} else {
+		for _, card := range cards {
+			fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f%s%s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset)
+			total = total + card.getValue(false)*float64(card.SerraCount) + card.getValue(true)*float64(card.SerraCountFoil)
+		}
 	}
+
 	fmt.Printf("\nTotal Value: %s%.2f%s%s\n", Yellow, total, getCurrency(), Reset)
 
 }

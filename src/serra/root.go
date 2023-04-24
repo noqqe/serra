@@ -10,6 +10,7 @@ import (
 var Version = "unknown"
 
 var count int64
+var detail bool
 var limit float64
 var interactive bool
 var name string
