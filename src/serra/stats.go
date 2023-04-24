@@ -120,9 +120,9 @@ var statsCmd = &cobra.Command{
 			foil_value = 0
 		}
 		total_value := nf_value + foil_value
-		fmt.Printf("Total: %s%.2f %s%s\n", Pink, total_value, getCurrency(), Reset)
-		fmt.Printf("Normal: %s%.2f %s%s\n", Pink, nf_value, getCurrency(), Reset)
-		fmt.Printf("Foils: %s%.2f %s%s\n", Pink, foil_value, getCurrency(), Reset)
+		fmt.Printf("Total: %s%.2f%s%s\n", Pink, total_value, getCurrency(), Reset)
+		fmt.Printf("Normal: %s%.2f%s%s\n", Pink, nf_value, getCurrency(), Reset)
+		fmt.Printf("Foils: %s%.2f%s%s\n", Pink, foil_value, getCurrency(), Reset)
 		total, _ := totalcoll.storage_find_total()
 
 		fmt.Printf("History: \n")

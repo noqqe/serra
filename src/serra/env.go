@@ -18,9 +18,9 @@ func getMongoDBURI() string {
 func getCurrency() string {
 	switch os.Getenv("SERRA_CURRENCY") {
 	case "EUR":
-		return "EUR"
+		return "€"
 	case "USD":
-		return "USD"
+		return "$"
 	}
 	// default
 	LogMessage("Warning: You did not configure SERRA_CURRENCY. Assuming \"USD\"", "yellow")

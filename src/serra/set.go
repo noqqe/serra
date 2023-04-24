@@ -79,7 +79,7 @@ func show_set_list(sets []primitive.M) {
 		setobj, _ := find_set_by_code(setscoll, set["code"].(string))
 		fmt.Printf("* %s %s%s%s (%s%s%s)\n", set["release"].(string)[0:4], Purple, set["_id"], Reset, Cyan, set["code"], Reset)
 		fmt.Printf("  Cards: %s%d/%d%s Total: %.0f \n", Yellow, set["unique"], setobj.CardCount, Reset, set["count"])
-		fmt.Printf("  Value: %s%.2f %s%s\n", Pink, set["value"], getCurrency(), Reset)
+		fmt.Printf("  Value: %s%.2f%s%s\n", Pink, set["value"], getCurrency(), Reset)
 		fmt.Println()
 	}
 }
@@ -155,7 +155,7 @@ func ShowSet(setname string) error {
 		foil_value = 0
 	}
 	total_value := nf_value + foil_value
-	LogMessage(fmt.Sprintf("Total Value: %.2f %s", total_value, getCurrency()), "normal")
+	LogMessage(fmt.Sprintf("Total Value: %.2f%s", total_value, getCurrency()), "normal")
 	LogMessage(fmt.Sprintf("Released: %s", sets[0].ReleasedAt), "normal")
 	LogMessage(fmt.Sprintf("Mythics: %.0f", ri.Mythics), "normal")
 	LogMessage(fmt.Sprintf("Rares: %.0f", ri.Rares), "normal")
@@ -176,7 +176,7 @@ func ShowSet(setname string) error {
 
 	for i := 0; i < ccards; i++ {
 		card := cards[i]
-		fmt.Printf("* %s%s%s (%s/%s) %s%.2f %s%s\n", Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset)
+		fmt.Printf("* %s%s%s (%s/%s) %s%.2f%s%s\n", Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset)
 	}
 
 	return nil

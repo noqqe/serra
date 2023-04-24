@@ -90,7 +90,7 @@ func removeCards(cards []string, count int64) error {
 
 		if foil && c.SerraCountFoil == 1 && c.SerraCount == 0 || !foil && c.SerraCount == 1 && c.SerraCountFoil == 0 {
 			coll.storage_remove(bson.M{"_id": c.ID})
-			LogMessage(fmt.Sprintf("\"%s\" (%.2f %s) removed from the Collection.", c.Name, c.getValue(foil), getCurrency()), "green")
+			LogMessage(fmt.Sprintf("\"%s\" (%.2f%s) removed from the Collection.", c.Name, c.getValue(foil), getCurrency()), "green")
 		} else {
 			modify_count_of_card(coll, c, -1, foil)
 		}

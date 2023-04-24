@@ -127,10 +127,10 @@ func show_card_list(cards []Card) {
 
 	var total float64
 	for _, card := range cards {
-		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f %s%s", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset), "normal")
+		LogMessage(fmt.Sprintf("* %dx %s%s%s (%s/%s) %s%.2f%s%s", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset), "normal")
 		total = total + card.getValue(false)*float64(card.SerraCount) + card.getValue(true)*float64(card.SerraCountFoil)
 	}
-	fmt.Printf("\nTotal Value: %s%.2f %s%s\n", Yellow, total, getCurrency(), Reset)
+	fmt.Printf("\nTotal Value: %s%.2f%s%s\n", Yellow, total, getCurrency(), Reset)
 
 }
 
@@ -141,9 +141,9 @@ func show_card_details(card *Card) error {
 	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
 
 	fmt.Printf("\n%sCurrent Value%s\n", Green, Reset)
-	fmt.Printf("* Normal: %dx %s%.2f %s%s\n", card.SerraCount, Yellow, card.getValue(false), getCurrency(), Reset)
+	fmt.Printf("* Normal: %dx %s%.2f%s%s\n", card.SerraCount, Yellow, card.getValue(false), getCurrency(), Reset)
 	if card.SerraCountFoil > 0 {
-		fmt.Printf("* Foil: %dx %s%.2f %s%s\n", card.SerraCountFoil, Yellow, card.getValue(true), getCurrency(), Reset)
+		fmt.Printf("* Foil: %dx %s%.2f%s%s\n", card.SerraCountFoil, Yellow, card.getValue(true), getCurrency(), Reset)
 	}
 
 	fmt.Printf("\n%sValue History%s\n", Green, Reset)
