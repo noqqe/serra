@@ -170,12 +170,12 @@ func Gains(limit float64, sort int) error {
 	fmt.Printf("%sCards%s\n", Purple, Reset)
 	// print each card
 	for _, e := range raise {
-		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f %s%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
+		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f%s%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
 	}
 
 	fmt.Printf("\n%sSets%s\n", Purple, Reset)
 	for _, e := range sraise {
-		fmt.Printf("%s%+.0f%%%s %s %s(%s)%s (%.2f->%s%.2f %s%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["code"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
+		fmt.Printf("%s%+.0f%%%s %s %s(%s)%s (%.2f->%s%.2f%s%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["code"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
 	}
 	return nil
 
