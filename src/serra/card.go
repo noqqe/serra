@@ -16,7 +16,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
 	cardCmd.Flags().StringVarP(&oracle, "oracle", "o", "", "Contains string in card text")
 	cardCmd.Flags().StringVarP(&cardType, "type", "t", "", "Contains string in card type line")
-	cardCmd.Flags().BoolVarP(&detail, "detail", "d", true, "Show details for cards (url)")
+	cardCmd.Flags().BoolVarP(&detail, "detail", "d", false, "Show details for cards (url)")
 	rootCmd.AddCommand(cardCmd)
 }
 
