@@ -156,6 +156,14 @@ one> 3
 1x "Apostle of Invasion" (uncommon, 0.03 USD) added to Collection.
 ```
 
+It also supports ranges of cards 
+```
+dmr> 1-3
+1x "Auramancer" (common, 0.02$) added to Collection.
+1x "Battle Screech" (uncommon, 0.09$) added to Collection.
+1x "Cleric of the Forward Order" (common, 0.01$) added to Collection.
+```
+
 Its basically typing 2-3 digit numbers and hitting enter. I was way faster
 with this approach then Smartphone scanners.
 
