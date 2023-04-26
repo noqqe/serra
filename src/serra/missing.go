@@ -73,7 +73,7 @@ cards you dont own (yet) :)`,
 		})
 
 		for _, card := range missingCards {
-			fmt.Printf("[%s] %.02f %s\t%s (%s)\n", card.CollectorNumber, card.getValue(false), getCurrency(), card.Name, card.SetName)
+			fmt.Printf("%s%s/%s%s %s%.02f%s%s\t%s (%s)\n", Purple, card.Set, card.CollectorNumber, Reset, Green, card.getValue(false), Reset, getCurrency(), card.Name, card.SetName)
 		}
 
 		return nil
