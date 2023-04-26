@@ -20,12 +20,12 @@ var statsCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		client := storage_connect()
+		client := storageConnect()
 		coll := &Collection{client.Database("serra").Collection("cards")}
 		totalcoll := &Collection{client.Database("serra").Collection("total")}
-		defer storage_disconnect(client)
+		defer storageDisconnect(client)
 
-		sets, _ := coll.storage_aggregate(mongo.Pipeline{
+		sets, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$match", bson.D{
 					{"coloridentity", bson.D{{"$size", 1}}}}}},
@@ -43,10 +43,10 @@ var statsCmd = &cobra.Command{
 		for _, set := range sets {
 			x, _ := set["_id"].(primitive.A)
 			s := []interface{}(x)
-			fmt.Printf("%s: %s%.0f%s\n", convert_mana_symbols(s), Purple, set["count"], Reset)
+			fmt.Printf("%s: %s%.0f%s\n", convertManaSymbols(s), Purple, set["count"], Reset)
 		}
 
-		stats, _ := coll.storage_aggregate(mongo.Pipeline{
+		stats, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$group", bson.D{
 					{"_id", nil},
@@ -73,7 +73,7 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("Foil: %s%d%s\n", Purple, stats[0]["count_foil"], Reset)
 		fmt.Printf("Etched: %s%d%s\n", Purple, stats[0]["count_etched"], Reset)
 
-		reserved, _ := coll.storage_aggregate(mongo.Pipeline{
+		reserved, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$match", bson.D{
 					{"reserved", true}}}},
@@ -90,7 +90,7 @@ var statsCmd = &cobra.Command{
 		}
 		fmt.Printf("Reserved List: %s%d%s\n", Yellow, count_reserved, Reset)
 
-		rar, _ := coll.storage_aggregate(mongo.Pipeline{
+		rar, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$group", bson.D{
 					{"_id", "$rarity"},
@@ -101,7 +101,7 @@ var statsCmd = &cobra.Command{
 					{"_id", 1},
 				}}},
 		})
-		ri := convert_rarities(rar)
+		ri := convertRarities(rar)
 		fmt.Printf("\n%sRarity%s\n", Green, Reset)
 		fmt.Printf("Mythics: %s%.0f%s\n", Pink, ri.Mythics, Reset)
 		fmt.Printf("Rares: %s%.0f%s\n", Pink, ri.Rares, Reset)
@@ -123,10 +123,10 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("Total: %s%.2f%s%s\n", Pink, total_value, getCurrency(), Reset)
 		fmt.Printf("Normal: %s%.2f%s%s\n", Pink, nf_value, getCurrency(), Reset)
 		fmt.Printf("Foils: %s%.2f%s%s\n", Pink, foil_value, getCurrency(), Reset)
-		total, _ := totalcoll.storage_find_total()
+		total, _ := totalcoll.storageFindTotal()
 
 		fmt.Printf("History: \n")
-		print_price_history(total.Value, "* ", true)
+		showPriceHistory(total.Value, "* ", true)
 		return nil
 	},
 }

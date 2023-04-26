@@ -31,7 +31,7 @@ otherwise you'll get a list of cards as a search result.`,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
 			card_list := Cards(rarity, set, sortby, name, oracle, cardType)
-			show_card_list(card_list, detail)
+			showCardList(card_list, detail)
 		} else {
 			ShowCard(cards)
 		}
@@ -40,9 +40,9 @@ otherwise you'll get a list of cards as a search result.`,
 }
 
 func ShowCard(cardids []string) {
-	client := storage_connect()
+	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	defer storage_disconnect(client)
+	defer storageDisconnect(client)
 
 	for _, v := range cardids {
 		if len(strings.Split(v, "/")) < 2 || strings.Split(v, "/")[1] == "" {
@@ -50,18 +50,18 @@ func ShowCard(cardids []string) {
 			continue
 		}
 
-		cards, _ := coll.storage_find(bson.D{{"set", strings.Split(v, "/")[0]}, {"collectornumber", strings.Split(v, "/")[1]}}, bson.D{{"name", 1}})
+		cards, _ := coll.storageFind(bson.D{{"set", strings.Split(v, "/")[0]}, {"collectornumber", strings.Split(v, "/")[1]}}, bson.D{{"name", 1}})
 
 		for _, card := range cards {
-			show_card_details(&card)
+			showCardDetails(&card)
 		}
 	}
 }
 
 func Cards(rarity, set, sortby, name, oracle, cardType string) []Card {
-	client := storage_connect()
+	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	defer storage_disconnect(client)
+	defer storageDisconnect(client)
 
 	filter := bson.D{}
 
@@ -108,7 +108,7 @@ func Cards(rarity, set, sortby, name, oracle, cardType string) []Card {
 		filter = append(filter, bson.E{"typeline", bson.D{{"$regex", ".*" + cardType + ".*"}, {"$options", "i"}}})
 	}
 
-	cards, _ := coll.storage_find(filter, sortStage)
+	cards, _ := coll.storageFind(filter, sortStage)
 
 	// This is needed because collectornumbers are strings (ie. "23a") but still we
 	// want it to be sorted numerically ... 1,2,3,10,11,100.
@@ -121,7 +121,7 @@ func Cards(rarity, set, sortby, name, oracle, cardType string) []Card {
 	return cards
 }
 
-func show_card_list(cards []Card, detail bool) {
+func showCardList(cards []Card, detail bool) {
 
 	var total float64
 	if detail {
@@ -140,7 +140,7 @@ func show_card_list(cards []Card, detail bool) {
 
 }
 
-func show_card_details(card *Card) error {
+func showCardDetails(card *Card) error {
 	fmt.Printf("%s%s%s (%s/%s)\n", Purple, card.Name, Reset, card.Set, card.CollectorNumber)
 	fmt.Printf("Added: %s\n", stringToTime(card.SerraCreated))
 	fmt.Printf("Rarity: %s\n", card.Rarity)
@@ -153,7 +153,7 @@ func show_card_details(card *Card) error {
 	}
 
 	fmt.Printf("\n%sValue History%s\n", Green, Reset)
-	print_price_history(card.SerraPrices, "* ", false)
+	showPriceHistory(card.SerraPrices, "* ", false)
 	fmt.Println()
 	return nil
 }

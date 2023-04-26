@@ -21,12 +21,12 @@ var missingCmd = &cobra.Command{
 cards you dont own (yet) :)`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, setname []string) error {
-		client := storage_connect()
+		client := storageConnect()
 		coll := &Collection{client.Database("serra").Collection("cards")}
-		defer storage_disconnect(client)
+		defer storageDisconnect(client)
 
 		// fetch all cards in set
-		cards, err := coll.storage_find(bson.D{{"set", setname[0]}}, bson.D{{"collectornumber", 1}})
+		cards, err := coll.storageFind(bson.D{{"set", setname[0]}}, bson.D{{"collectornumber", 1}})
 		if (err != nil) || len(cards) == 0 {
 			LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname[0]), "red")
 			return err
@@ -34,7 +34,7 @@ cards you dont own (yet) :)`,
 
 		// fetch set informations
 		setcoll := &Collection{client.Database("serra").Collection("sets")}
-		sets, _ := setcoll.storage_find_set(bson.D{{"code", setname[0]}}, bson.D{{"_id", 1}})
+		sets, _ := setcoll.storageFindSet(bson.D{{"code", setname[0]}}, bson.D{{"_id", 1}})
 		set := sets[0]
 
 		LogMessage(fmt.Sprintf("Missing cards in %s", sets[0].Name), "green")

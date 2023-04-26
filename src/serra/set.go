@@ -25,7 +25,7 @@ otherwise you'll get a list of sets as a search result.`,
 	RunE: func(cmd *cobra.Command, set []string) error {
 		if len(set) == 0 {
 			setList := Sets(sortby)
-			show_set_list(setList)
+			showSetList(setList)
 		} else {
 			ShowSet(set[0])
 		}
@@ -35,9 +35,9 @@ otherwise you'll get a list of sets as a search result.`,
 
 func Sets(sort string) []primitive.M {
 
-	client := storage_connect()
+	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	defer storage_disconnect(client)
+	defer storageDisconnect(client)
 
 	groupStage := bson.D{
 		{"$group", bson.D{
@@ -65,18 +65,18 @@ func Sets(sort string) []primitive.M {
 			}}}
 	}
 
-	sets, _ := coll.storage_aggregate(mongo.Pipeline{groupStage, sortStage})
+	sets, _ := coll.storageAggregate(mongo.Pipeline{groupStage, sortStage})
 	return sets
 
 }
 
-func show_set_list(sets []primitive.M) {
+func showSetList(sets []primitive.M) {
 
-	client := storage_connect()
+	client := storageConnect()
 	setscoll := &Collection{client.Database("serra").Collection("sets")}
 
 	for _, set := range sets {
-		setobj, _ := find_set_by_code(setscoll, set["code"].(string))
+		setobj, _ := findSetByCode(setscoll, set["code"].(string))
 		fmt.Printf("* %s %s%s%s (%s%s%s)\n", set["release"].(string)[0:4], Purple, set["_id"], Reset, Cyan, set["code"], Reset)
 		fmt.Printf("  Cards: %s%d/%d%s Total: %.0f \n", Yellow, set["unique"], setobj.CardCount, Reset, set["count"])
 		fmt.Printf("  Value: %s%.2f%s%s\n", Pink, set["value"], getCurrency(), Reset)
@@ -86,16 +86,16 @@ func show_set_list(sets []primitive.M) {
 
 func ShowSet(setname string) error {
 
-	client := storage_connect()
+	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	defer storage_disconnect(client)
+	defer storageDisconnect(client)
 
 	// fetch all cards in set ordered by currently used currency
 	cardSortCurrency := bson.D{{"prices.usd", -1}}
 	if getCurrency() == "EUR" {
 		cardSortCurrency = bson.D{{"prices.eur", -1}}
 	}
-	cards, err := coll.storage_find(bson.D{{"set", setname}}, cardSortCurrency)
+	cards, err := coll.storageFind(bson.D{{"set", setname}}, cardSortCurrency)
 	if (err != nil) || len(cards) == 0 {
 		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
 		return err
@@ -103,7 +103,7 @@ func ShowSet(setname string) error {
 
 	// fetch set informations
 	setcoll := &Collection{client.Database("serra").Collection("sets")}
-	sets, _ := setcoll.storage_find_set(bson.D{{"code", setname}}, bson.D{{"_id", 1}})
+	sets, _ := setcoll.storageFindSet(bson.D{{"code", setname}}, bson.D{{"_id", 1}})
 
 	// set values
 	matchStage := bson.D{
@@ -119,7 +119,7 @@ func ShowSet(setname string) error {
 			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
 		}},
 	}
-	stats, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage})
+	stats, _ := coll.storageAggregate(mongo.Pipeline{matchStage, groupStage})
 
 	// set rarities
 	matchStage = bson.D{
@@ -137,9 +137,9 @@ func ShowSet(setname string) error {
 		{"$sort", bson.D{
 			{"_id", 1},
 		}}}
-	rar, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, groupStage, sortStage})
+	rar, _ := coll.storageAggregate(mongo.Pipeline{matchStage, groupStage, sortStage})
 
-	ri := convert_rarities(rar)
+	ri := convertRarities(rar)
 
 	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
 	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
@@ -162,7 +162,7 @@ func ShowSet(setname string) error {
 	LogMessage(fmt.Sprintf("Uncommons: %.0f", ri.Uncommons), "normal")
 	LogMessage(fmt.Sprintf("Commons: %.0f", ri.Commons), "normal")
 	fmt.Printf("\n%sPrice History:%s\n", Pink, Reset)
-	print_price_history(sets[0].SerraPrices, "* ", true)
+	showPriceHistory(sets[0].SerraPrices, "* ", true)
 
 	fmt.Printf("\n%sMost valuable cards%s\n", Pink, Reset)
 

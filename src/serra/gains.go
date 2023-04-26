@@ -43,10 +43,10 @@ var flopsCmd = &cobra.Command{
 
 func Gains(limit float64, sort int) error {
 
-	client := storage_connect()
+	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	setcoll := &Collection{client.Database("serra").Collection("sets")}
-	defer storage_disconnect(client)
+	defer storageDisconnect(client)
 
 	var old int
 	if sinceBeginning {
@@ -109,7 +109,7 @@ func Gains(limit float64, sort int) error {
 			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 20}},
 	}
-	raise, _ := coll.storage_aggregate(raise_pipeline)
+	raise, _ := coll.storageAggregate(raise_pipeline)
 
 	sraise_pipeline := mongo.Pipeline{
 		bson.D{{"$project",
@@ -157,7 +157,7 @@ func Gains(limit float64, sort int) error {
 			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 10}},
 	}
-	sraise, _ := setcoll.storage_aggregate(sraise_pipeline)
+	sraise, _ := setcoll.storageAggregate(sraise_pipeline)
 
 	// percentage coloring
 	var p_color string

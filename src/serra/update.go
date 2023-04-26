@@ -24,8 +24,8 @@ var updateCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		client := storage_connect()
-		defer storage_disconnect(client)
+		client := storageConnect()
+		defer storageDisconnect(client)
 
 		// update sets
 		setscoll := &Collection{client.Database("serra").Collection("sets")}
@@ -55,9 +55,9 @@ var updateCmd = &cobra.Command{
 			// When downloading new sets, PriceList needs to be initialized
 			// This query silently fails if set was already downloaded. Not nice but ok for now.
 			set.SerraPrices = []PriceEntry{}
-			setscoll.storage_add_set(&set)
+			setscoll.storageAddSet(&set)
 
-			cards, _ := coll.storage_find(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}})
+			cards, _ := coll.storageFind(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}})
 
 			// if no cards in collection for this set, skip it
 			if len(cards) == 0 {
@@ -91,7 +91,7 @@ var updateCmd = &cobra.Command{
 					"$set":  bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updated_card.Prices, "collectornumber": updated_card.CollectorNumber},
 					"$push": bson.M{"serra_prices": updated_card.Prices},
 				}
-				coll.storage_update(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
+				coll.storageUpdate(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
 			}
 			fmt.Println()
 
@@ -99,7 +99,7 @@ var updateCmd = &cobra.Command{
 
 			// calculate value summary
 			matchStage := bson.D{{"$match", bson.D{{"set", set.Code}}}}
-			setvalue, _ := coll.storage_aggregate(mongo.Pipeline{matchStage, projectStage, groupStage})
+			setvalue, _ := coll.storageAggregate(mongo.Pipeline{matchStage, projectStage, groupStage})
 
 			p := PriceEntry{}
 			s := setvalue[0]
@@ -115,10 +115,10 @@ var updateCmd = &cobra.Command{
 				"$push": bson.M{"serra_prices": p},
 			}
 			// fmt.Printf("Set %s%s%s (%s) is now worth %s%.02f EUR%s\n", Pink, set.Name, Reset, set.Code, Yellow, setvalue[0]["value"], Reset)
-			setscoll.storage_update(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
+			setscoll.storageUpdate(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
 		}
 
-		totalvalue, _ := coll.storage_aggregate(mongo.Pipeline{projectStage, groupStage})
+		totalvalue, _ := coll.storageAggregate(mongo.Pipeline{projectStage, groupStage})
 
 		t := PriceEntry{}
 		t.Date = primitive.NewDateTimeFromTime(time.Now())
@@ -130,7 +130,7 @@ var updateCmd = &cobra.Command{
 		tmpCard.Prices = t
 
 		fmt.Printf("\n%sUpdating total value of collection to: %s%.02f%s%s\n", Green, Yellow, tmpCard.getValue(false)+tmpCard.getValue(true), getCurrency(), Reset)
-		totalcoll.storage_add_total(t)
+		totalcoll.storageAddTotal(t)
 
 		return nil
 	},

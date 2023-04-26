@@ -65,14 +65,14 @@ func removeCardsInteractive(unique bool, set string) {
 
 func removeCards(cards []string, count int64) error {
 
-	client := storage_connect()
+	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	defer storage_disconnect(client)
+	defer storageDisconnect(client)
 
 	// Loop over different cards
 	for _, card := range cards {
 		// Fetch card from scryfall
-		c, err := find_card_by_setcollectornumber(coll, strings.Split(card, "/")[0], strings.Split(card, "/")[1])
+		c, err := findCardbyCollectornumber(coll, strings.Split(card, "/")[0], strings.Split(card, "/")[1])
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue
@@ -89,10 +89,10 @@ func removeCards(cards []string, count int64) error {
 		}
 
 		if foil && c.SerraCountFoil == 1 && c.SerraCount == 0 || !foil && c.SerraCount == 1 && c.SerraCountFoil == 0 {
-			coll.storage_remove(bson.M{"_id": c.ID})
+			coll.storageRemove(bson.M{"_id": c.ID})
 			LogMessage(fmt.Sprintf("\"%s\" (%.2f%s) removed from the Collection.", c.Name, c.getValue(foil), getCurrency()), "green")
 		} else {
-			modify_count_of_card(coll, c, -1, foil)
+			modifyCardCount(coll, c, -1, foil)
 		}
 
 	}

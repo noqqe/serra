@@ -82,14 +82,14 @@ func addCardsInteractive(unique bool, set string) {
 }
 
 func addCards(cards []string, unique bool, count int64) error {
-	client := storage_connect()
+	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
-	defer storage_disconnect(client)
+	defer storageDisconnect(client)
 
 	// Loop over different cards
 	for _, card := range cards {
 		// Check if card is already in collection
-		co, _ := coll.storage_find(bson.D{{"set", strings.Split(card, "/")[0]}, {"collectornumber", strings.Split(card, "/")[1]}}, bson.D{})
+		co, _ := coll.storageFind(bson.D{{"set", strings.Split(card, "/")[0]}, {"collectornumber", strings.Split(card, "/")[1]}}, bson.D{})
 
 		if len(co) >= 1 {
 			c := co[0]
@@ -99,7 +99,7 @@ func addCards(cards []string, unique bool, count int64) error {
 				continue
 			}
 
-			modify_count_of_card(coll, &c, count, foil)
+			modifyCardCount(coll, &c, count, foil)
 
 			var total int64 = 0
 			if foil {
@@ -128,7 +128,7 @@ func addCards(cards []string, unique bool, count int64) error {
 				c.SerraCount = count
 				total = c.SerraCount
 			}
-			err = coll.storage_add(c)
+			err = coll.storageAdd(c)
 			if err != nil {
 				LogMessage(fmt.Sprintf("%v", err), "red")
 				continue
@@ -138,6 +138,6 @@ func addCards(cards []string, unique bool, count int64) error {
 			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f%s) added to Collection.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "green")
 		}
 	}
-	storage_disconnect(client)
+	storageDisconnect(client)
 	return nil
 }

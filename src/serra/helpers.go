@@ -16,12 +16,12 @@ type Rarities struct {
 	Rares, Uncommons, Commons, Mythics float64
 }
 
-func modify_count_of_card(coll *Collection, c *Card, amount int64, foil bool) error {
+func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 
 	// find already existing card
 	sort := bson.D{{"_id", 1}}
 	search_filter := bson.D{{"_id", c.ID}}
-	stored_cards, err := coll.storage_find(search_filter, sort)
+	stored_cards, err := coll.storageFind(search_filter, sort)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func modify_count_of_card(coll *Collection, c *Card, amount int64, foil bool) er
 		}
 	}
 
-	coll.storage_update(update_filter, update)
+	coll.storageUpdate(update_filter, update)
 
 	var total int64
 	if foil {
@@ -52,11 +52,11 @@ func modify_count_of_card(coll *Collection, c *Card, amount int64, foil bool) er
 	return nil
 }
 
-func find_card_by_setcollectornumber(coll *Collection, setcode string, collectornumber string) (*Card, error) {
+func findCardbyCollectornumber(coll *Collection, setcode string, collectornumber string) (*Card, error) {
 
 	sort := bson.D{{"_id", 1}}
 	search_filter := bson.D{{"set", setcode}, {"collectornumber", collectornumber}}
-	stored_cards, err := coll.storage_find(search_filter, sort)
+	stored_cards, err := coll.storageFind(search_filter, sort)
 	if err != nil {
 		return &Card{}, err
 	}
@@ -91,9 +91,9 @@ func missing(a, b []string) []string {
 	return diffs
 }
 
-func find_set_by_code(coll *Collection, setcode string) (*Set, error) {
+func findSetByCode(coll *Collection, setcode string) (*Set, error) {
 
-	stored_sets, err := coll.storage_find_set(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
+	stored_sets, err := coll.storageFindSet(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
 	if err != nil {
 		return &Set{}, err
 	}
@@ -105,7 +105,7 @@ func find_set_by_code(coll *Collection, setcode string) (*Set, error) {
 	return &stored_sets[0], nil
 }
 
-func convert_mana_symbols(sym []interface{}) string {
+func convertManaSymbols(sym []interface{}) string {
 	var mana string
 
 	if len(sym) == 0 {
@@ -136,7 +136,7 @@ func convert_mana_symbols(sym []interface{}) string {
 
 }
 
-func convert_rarities(rar []primitive.M) Rarities {
+func convertRarities(rar []primitive.M) Rarities {
 
 	// this is maybe the ugliest way someone could choose to verify, if a rarity type is missing
 	// [
@@ -163,7 +163,7 @@ func convert_rarities(rar []primitive.M) Rarities {
 
 }
 
-func print_price_history(prices []PriceEntry, prefix string, total bool) {
+func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 
 	var before float64
 	for _, e := range prices {

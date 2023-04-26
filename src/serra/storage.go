@@ -45,7 +45,7 @@ func getCurrencyField(foil bool) string {
 	}
 }
 
-func storage_connect() *mongo.Client {
+func storageConnect() *mongo.Client {
 
 	uri := getMongoDBURI()
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
@@ -58,7 +58,7 @@ func storage_connect() *mongo.Client {
 
 }
 
-func (coll Collection) storage_add(card *Card) error {
+func (coll Collection) storageAdd(card *Card) error {
 
 	card.SerraUpdated = primitive.NewDateTimeFromTime(time.Now())
 
@@ -70,7 +70,7 @@ func (coll Collection) storage_add(card *Card) error {
 
 }
 
-func (coll Collection) storage_add_set(set *Set) (*mongo.InsertOneResult, error) {
+func (coll Collection) storageAddSet(set *Set) (*mongo.InsertOneResult, error) {
 
 	id, err := coll.InsertOne(context.TODO(), set)
 	if err != nil {
@@ -80,7 +80,7 @@ func (coll Collection) storage_add_set(set *Set) (*mongo.InsertOneResult, error)
 
 }
 
-func (coll Collection) storage_add_total(p PriceEntry) error {
+func (coll Collection) storageAddTotal(p PriceEntry) error {
 
 	// create total object if not exists...
 	coll.InsertOne(context.TODO(), Total{ID: "1", Value: []PriceEntry{}})
@@ -101,7 +101,7 @@ func (coll Collection) storage_add_total(p PriceEntry) error {
 	return nil
 }
 
-func (coll Collection) storage_find(filter, sort bson.D) ([]Card, error) {
+func (coll Collection) storageFind(filter, sort bson.D) ([]Card, error) {
 
 	opts := options.Find().SetSort(sort)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
@@ -119,7 +119,7 @@ func (coll Collection) storage_find(filter, sort bson.D) ([]Card, error) {
 
 }
 
-func (coll Collection) storage_find_set(filter, sort bson.D) ([]Set, error) {
+func (coll Collection) storageFindSet(filter, sort bson.D) ([]Set, error) {
 
 	opts := options.Find().SetSort(sort)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
@@ -137,7 +137,7 @@ func (coll Collection) storage_find_set(filter, sort bson.D) ([]Set, error) {
 
 }
 
-func (coll Collection) storage_find_total() (Total, error) {
+func (coll Collection) storageFindTotal() (Total, error) {
 
 	var total Total
 	err := coll.FindOne(context.TODO(), bson.D{{"_id", "1"}}).Decode(&total)
@@ -150,7 +150,7 @@ func (coll Collection) storage_find_total() (Total, error) {
 
 }
 
-func (coll Collection) storage_remove(filter bson.M) error {
+func (coll Collection) storageRemove(filter bson.M) error {
 
 	_, err := coll.DeleteOne(context.TODO(), filter)
 	if err != nil {
@@ -161,7 +161,7 @@ func (coll Collection) storage_remove(filter bson.M) error {
 
 }
 
-func (coll Collection) storage_aggregate(pipeline mongo.Pipeline) ([]primitive.M, error) {
+func (coll Collection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M, error) {
 
 	opts := options.Aggregate()
 	cursor, err := coll.Aggregate(
@@ -184,7 +184,7 @@ func (coll Collection) storage_aggregate(pipeline mongo.Pipeline) ([]primitive.M
 
 }
 
-func (coll Collection) storage_update(filter, update bson.M) error {
+func (coll Collection) storageUpdate(filter, update bson.M) error {
 
 	// Call the driver's UpdateOne() method and pass filter and update to it
 	_, err := coll.UpdateOne(
@@ -200,7 +200,7 @@ func (coll Collection) storage_update(filter, update bson.M) error {
 	return nil
 }
 
-func storage_disconnect(client *mongo.Client) error {
+func storageDisconnect(client *mongo.Client) error {
 	if err := client.Disconnect(context.TODO()); err != nil {
 		return err
 	}
