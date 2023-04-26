@@ -49,7 +49,7 @@ var updateCmd = &cobra.Command{
 				{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
 			}}}
 
-		sets, _ := fetch_sets()
+		sets, _ := fetchSets()
 		for _, set := range sets.Data {
 
 			// When downloading new sets, PriceList needs to be initialized

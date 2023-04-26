@@ -211,7 +211,7 @@ func fetchCard(path string) (*Card, error) {
 	return val, nil
 }
 
-func fetch_sets() (*SetList, error) {
+func fetchSets() (*SetList, error) {
 	// TODO better URL Building...
 	resp, err := http.Get("https://api.scryfall.com/sets")
 	if err != nil {
