@@ -75,7 +75,7 @@ func removeCards(cards []string, count int64) error {
 		setName := strings.Split(card, "/")[0]
 
 		// Fetch card from scryfall
-		c, err := findCardbyCollectornumber(coll, setName, collectorNumber)
+		c, err := findCardByCollectorNumber(coll, setName, collectorNumber)
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue

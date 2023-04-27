@@ -52,20 +52,19 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	return nil
 }
 
-func findCardbyCollectornumber(coll *Collection, setcode string, collectornumber string) (*Card, error) {
-
+func findCardByCollectorNumber(coll *Collection, setCode string, collectorNumber string) (*Card, error) {
 	sort := bson.D{{"_id", 1}}
-	search_filter := bson.D{{"set", setcode}, {"collectornumber", collectornumber}}
-	stored_cards, err := coll.storageFind(search_filter, sort)
+	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
+	storedCards, err := coll.storageFind(searchFilter, sort)
 	if err != nil {
 		return &Card{}, err
 	}
 
-	if len(stored_cards) < 1 {
+	if len(storedCards) < 1 {
 		return &Card{}, errors.New("Card not found")
 	}
 
-	return &stored_cards[0], nil
+	return &storedCards[0], nil
 }
 
 func stringToTime(s primitive.DateTime) string {
@@ -92,17 +91,16 @@ func missing(a, b []string) []string {
 }
 
 func findSetByCode(coll *Collection, setcode string) (*Set, error) {
-
-	stored_sets, err := coll.storageFindSet(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
+	storedSets, err := coll.storageFindSet(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
 	if err != nil {
 		return &Set{}, err
 	}
 
-	if len(stored_sets) < 1 {
+	if len(storedSets) < 1 {
 		return &Set{}, errors.New("Set not found")
 	}
 
-	return &stored_sets[0], nil
+	return &storedSets[0], nil
 }
 
 func convertManaSymbols(sym []interface{}) string {
