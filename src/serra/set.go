@@ -117,6 +117,7 @@ func ShowSet(setname string) error {
 			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(false), "$serra_count"}}}}}},
 			{"value_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(true), "$serra_count_foil"}}}}}},
 			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+			{"count_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count_foil"}}}}}},
 		}},
 	}
 	stats, _ := coll.storageAggregate(mongo.Pipeline{matchStage, groupStage})
@@ -141,9 +142,12 @@ func ShowSet(setname string) error {
 
 	ri := convertRarities(rar)
 
-	LogMessage(fmt.Sprintf("%s", sets[0].Name), "green")
-	LogMessage(fmt.Sprintf("Set Cards: %d/%d", len(cards), sets[0].CardCount), "normal")
-	LogMessage(fmt.Sprintf("Total Cards: %.0f", stats[0]["count"]), "normal")
+	LogMessage(sets[0].Name, "green")
+	fmt.Printf("Released: %s\n", sets[0].ReleasedAt)
+	fmt.Printf("Set Cards: %d/%d\n", len(cards), sets[0].CardCount)
+	fmt.Printf("Total Cards: %.0f\n", stats[0]["count"])
+	fmt.Printf("Foil Cards: %.0f\n", stats[0]["count_foil"])
+
 	nf_value, err := getFloat64(stats[0]["value"])
 	if err != nil {
 		LogMessage(fmt.Sprintf("Error: %v", err), "red")
@@ -155,12 +159,21 @@ func ShowSet(setname string) error {
 		foil_value = 0
 	}
 	total_value := nf_value + foil_value
-	LogMessage(fmt.Sprintf("Total Value: %.2f%s", total_value, getCurrency()), "normal")
-	LogMessage(fmt.Sprintf("Released: %s", sets[0].ReleasedAt), "normal")
-	LogMessage(fmt.Sprintf("Mythics: %.0f", ri.Mythics), "normal")
-	LogMessage(fmt.Sprintf("Rares: %.0f", ri.Rares), "normal")
-	LogMessage(fmt.Sprintf("Uncommons: %.0f", ri.Uncommons), "normal")
-	LogMessage(fmt.Sprintf("Commons: %.0f", ri.Commons), "normal")
+
+	nf_count, _ := getFloat64(stats[0]["count"])
+	foil_count, _ := getFloat64(stats[0]["count_foil"])
+
+	fmt.Printf("\n%sCurrent Value%s\n", Purple, Reset)
+	fmt.Printf("Total: %.0fx %s%.2f%s%s\n", nf_count+foil_count, Yellow, total_value, getCurrency(), Reset)
+	fmt.Printf("Normal: %.0fx %s%.2f%s%s\n", stats[0]["count"], Yellow, nf_value, getCurrency(), Reset)
+	fmt.Printf("Foil: %.0fx %s%.2f%s%s\n", stats[0]["count_foil"], Yellow, foil_value, getCurrency(), Reset)
+
+	fmt.Printf("\n%sRarities%s\n", Purple, Reset)
+	fmt.Printf("Mythics: %.0f\n", ri.Mythics)
+	fmt.Printf("Rares: %.0f\n", ri.Rares)
+	fmt.Printf("Uncommons: %.0f\n", ri.Uncommons)
+	fmt.Printf("Commons: %.0f\n", ri.Commons)
+
 	fmt.Printf("\n%sPrice History:%s\n", Pink, Reset)
 	showPriceHistory(sets[0].SerraPrices, "* ", true)
 
