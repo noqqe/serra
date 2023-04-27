@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -169,20 +168,15 @@ type Set struct {
 	URI          string             `json:"uri"`
 }
 
-func fetchCard(path string) (*Card, error) {
-	if !strings.Contains(path, "/") {
-		return &Card{}, fmt.Errorf("Card must follow format <set>/<number>, for example: ath/15")
-	}
-
-	// TODO better URL Building...
-	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/", path))
+func fetchCard(setName, collectorNumber string) (*Card, error) {
+	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/%s/", setName, collectorNumber))
 	if err != nil {
 		log.Fatalln(err)
 		return &Card{}, err
 	}
 
 	if resp.StatusCode != 200 {
-		return &Card{}, fmt.Errorf("Card %s not found", path)
+		return &Card{}, fmt.Errorf("Card %s/%s not found", setName, collectorNumber)
 	}
 
 	//We Read the response body on the line below.

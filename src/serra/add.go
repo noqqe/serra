@@ -88,8 +88,16 @@ func addCards(cards []string, unique bool, count int64) error {
 
 	// Loop over different cards
 	for _, card := range cards {
+		// Extract collector number and set name from card input & trim any leading 0 from collector number
+		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
+		setName := strings.Split(card, "/")[0]
+
 		// Check if card is already in collection
-		co, _ := coll.storageFind(bson.D{{"set", strings.Split(card, "/")[0]}, {"collectornumber", strings.Split(card, "/")[1]}}, bson.D{})
+		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{})
+		if err != nil {
+			LogMessage(fmt.Sprintf("%v", err), "red")
+			continue
+		}
 
 		if len(co) >= 1 {
 			c := co[0]
@@ -113,7 +121,7 @@ func addCards(cards []string, unique bool, count int64) error {
 			// If card is not already in collection, fetching from scyfall
 		} else {
 			// Fetch card from scryfall
-			c, err := fetchCard(card)
+			c, err := fetchCard(setName, collectorNumber)
 			if err != nil {
 				LogMessage(fmt.Sprintf("%v", err), "red")
 				continue

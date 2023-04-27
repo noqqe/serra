@@ -20,44 +20,46 @@ var missingCmd = &cobra.Command{
 	Long: `In case you are a set collector, you can generate a list of
 cards you dont own (yet) :)`,
 	SilenceErrors: true,
-	RunE: func(cmd *cobra.Command, setname []string) error {
+	RunE: func(cmd *cobra.Command, setName []string) error {
 		client := storageConnect()
 		coll := &Collection{client.Database("serra").Collection("cards")}
 		defer storageDisconnect(client)
 
 		// fetch all cards in set
-		cards, err := coll.storageFind(bson.D{{"set", setname[0]}}, bson.D{{"collectornumber", 1}})
+		cards, err := coll.storageFind(bson.D{{"set", setName[0]}}, bson.D{{"collectornumber", 1}})
 		if (err != nil) || len(cards) == 0 {
-			LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname[0]), "red")
+			LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setName[0]), "red")
 			return err
 		}
 
 		// fetch set informations
 		setcoll := &Collection{client.Database("serra").Collection("sets")}
-		sets, _ := setcoll.storageFindSet(bson.D{{"code", setname[0]}}, bson.D{{"_id", 1}})
+		sets, _ := setcoll.storageFindSet(bson.D{{"code", setName[0]}}, bson.D{{"_id", 1}})
 		set := sets[0]
 
 		LogMessage(fmt.Sprintf("Missing cards in %s", sets[0].Name), "green")
 
 		// generate set with all setnumbers
-		var complete_set []string
-		var i int64
+		var (
+			completeSet []string
+			i           int64
+		)
 		for i = 1; i <= set.CardCount; i++ {
-			complete_set = append(complete_set, strconv.FormatInt(i, 10))
+			completeSet = append(completeSet, strconv.FormatInt(i, 10))
 		}
 
 		// iterate over all cards in collection
-		var in_collection []string
+		var inCollection []string
 		for _, c := range cards {
-			in_collection = append(in_collection, c.CollectorNumber)
+			inCollection = append(inCollection, c.CollectorNumber)
 		}
 
-		misses := missing(in_collection, complete_set)
+		misses := missing(inCollection, completeSet)
 
 		// Fetch all missing cards
 		missingCards := []*Card{}
 		for _, m := range misses {
-			card, err := fetchCard(fmt.Sprintf("%s/%s", setname[0], m))
+			card, err := fetchCard(setName[0], m)
 			if err != nil {
 				continue
 			}

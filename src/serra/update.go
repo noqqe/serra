@@ -77,17 +77,17 @@ var updateCmd = &cobra.Command{
 			)
 			for _, card := range cards {
 				bar.Add(1)
-				updated_card, err := fetchCard(fmt.Sprintf("%s/%s", card.Set, card.CollectorNumber))
+				updatedCard, err := fetchCard(card.Set, card.CollectorNumber)
 				if err != nil {
 					LogMessage(fmt.Sprintf("%v", err), "red")
 					continue
 				}
 
-				updated_card.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
+				updatedCard.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
 
 				update := bson.M{
-					"$set":  bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updated_card.Prices, "collectornumber": updated_card.CollectorNumber},
-					"$push": bson.M{"serra_prices": updated_card.Prices},
+					"$set":  bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updatedCard.Prices, "collectornumber": updatedCard.CollectorNumber},
+					"$push": bson.M{"serra_prices": updatedCard.Prices},
 				}
 				coll.storageUpdate(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
 			}
@@ -97,10 +97,10 @@ var updateCmd = &cobra.Command{
 
 			// calculate value summary
 			matchStage := bson.D{{"$match", bson.D{{"set", set.Code}}}}
-			setvalue, _ := coll.storageAggregate(mongo.Pipeline{matchStage, projectStage, groupStage})
+			setValue, _ := coll.storageAggregate(mongo.Pipeline{matchStage, projectStage, groupStage})
 
 			p := PriceEntry{}
-			s := setvalue[0]
+			s := setValue[0]
 
 			p.Date = primitive.NewDateTimeFromTime(time.Now())
 
@@ -108,19 +108,19 @@ var updateCmd = &cobra.Command{
 			mapstructure.Decode(s, &p)
 
 			// do the update
-			set_update := bson.M{
+			setUpdate := bson.M{
 				"$set":  bson.M{"serra_updated": p.Date},
 				"$push": bson.M{"serra_prices": p},
 			}
 			// fmt.Printf("Set %s%s%s (%s) is now worth %s%.02f EUR%s\n", Pink, set.Name, Reset, set.Code, Yellow, setvalue[0]["value"], Reset)
-			setscoll.storageUpdate(bson.M{"code": bson.M{"$eq": set.Code}}, set_update)
+			setscoll.storageUpdate(bson.M{"code": bson.M{"$eq": set.Code}}, setUpdate)
 		}
 
-		totalvalue, _ := coll.storageAggregate(mongo.Pipeline{projectStage, groupStage})
+		totalValue, _ := coll.storageAggregate(mongo.Pipeline{projectStage, groupStage})
 
 		t := PriceEntry{}
 		t.Date = primitive.NewDateTimeFromTime(time.Now())
-		mapstructure.Decode(totalvalue[0], &t)
+		mapstructure.Decode(totalValue[0], &t)
 
 		// This is here to be able to fetch currency from
 		// constructed new priceentry
