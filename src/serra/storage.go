@@ -46,8 +46,8 @@ func getCurrencyField(foil bool) string {
 }
 
 func storageConnect() *mongo.Client {
-
 	uri := getMongoDBURI()
+
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
 		LogMessage(fmt.Sprintf("Could not connect to mongodb at %s", uri), "red")
@@ -102,11 +102,10 @@ func (coll Collection) storageAddTotal(p PriceEntry) error {
 }
 
 func (coll Collection) storageFind(filter, sort bson.D) ([]Card, error) {
-
 	opts := options.Find().SetSort(sort)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
-		LogMessage("Could not query data due to connection errors to database", "red")
+		LogMessage(fmt.Sprintf("Could not query data due to connection errors to database: %s", err.Error()), "red")
 		os.Exit(1)
 	}
 
@@ -120,11 +119,11 @@ func (coll Collection) storageFind(filter, sort bson.D) ([]Card, error) {
 }
 
 func (coll Collection) storageFindSet(filter, sort bson.D) ([]Set, error) {
-
 	opts := options.Find().SetSort(sort)
+
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
-		LogMessage("Could not query set data due to connection errors to database", "red")
+		LogMessage(fmt.Sprintf("Could not query set data due to connection errors to database: %s", err.Error()), "red")
 		os.Exit(1)
 	}
 
@@ -133,44 +132,41 @@ func (coll Collection) storageFindSet(filter, sort bson.D) ([]Set, error) {
 		log.Fatal(err)
 		return []Set{}, err
 	}
-	return results, nil
 
+	return results, nil
 }
 
 func (coll Collection) storageFindTotal() (Total, error) {
-
 	var total Total
-	err := coll.FindOne(context.TODO(), bson.D{{"_id", "1"}}).Decode(&total)
 
+	err := coll.FindOne(context.TODO(), bson.D{{"_id", "1"}}).Decode(&total)
 	if err != nil {
-		LogMessage("Could not query total data due to connection errors to database", "red")
+		LogMessage(fmt.Sprintf("Could not query total data due to connection errors to database: %s", err.Error()), "red")
 		os.Exit(1)
 	}
-	return total, nil
 
+	return total, nil
 }
 
 func (coll Collection) storageRemove(filter bson.M) error {
-
 	_, err := coll.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		LogMessage("Could remove card data due to connection errors to database", "red")
+		LogMessage(fmt.Sprintf("Could remove card data due to connection errors to database: %s", err.Error()), "red")
 		os.Exit(1)
 	}
-	return nil
 
+	return nil
 }
 
 func (coll Collection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M, error) {
-
 	opts := options.Aggregate()
+
 	cursor, err := coll.Aggregate(
 		context.TODO(),
 		pipeline,
 		opts)
 	if err != nil {
-		LogMessage(fmt.Sprintf("%v", err), "red")
-		LogMessage("Could not aggregate data due to connection errors to database", "red")
+		LogMessage(fmt.Sprintf("Could not aggregate data due to connection errors to database: %s", err.Error()), "red")
 		os.Exit(1)
 	}
 
@@ -180,12 +176,11 @@ func (coll Collection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M,
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		log.Fatal(err)
 	}
-	return results, nil
 
+	return results, nil
 }
 
 func (coll Collection) storageUpdate(filter, update bson.M) error {
-
 	// Call the driver's UpdateOne() method and pass filter and update to it
 	_, err := coll.UpdateOne(
 		context.Background(),
@@ -193,7 +188,7 @@ func (coll Collection) storageUpdate(filter, update bson.M) error {
 		update,
 	)
 	if err != nil {
-		LogMessage("Could not update data due to connection errors to database", "red")
+		LogMessage(fmt.Sprintf("Could not update data due to connection errors to database: %s", err.Error()), "red")
 		os.Exit(1)
 	}
 

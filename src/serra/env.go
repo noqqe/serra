@@ -10,6 +10,7 @@ func getMongoDBURI() string {
 	if uri == "" {
 		log.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://docs.mongodb.com/drivers/go/current/usage-examples/#environment-variable")
 	}
+
 	return uri
 }
 
@@ -22,7 +23,9 @@ func getCurrency() string {
 	case "USD":
 		return "$"
 	}
+
 	// default
 	LogMessage("Warning: You did not configure SERRA_CURRENCY. Assuming \"USD\"", "yellow")
+
 	return "USD"
 }
