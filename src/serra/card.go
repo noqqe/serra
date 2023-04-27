@@ -17,6 +17,8 @@ func init() {
 	cardCmd.Flags().StringVarP(&oracle, "oracle", "o", "", "Contains string in card text")
 	cardCmd.Flags().StringVarP(&cardType, "type", "t", "", "Contains string in card type line")
 	cardCmd.Flags().BoolVarP(&detail, "detail", "d", false, "Show details for cards (url)")
+	cardCmd.Flags().BoolVarP(&reserved, "reserved", "w", false, "If card is on reserved list")
+	cardCmd.Flags().BoolVarP(&foil, "foil", "f", false, "If card is foil list")
 	rootCmd.AddCommand(cardCmd)
 }
 
@@ -30,8 +32,8 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			card_list := Cards(rarity, set, sortby, name, oracle, cardType)
-			showCardList(card_list, detail)
+			cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil)
+			showCardList(cardList, detail)
 		} else {
 			ShowCard(cards)
 		}
@@ -58,7 +60,7 @@ func ShowCard(cardids []string) {
 	}
 }
 
-func Cards(rarity, set, sortby, name, oracle, cardType string) []Card {
+func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bool) []Card {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storageDisconnect(client)
@@ -108,7 +110,16 @@ func Cards(rarity, set, sortby, name, oracle, cardType string) []Card {
 		filter = append(filter, bson.E{"typeline", bson.D{{"$regex", ".*" + cardType + ".*"}, {"$options", "i"}}})
 	}
 
+	if reserved {
+		filter = append(filter, bson.E{"reserved", true})
+	}
+
+	if foil {
+		filter = append(filter, bson.E{"serra_count_foil", bson.D{{"$gt", 0}}})
+	}
+
 	cards, _ := coll.storageFind(filter, sortStage)
+	fmt.Println(filter)
 
 	// This is needed because collectornumbers are strings (ie. "23a") but still we
 	// want it to be sorted numerically ... 1,2,3,10,11,100.

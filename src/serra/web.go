@@ -47,7 +47,7 @@ func startWeb() error {
 func landingPage(c *gin.Context) {
 	var query Query
 	if c.ShouldBind(&query) == nil {
-		cards := Cards("", query.Set, query.Sort, query.Name, "", "")
+		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false)
 		sets := Sets("release")
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title":   "Serra",

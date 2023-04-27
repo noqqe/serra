@@ -9,22 +9,23 @@ import (
 
 var (
 	Version         = "unknown"
+	address         string
+	cardType        string
 	count           int64
 	detail          bool
-	limit           float64
+	foil            bool
 	interactive     bool
+	limit           float64
 	name            string
 	oracle          string
+	port            uint64
 	rarity          string
+	reserved        bool
 	set             string
 	sinceBeginning  bool
 	sinceLastUpdate bool
 	sortby          string
-	cardType        string
 	unique          bool
-	foil            bool
-	address         string
-	port            uint64
 )
 
 var rootCmd = &cobra.Command{
