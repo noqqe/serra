@@ -119,7 +119,6 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 	}
 
 	cards, _ := coll.storageFind(filter, sortStage)
-	fmt.Println(filter)
 
 	// This is needed because collectornumbers are strings (ie. "23a") but still we
 	// want it to be sorted numerically ... 1,2,3,10,11,100.
