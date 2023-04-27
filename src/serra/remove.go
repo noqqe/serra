@@ -36,7 +36,6 @@ var removeCmd = &cobra.Command{
 }
 
 func removeCardsInteractive(unique bool, set string) {
-
 	if len(set) == 0 {
 		LogMessage("Error: --set must be given in interactive mode", "red")
 		os.Exit(1)
@@ -64,15 +63,19 @@ func removeCardsInteractive(unique bool, set string) {
 }
 
 func removeCards(cards []string, count int64) error {
-
+	// Connect to the DB & load the collection
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storageDisconnect(client)
 
 	// Loop over different cards
 	for _, card := range cards {
+		// Extract collector number and set name from input & remove leading zeros
+		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
+		setName := strings.Split(card, "/")[0]
+
 		// Fetch card from scryfall
-		c, err := findCardbyCollectornumber(coll, strings.Split(card, "/")[0], strings.Split(card, "/")[1])
+		c, err := findCardbyCollectornumber(coll, setName, collectorNumber)
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue
@@ -94,7 +97,7 @@ func removeCards(cards []string, count int64) error {
 		} else {
 			modifyCardCount(coll, c, -count, foil)
 		}
-
 	}
+
 	return nil
 }
