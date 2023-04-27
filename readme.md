@@ -22,7 +22,8 @@ an overview in what cards you own and what value they have.
 
 **What Serra does not**
 
-* Does not give a shit about conditions (NM, M, GD...)
+* Does not care about conditions (NM, M, GD...)
+* Does not track etched cards. Only normal and foil.
 
 # Quickstart
 

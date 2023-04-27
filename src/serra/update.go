@@ -36,7 +36,6 @@ var updateCmd = &cobra.Command{
 			bson.D{
 				{"serra_count", true},
 				{"serra_count_foil", true},
-				{"serra_count_etched", true},
 				{"set", true},
 				{"last_price", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}}
 		groupStage := bson.D{
@@ -45,7 +44,6 @@ var updateCmd = &cobra.Command{
 				{"eur", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur", "$serra_count"}}}}}},
 				{"eurfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur_foil", "$serra_count_foil"}}}}}},
 				{"usd", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd", "$serra_count"}}}}}},
-				{"usdetched", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_etched", "$serra_count_etched"}}}}}},
 				{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
 			}}}
 
