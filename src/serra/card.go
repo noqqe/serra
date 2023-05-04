@@ -16,6 +16,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
 	cardCmd.Flags().StringVarP(&oracle, "oracle", "o", "", "Contains string in card text")
 	cardCmd.Flags().StringVarP(&cardType, "type", "t", "", "Contains string in card type line")
+	cardCmd.Flags().Int64VarP(&count, "min-count", "c", 0, "Occource more than X in your collection")
 	cardCmd.Flags().BoolVarP(&detail, "detail", "d", false, "Show details for cards (url)")
 	cardCmd.Flags().BoolVarP(&reserved, "reserved", "w", false, "If card is on reserved list")
 	cardCmd.Flags().BoolVarP(&foil, "foil", "f", false, "If card is foil list")
@@ -116,6 +117,10 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 
 	if foil {
 		filter = append(filter, bson.E{"serra_count_foil", bson.D{{"$gt", 0}}})
+	}
+
+	if count > 0 {
+		filter = append(filter, bson.E{"serra_count", bson.D{{"$gte", count}}})
 	}
 
 	cards, _ := coll.storageFind(filter, sortStage)
