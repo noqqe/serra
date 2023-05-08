@@ -84,7 +84,7 @@ func removeCards(cards []string, count int64) error {
 		}
 
 		if !foil && c.SerraCount < 1 {
-			LogMessage(fmt.Sprintf("Error: No Non-Foil \"%s\" in the Collection.", c.Name), "red")
+			LogMessage(fmt.Sprintf("Error: No normal \"%s\" in the Collection.", c.Name), "red")
 			continue
 		}
 
@@ -92,7 +92,7 @@ func removeCards(cards []string, count int64) error {
 			coll.storageRemove(bson.M{"_id": c.ID})
 			LogMessage(fmt.Sprintf("\"%s\" (%.2f%s) removed from the Collection.", c.Name, c.getValue(foil), getCurrency()), "green")
 		} else {
-			modifyCardCount(coll, c, -1, foil)
+			modifyCardCount(coll, c, -count, foil)
 		}
 
 	}
