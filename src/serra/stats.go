@@ -25,6 +25,7 @@ var statsCmd = &cobra.Command{
 		totalcoll := &Collection{client.Database("serra").Collection("total")}
 		defer storageDisconnect(client)
 
+		// Generate list of Sets
 		sets, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$match", bson.D{
@@ -46,6 +47,7 @@ var statsCmd = &cobra.Command{
 			fmt.Printf("%s: %s%.0f%s\n", convertManaSymbols(s), Purple, set["count"], Reset)
 		}
 
+		// Value and Card Numbers
 		stats, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$group", bson.D{
@@ -64,7 +66,6 @@ var statsCmd = &cobra.Command{
 				}},
 			},
 		})
-
 		fmt.Printf("\n%sCards %s\n", Green, Reset)
 		fmt.Printf("Total: %s%.0f%s\n", Yellow, stats[0]["count_all"], Reset)
 		fmt.Printf("Unique: %s%d%s\n", Purple, stats[0]["unique"], Reset)
@@ -88,6 +89,7 @@ var statsCmd = &cobra.Command{
 		}
 		fmt.Printf("Reserved List: %s%d%s\n", Yellow, count_reserved, Reset)
 
+		// Rarities
 		rar, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$group", bson.D{
@@ -106,6 +108,26 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("Uncommons: %s%.0f%s\n", Yellow, ri.Uncommons, Reset)
 		fmt.Printf("Commons: %s%.0f%s\n", Purple, ri.Commons, Reset)
 
+		// Artists
+		artists, _ := coll.storageAggregate(mongo.Pipeline{
+			bson.D{
+				{"$group", bson.D{
+					{"_id", "$artist"},
+					{"count", bson.D{{"$sum", 1}}},
+				}}},
+			bson.D{
+				{"$sort", bson.D{
+					{"count", -1},
+				}}},
+			bson.D{
+				{"$limit", 10}},
+		})
+		fmt.Printf("\n%sTop Artists%s\n", Green, Reset)
+		for _, artist := range artists {
+			fmt.Printf("%s: %s%d%s\n", artist["_id"].(string), Purple, artist["count"], Reset)
+		}
+
+		// Total Value
 		fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
 		nf_value, err := getFloat64(stats[0]["value"])
 		if err != nil {
