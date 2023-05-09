@@ -2,6 +2,7 @@ package serra
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
@@ -125,6 +126,25 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("\n%sTop Artists%s\n", Green, Reset)
 		for _, artist := range artists {
 			fmt.Printf("%s: %s%d%s\n", artist["_id"].(string), Purple, artist["count"], Reset)
+		}
+
+		// Mana Curve of Collection
+		cards := Cards(rarity, set, sortby, name, oracle, cardType, false, foil)
+		var numCosts []int
+		for _, card := range cards {
+			numCosts = append(numCosts, calcManaCosts(card.ManaCost))
+
+		}
+		dist := printUniqueValue(numCosts)
+		fmt.Printf("\n%sMana Curve%s\n", Green, Reset)
+
+		keys := make([]int, 0, len(dist))
+		for k := range dist {
+			keys = append(keys, k)
+		}
+		sort.Ints(keys)
+		for _, k := range keys {
+			fmt.Printf("%d: %s%d%s\n", k, Purple, dist[k], Reset)
 		}
 
 		// Total Value
