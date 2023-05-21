@@ -61,7 +61,7 @@ func Gains(limit float64, sort int) error {
 		currencyField = "$serra_prices.eur"
 	}
 
-	raise_pipeline := mongo.Pipeline{
+	raisePipeline := mongo.Pipeline{
 		bson.D{{"$project",
 			bson.D{
 				{"name", true},
@@ -109,9 +109,9 @@ func Gains(limit float64, sort int) error {
 			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 20}},
 	}
-	raise, _ := coll.storageAggregate(raise_pipeline)
+	raise, _ := coll.storageAggregate(raisePipeline)
 
-	sraise_pipeline := mongo.Pipeline{
+	sraisePipeline := mongo.Pipeline{
 		bson.D{{"$project",
 			bson.D{
 				{"name", true},
@@ -157,25 +157,25 @@ func Gains(limit float64, sort int) error {
 			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 10}},
 	}
-	sraise, _ := setcoll.storageAggregate(sraise_pipeline)
+	sraise, _ := setcoll.storageAggregate(sraisePipeline)
 
 	// percentage coloring
-	var p_color string
+	var pColor string
 	if sort == 1 {
-		p_color = Red
+		pColor = Red
 	} else {
-		p_color = Green
+		pColor = Green
 	}
 
 	fmt.Printf("%sCards%s\n", Purple, Reset)
 	// print each card
 	for _, e := range raise {
-		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f%s%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
+		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f%s%s) \n", pColor, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
 	}
 
 	fmt.Printf("\n%sSets%s\n", Purple, Reset)
 	for _, e := range sraise {
-		fmt.Printf("%s%+.0f%%%s %s %s(%s)%s (%.2f->%s%.2f%s%s) \n", p_color, e["rate"], Reset, e["name"], Yellow, e["code"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
+		fmt.Printf("%s%+.0f%%%s %s %s(%s)%s (%.2f->%s%.2f%s%s) \n", pColor, e["rate"], Reset, e["name"], Yellow, e["code"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
 	}
 	return nil
 

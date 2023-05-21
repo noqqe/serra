@@ -21,35 +21,34 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 
 	// find already existing card
 	sort := bson.D{{"_id", 1}}
-	search_filter := bson.D{{"_id", c.ID}}
-	stored_cards, err := coll.storageFind(search_filter, sort)
+	searchFilter := bson.D{{"_id", c.ID}}
+	storedCards, err := coll.storageFind(searchFilter, sort)
 	if err != nil {
 		return err
 	}
-	stored_card := stored_cards[0]
+	storedCard := storedCards[0]
 
 	// update card amount
-	update_filter := bson.M{"_id": bson.M{"$eq": c.ID}}
 	var update bson.M
 	if foil {
 		update = bson.M{
-			"$set": bson.M{"serra_count_foil": stored_card.SerraCountFoil + amount},
+			"$set": bson.M{"serra_count_foil": storedCard.SerraCountFoil + amount},
 		}
 	} else {
 		update = bson.M{
-			"$set": bson.M{"serra_count": stored_card.SerraCount + amount},
+			"$set": bson.M{"serra_count": storedCard.SerraCount + amount},
 		}
 	}
 
-	coll.storageUpdate(update_filter, update)
+	coll.storageUpdate(bson.M{"_id": bson.M{"$eq": c.ID}}, update)
 
 	var total int64
 	if foil {
-		total = stored_card.SerraCountFoil + amount
+		total = storedCard.SerraCountFoil + amount
 	} else {
-		total = stored_card.SerraCount + amount
+		total = storedCard.SerraCount + amount
 	}
-	LogMessage(fmt.Sprintf("Updating Card \"%s\" amount to %d", stored_card.Name, total), "purple")
+	LogMessage(fmt.Sprintf("Updating Card \"%s\" amount to %d", storedCard.Name, total), "purple")
 	return nil
 }
 

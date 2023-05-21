@@ -148,25 +148,25 @@ func ShowSet(setname string) error {
 	fmt.Printf("Total Cards: %.0f\n", stats[0]["count"])
 	fmt.Printf("Foil Cards: %.0f\n", stats[0]["count_foil"])
 
-	nf_value, err := getFloat64(stats[0]["value"])
+	normalValue, err := getFloat64(stats[0]["value"])
 	if err != nil {
 		LogMessage(fmt.Sprintf("Error: %v", err), "red")
-		nf_value = 0
+		normalValue = 0
 	}
-	foil_value, err := getFloat64(stats[0]["value_foil"])
+	foilValue, err := getFloat64(stats[0]["value_foil"])
 	if err != nil {
 		LogMessage(fmt.Sprintf("Error: %v", err), "red")
-		foil_value = 0
+		foilValue = 0
 	}
-	total_value := nf_value + foil_value
+	totalValue := normalValue + foilValue
 
-	nf_count, _ := getFloat64(stats[0]["count"])
-	foil_count, _ := getFloat64(stats[0]["count_foil"])
+	normalCount, _ := getFloat64(stats[0]["count"])
+	foilCount, _ := getFloat64(stats[0]["count_foil"])
 
 	fmt.Printf("\n%sCurrent Value%s\n", Purple, Reset)
-	fmt.Printf("Total: %.0fx %s%.2f%s%s\n", nf_count+foil_count, Yellow, total_value, getCurrency(), Reset)
-	fmt.Printf("Normal: %.0fx %s%.2f%s%s\n", stats[0]["count"], Yellow, nf_value, getCurrency(), Reset)
-	fmt.Printf("Foil: %.0fx %s%.2f%s%s\n", stats[0]["count_foil"], Yellow, foil_value, getCurrency(), Reset)
+	fmt.Printf("Total: %.0fx %s%.2f%s%s\n", normalCount+foilCount, Yellow, totalValue, getCurrency(), Reset)
+	fmt.Printf("Normal: %.0fx %s%.2f%s%s\n", stats[0]["count"], Yellow, normalValue, getCurrency(), Reset)
+	fmt.Printf("Foil: %.0fx %s%.2f%s%s\n", stats[0]["count_foil"], Yellow, foilValue, getCurrency(), Reset)
 
 	fmt.Printf("\n%sRarities%s\n", Purple, Reset)
 	fmt.Printf("Mythics: %.0f\n", ri.Mythics)

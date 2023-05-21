@@ -149,20 +149,20 @@ var statsCmd = &cobra.Command{
 
 		// Total Value
 		fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
-		nf_value, err := getFloat64(stats[0]["value"])
+		normalValue, err := getFloat64(stats[0]["value"])
 		if err != nil {
 			LogMessage(fmt.Sprintf("Error: %v", err), "red")
-			nf_value = 0
+			normalValue = 0
 		}
-		foil_value, err := getFloat64(stats[0]["value_foil"])
+		foilValue, err := getFloat64(stats[0]["value_foil"])
 		if err != nil {
 			LogMessage(fmt.Sprintf("Error: %v", err), "red")
-			foil_value = 0
+			foilValue = 0
 		}
-		total_value := nf_value + foil_value
-		fmt.Printf("Total: %s%.2f%s%s\n", Pink, total_value, getCurrency(), Reset)
-		fmt.Printf("Normal: %s%.2f%s%s\n", Pink, nf_value, getCurrency(), Reset)
-		fmt.Printf("Foils: %s%.2f%s%s\n", Pink, foil_value, getCurrency(), Reset)
+		totalValue := normalValue + foilValue
+		fmt.Printf("Total: %s%.2f%s%s\n", Pink, totalValue, getCurrency(), Reset)
+		fmt.Printf("Normal: %s%.2f%s%s\n", Pink, normalValue, getCurrency(), Reset)
+		fmt.Printf("Foils: %s%.2f%s%s\n", Pink, foilValue, getCurrency(), Reset)
 		total, _ := totalcoll.storageFindTotal()
 
 		fmt.Printf("History: \n")
