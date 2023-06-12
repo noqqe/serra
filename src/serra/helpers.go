@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
 	"time"
 	"unicode"
 
@@ -222,49 +221,4 @@ func getFloat64(unknown interface{}) (float64, error) {
 	default:
 		return math.NaN(), errors.New("Non-numeric type could not be converted to float")
 	}
-}
-
-// Splits string by multiple occurances of substring
-// needed for calcManaCosts
-func SplitAny(s string, seps string) []string {
-	splitter := func(r rune) bool {
-		return strings.ContainsRune(seps, r)
-	}
-	return strings.FieldsFunc(s, splitter)
-}
-
-// Converts mana encoding to mana costs
-//
-//	calcManaCosts("{2}{B}{B}") -> 4
-//	calcManaCosts("{4}{G}{G}{G}{G}") -> 7
-//	calcManaCosts("{1}{U} // {3}{U}") -> 2 (ignore transform costs)
-func calcManaCosts(costs string) int {
-
-	var count int
-
-	for _, c := range SplitAny(costs, "{}") {
-		if strings.Contains(c, "//") {
-			break
-		}
-
-		i, err := strconv.Atoi(c)
-		if err != nil {
-			count = count + 1
-		} else {
-			count = count + i
-		}
-	}
-
-	return count
-}
-
-func printUniqueValue(arr []int) map[int]int {
-	//Create a dictionary of values for each element
-	dict := make(map[int]int)
-	for _, num := range arr {
-		dict[num] = dict[num] + 1
-	}
-
-	return dict
-
 }

@@ -2,7 +2,6 @@ package serra
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
@@ -129,22 +128,23 @@ var statsCmd = &cobra.Command{
 		}
 
 		// Mana Curve of Collection
-		cards := Cards(rarity, set, sortby, name, oracle, cardType, false, foil)
-		var numCosts []int
-		for _, card := range cards {
-			numCosts = append(numCosts, calcManaCosts(card.ManaCost))
 
-		}
-		dist := printUniqueValue(numCosts)
+		// Rarities
+		cmc, _ := coll.storageAggregate(mongo.Pipeline{
+			bson.D{
+				{"$group", bson.D{
+					{"_id", "$cmc"},
+					// {"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+					{"count", bson.D{{"$sum", 1}}},
+				}}},
+			bson.D{
+				{"$sort", bson.D{
+					{"_id", 1},
+				}}},
+		})
 		fmt.Printf("\n%sMana Curve%s\n", Green, Reset)
-
-		keys := make([]int, 0, len(dist))
-		for k := range dist {
-			keys = append(keys, k)
-		}
-		sort.Ints(keys)
-		for _, k := range keys {
-			fmt.Printf("%d: %s%d%s\n", k, Purple, dist[k], Reset)
+		for _, mc := range cmc {
+			fmt.Printf("%d: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
 		}
 
 		// Total Value
