@@ -128,8 +128,6 @@ var statsCmd = &cobra.Command{
 		}
 
 		// Mana Curve of Collection
-
-		// Rarities
 		cmc, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$group", bson.D{
@@ -144,7 +142,7 @@ var statsCmd = &cobra.Command{
 		})
 		fmt.Printf("\n%sMana Curve%s\n", Green, Reset)
 		for _, mc := range cmc {
-			fmt.Printf("%d: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
+			fmt.Printf("%.0f: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
 		}
 
 		// Total Value
