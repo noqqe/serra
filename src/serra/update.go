@@ -86,7 +86,7 @@ var updateCmd = &cobra.Command{
 				updatedCard.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
 
 				update := bson.M{
-					"$set":  bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updatedCard.Prices, "collectornumber": updatedCard.CollectorNumber},
+					"$set":  bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updatedCard.Prices, "cmc": updatedCard.Cmc},
 					"$push": bson.M{"serra_prices": updatedCard.Prices},
 				}
 				coll.storageUpdate(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
@@ -109,7 +109,7 @@ var updateCmd = &cobra.Command{
 
 			// do the update
 			setUpdate := bson.M{
-				"$set":  bson.M{"serra_updated": p.Date},
+				"$set":  bson.M{"serra_updated": p.Date, "card_count": set.CardCount},
 				"$push": bson.M{"serra_prices": p},
 			}
 			// fmt.Printf("Set %s%s%s (%s) is now worth %s%.02f EUR%s\n", Pink, set.Name, Reset, set.Code, Yellow, setvalue[0]["value"], Reset)
