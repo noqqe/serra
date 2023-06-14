@@ -33,7 +33,7 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil)
+			cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0)
 			showCardList(cardList, detail)
 		} else {
 			ShowCard(cards)
@@ -53,7 +53,7 @@ func ShowCard(cardids []string) {
 			continue
 		}
 
-		cards, _ := coll.storageFind(bson.D{{"set", strings.Split(v, "/")[0]}, {"collectornumber", strings.Split(v, "/")[1]}}, bson.D{{"name", 1}})
+		cards, _ := coll.storageFind(bson.D{{"set", strings.Split(v, "/")[0]}, {"collectornumber", strings.Split(v, "/")[1]}}, bson.D{{"name", 1}}, 0, 0)
 
 		for _, card := range cards {
 			showCardDetails(&card)
@@ -61,7 +61,7 @@ func ShowCard(cardids []string) {
 	}
 }
 
-func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bool) []Card {
+func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bool, skip, limit int64) []Card {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storageDisconnect(client)
@@ -123,7 +123,7 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 		filter = append(filter, bson.E{"serra_count", bson.D{{"$gte", count}}})
 	}
 
-	cards, _ := coll.storageFind(filter, sortStage)
+	cards, _ := coll.storageFind(filter, sortStage, skip, limit)
 
 	// This is needed because collectornumbers are strings (ie. "23a") but still we
 	// want it to be sorted numerically ... 1,2,3,10,11,100.

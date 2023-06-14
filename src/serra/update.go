@@ -55,7 +55,7 @@ var updateCmd = &cobra.Command{
 			set.SerraPrices = []PriceEntry{}
 			setscoll.storageAddSet(&set)
 
-			cards, _ := coll.storageFind(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}})
+			cards, _ := coll.storageFind(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}}, 0, 0)
 
 			// if no cards in collection for this set, skip it
 			if len(cards) == 0 {

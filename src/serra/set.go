@@ -95,7 +95,7 @@ func ShowSet(setname string) error {
 	if getCurrency() == "EUR" {
 		cardSortCurrency = bson.D{{"prices.eur", -1}}
 	}
-	cards, err := coll.storageFind(bson.D{{"set", setname}}, cardSortCurrency)
+	cards, err := coll.storageFind(bson.D{{"set", setname}}, cardSortCurrency, 0, 0)
 	if (err != nil) || len(cards) == 0 {
 		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
 		return err

@@ -26,7 +26,7 @@ cards you dont own (yet) :)`,
 		defer storageDisconnect(client)
 
 		// fetch all cards in set
-		cards, err := coll.storageFind(bson.D{{"set", setName[0]}}, bson.D{{"collectornumber", 1}})
+		cards, err := coll.storageFind(bson.D{{"set", setName[0]}}, bson.D{{"collectornumber", 1}}, 0, 0)
 		if (err != nil) || len(cards) == 0 {
 			LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setName[0]), "red")
 			return err

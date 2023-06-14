@@ -21,7 +21,7 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	// find already existing card
 	sort := bson.D{{"_id", 1}}
 	searchFilter := bson.D{{"_id", c.ID}}
-	storedCards, err := coll.storageFind(searchFilter, sort)
+	storedCards, err := coll.storageFind(searchFilter, sort, 0, 0)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 func findCardByCollectorNumber(coll *Collection, setCode string, collectorNumber string) (*Card, error) {
 	sort := bson.D{{"_id", 1}}
 	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
-	storedCards, err := coll.storageFind(searchFilter, sort)
+	storedCards, err := coll.storageFind(searchFilter, sort, 0, 0)
 	if err != nil {
 		return &Card{}, err
 	}

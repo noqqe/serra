@@ -25,7 +25,7 @@ var statsCmd = &cobra.Command{
 		totalcoll := &Collection{client.Database("serra").Collection("total")}
 		defer storageDisconnect(client)
 
-		// Generate list of Sets
+		// Colors
 		sets, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
 				{"$match", bson.D{

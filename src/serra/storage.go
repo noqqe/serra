@@ -101,8 +101,8 @@ func (coll Collection) storageAddTotal(p PriceEntry) error {
 	return nil
 }
 
-func (coll Collection) storageFind(filter, sort bson.D) ([]Card, error) {
-	opts := options.Find().SetSort(sort)
+func (coll Collection) storageFind(filter, sort bson.D, skip, limit int64) ([]Card, error) {
+	opts := options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
 		LogMessage(fmt.Sprintf("Could not query data due to connection errors to database: %s", err.Error()), "red")

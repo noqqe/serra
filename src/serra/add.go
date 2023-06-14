@@ -93,7 +93,7 @@ func addCards(cards []string, unique bool, count int64) error {
 		setName := strings.Split(card, "/")[0]
 
 		// Check if card is already in collection
-		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{})
+		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{}, 0, 0)
 		if err != nil {
 			LogMessage(fmt.Sprintf("%v", err), "red")
 			continue

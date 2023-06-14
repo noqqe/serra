@@ -27,9 +27,11 @@ var webCmd = &cobra.Command{
 }
 
 type Query struct {
-	Name string `form:"name"`
-	Set  string `form:"set"`
-	Sort string `form:"sort"`
+	Name  string `form:"name"`
+	Set   string `form:"set"`
+	Sort  string `form:"sort"`
+	Limit int64  `form:"limit"`
+	Page  int64  `form:"page"`
 }
 
 func startWeb() error {
@@ -47,13 +49,25 @@ func startWeb() error {
 func landingPage(c *gin.Context) {
 	var query Query
 	if c.ShouldBind(&query) == nil {
-		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false)
+		if query.Limit == 0 {
+			query.Limit = 500
+		}
+		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page, query.Limit)
+		numCards := len(Cards("", query.Set, query.Sort, query.Name, "", "", false, false, 0, 0))
 		sets := Sets("release")
+
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"title":   "Serra",
-			"cards":   cards,
-			"sets":    sets,
-			"version": Version,
+			"title":    "Serra",
+			"cards":    cards,
+			"sets":     sets,
+			"query":    query,
+			"version":  Version,
+			"prevPage": query.Page - 1,
+			"page":     query.Page,
+			"nextPage": query.Page + 1,
+			"limit":    query.Limit,
+			"numCards": numCards,
+			"numPages": int64(numCards) / query.Limit,
 		})
 	}
 }

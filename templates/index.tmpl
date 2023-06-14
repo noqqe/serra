@@ -5,8 +5,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Serra</title>
-  <!-- <link rel="stylesheet" href="https://unpkg.com/bulma-dracula"> -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://jenil.github.io/bulmaswatch/cosmo/bulmaswatch.min.css">
+  <!-- <link rel="stylesheet" href="https://jenil.github.io/bulmaswatch/lumen/bulmaswatch.min.css"> -->
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"> -->
 
   <style>
     .cardpreview {
@@ -63,7 +64,7 @@
 <body>
 
   <!-- Site Title -->
-  <section class="hero is-primary">
+  <section class="hero is-black">
     <div class="hero-body">
       <p class="title">
         {{ .title }}
@@ -84,7 +85,7 @@
           <div class="field">
             <label class="label">Set</label>
             <div class="control">
-              <div class="select is-primary">
+              <div class="select">
                 <select name="set" id="set" form="searchform">
                   <option value="">-</option>
                   {{range .sets}}
@@ -110,7 +111,7 @@
           <div class="field">
             <label class="label">Sort</label>
             <div class="control">
-              <div class="select is-primary">
+              <div class="select">
                 <select name="sort" id="sort" form="searchform">
                   <option value="name" selected>Name</option>
                   <option value="value">Value</option>
@@ -184,8 +185,53 @@
         {{end}}
       </tbody>
     </table>
-
   </section>
+
+  {{ if ne .numPages 0 }}
+  <div class="hero-body">
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      <a href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.prevPage}}" class="pagination-previous">Previous</a>
+      <a href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.nextPage}}" class="pagination-next">Next page</a>
+      <ul class="pagination-list">
+
+        {{ if ne .page 0 }}
+        <li>
+          <a class="pagination-link" href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page=0" aria-label="Goto page 0">0</a>
+        </li>
+
+        <li>
+          <span class="pagination-ellipsis">&hellip;</span>
+        </li>
+        {{end}}
+
+        {{ if ( gt .prevPage 0 ) }}
+        <li>
+          <a href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.prevPage}}" class="pagination-link" aria-label="Goto page {{.prevPage}}">{{.prevPage}}</a>
+        </li>
+        {{end}}
+        <li>
+          <a class="pagination-link is-current" href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.page}}" aria-label="Page {{ .page }}" aria-current="page">{{.page}}</a>
+        </li>
+
+        {{ if and (ne .nextPage .numPages) ( lt .nextPage .numPages) }}
+        <li>
+          <a href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.nextPage}}" class="pagination-link" aria-label="Goto page {{.nextPage}} ">{{.nextPage}}</a>
+        </li>
+        {{ end }}
+
+        {{ if ne .numPages .page }}
+        <li>
+          <span class="pagination-ellipsis">&hellip;</span>
+        </li>
+        <li>
+          <a class="pagination-link" href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.numPages}}" aria-label="Goto page {{.numPages}}">{{.numPages}}</a>
+        </li>
+        {{end}}
+
+      </ul>
+    </nav>
+  </div>
+  {{ end }}
 
   <!-- Select set from last search -->
   <script>
@@ -196,6 +242,12 @@
     }
     var selectedSetVal = getParam("set");
     document.getElementById("set").value = selectedSetVal;
+
+    var selectedSetVal = getParam("page");
+    document.getElementById("page").value = selectedSetVal;
+
+    var selectedSetVal = getParam("limit");
+    document.getElementById("limit").value = selectedSetVal;
 
     var selectedSortVal = getParam("sort");
     document.getElementById("sort").value = selectedSortVal;
