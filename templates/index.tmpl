@@ -107,6 +107,9 @@
           </div>
         </div>
 
+        <input type="hidden" id="limit" name="limit" value="500" form="searchform">
+        <input type="hidden" id="page" name="page" value="{{.page}}" form="searchform">
+
         <div class="level-item">
           <div class="field">
             <label class="label">Sort</label>
@@ -190,8 +193,15 @@
   {{ if ne .numPages 0 }}
   <div class="hero-body">
     <nav class="pagination" role="navigation" aria-label="pagination">
+
+      {{ if ge .prevPage 0 }}
       <a href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.prevPage}}" class="pagination-previous">Previous</a>
+      {{ end }}
+
+      {{ if ( le .nextPage .numPages) }}
       <a href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.nextPage}}" class="pagination-next">Next page</a>
+      {{ end }}
+
       <ul class="pagination-list">
 
         {{ if ne .page 0 }}
@@ -204,7 +214,7 @@
         </li>
         {{end}}
 
-        {{ if ( gt .prevPage 0 ) }}
+        {{ if gt .prevPage 0 }}
         <li>
           <a href="/?set={{.query.Set}}&name={{.query.Name}}&sort={{.query.Sort}}&limit={{.query.Limit}}&page={{.prevPage}}" class="pagination-link" aria-label="Goto page {{.prevPage}}">{{.prevPage}}</a>
         </li>
