@@ -1,12 +1,13 @@
 package serra
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -50,18 +51,45 @@ func startWeb() error {
 func landingPage(c *gin.Context) {
 	var query Query
 	if c.ShouldBind(&query) == nil {
-		strLimit := c.DefaultQuery("limit", "500")
 
+		// Construct per Page results "limit"
+		strLimit := c.DefaultQuery("limit", "500")
 		limit, _ := strconv.ParseInt(strLimit, 10, 64)
 		if limit == 0 {
 			limit = 500
 		}
 
-		fmt.Println(limit, query.Page, query.Limit)
-
-		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page*int64(limit), limit)
-		numCards := len(Cards("", query.Set, query.Sort, query.Name, "", "", false, false, 0, 0))
+		// Fetch all sets for Dropdown
 		sets := Sets("release")
+
+		// Fetch all results based on filter criteria
+		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page*int64(limit), limit)
+
+		// Construct quick way for counting results
+		filter := bson.D{}
+		client := storageConnect()
+		coll := &Collection{client.Database("serra").Collection("cards")}
+
+		if query.Set != "" {
+			filter = append(filter, bson.E{"set", query.Set})
+		}
+
+		if query.Name != "" {
+			filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + query.Name + ".*"}, {"$options", "i"}}})
+		}
+
+		counts, _ := coll.storageAggregate(mongo.Pipeline{
+			bson.D{
+				{"$match", filter},
+			},
+			bson.D{
+				{"$group", bson.D{
+					{"_id", nil},
+					{"count", bson.D{{"$sum", 1}}},
+				}}},
+		})
+		defer storageDisconnect(client)
+		numCards := counts[0]["count"].(int32)
 
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title":    "Serra",
@@ -73,7 +101,7 @@ func landingPage(c *gin.Context) {
 			"page":     query.Page,
 			"nextPage": query.Page + 1,
 			"limit":    limit,
-			"numCards": numCards,
+			"numCards": int64(numCards),
 			"numPages": int64(numCards) / limit,
 		})
 	}
