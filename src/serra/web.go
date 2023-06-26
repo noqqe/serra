@@ -1,6 +1,7 @@
 package serra
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -49,10 +50,16 @@ func startWeb() error {
 func landingPage(c *gin.Context) {
 	var query Query
 	if c.ShouldBind(&query) == nil {
-		if query.Limit == 0 {
-			query.Limit = 500
+		strLimit := c.DefaultQuery("limit", "500")
+
+		limit, _ := strconv.ParseInt(strLimit, 10, 64)
+		if limit == 0 {
+			limit = 500
 		}
-		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page, query.Limit)
+
+		fmt.Println(limit, query.Page, query.Limit)
+
+		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page*int64(limit), limit)
 		numCards := len(Cards("", query.Set, query.Sort, query.Name, "", "", false, false, 0, 0))
 		sets := Sets("release")
 
@@ -65,9 +72,9 @@ func landingPage(c *gin.Context) {
 			"prevPage": query.Page - 1,
 			"page":     query.Page,
 			"nextPage": query.Page + 1,
-			"limit":    query.Limit,
+			"limit":    limit,
 			"numCards": numCards,
-			"numPages": int64(numCards) / query.Limit,
+			"numPages": int64(numCards) / limit,
 		})
 	}
 }
