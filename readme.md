@@ -69,6 +69,7 @@ Usage:
 Available Commands:
   add         Add a card to your collection
   card        Search & show cards from your collection
+  check       Check if a card is in your collection
   completion  Generate the autocompletion script for the specified shell
   flops       What cards lost most value
   help        Help about any command
@@ -136,6 +137,12 @@ its price. After all cards you own in a set are updated, the set value will
 update. After all Sets are updated, the whole collection value is updated.
 
 ![](https://github.com/noqqe/serra/blob/main/imgs/update.png)
+
+## Check
+
+To add a card to your collection.
+
+![](https://github.com/noqqe/serra/blob/main/imgs/check.png)
 
 ## Adding all those cards, manually?
 
