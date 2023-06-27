@@ -27,7 +27,7 @@ an overview in what cards you own and what value they have.
 
 # Quickstart
 
-### Install Binaries
+## Install Binaries
 
 on macOS you can use
 
@@ -37,16 +37,15 @@ on Linux/BSD/Windows you can download binaries from
 
     https://github.com/noqqe/serra/releases
 
-### Spin up Database
+## Spin up Database
 
 To run serra, a MongoDB Database is required. The best way is to setup one by yourself. Any way it connects is fine. 
     
-
 You can also use the docker-compose setup included in this Repo:
 
     docker-compose up -d
 
-### Configure the Database
+## Configure the Database
 
 Configure `serra` via Environment variables
 
@@ -167,6 +166,30 @@ dmr> 1-3
 
 Its basically typing 2-3 digit numbers and hitting enter. I was way faster
 with this approach then Smartphone scanners.
+
+# Upgrade
+
+If you want to upgrade, go to [releases](https://github.com/noqqe/serra/releases) Page and download the corresponding release for your platform.
+
+For example:
+```
+wget https://github.com/noqqe/serra/releases/download/3.10.0/serra_Darwin_x86_64.tar.gz
+tar zxfv serra_Darwin_x86_64.tar.gz
+./serra 
+```
+
+## Upgrade Notes
+
+### 2.x.x -> 3.x.x
+
+No extra steps needed. Only new Webinterface and Foil support
+
+### 1.5.3 -> 2.0.0 
+
+In this stage of the development of serra, I was breaking the original
+database "schema" without migration. 
+
+Sadly you need to export  `utils/` Folder in this repo
 
 # Development
 
