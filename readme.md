@@ -196,7 +196,9 @@ No extra steps needed. Only new Webinterface and Foil support
 In this stage of the development of serra, I was breaking the original
 database "schema" without migration. 
 
-Sadly you need to export  `utils/` Folder in this repo
+Sadly you need to export the cards from the mongodb and import it again using `serra add ` commands
+
+You can find some inspiration in the  `utils/` Folder in this repo
 
 # Development
 
