@@ -198,7 +198,26 @@ database "schema" without migration.
 
 Sadly you need to export the cards from the mongodb and import it again using `serra add ` commands
 
-You can find some inspiration in the  `utils/` Folder in this repo
+I wrote a little helper script in python to export all the cards in format set/number and generate some queries
+
+```
+python3 export.py > add_commands.sh
+
+head add_commands.sh
+./serra add 5ed/3 -c 1
+./serra add mmq/2 -c 1
+./serra add p02/4 -c 1
+./serra add chr/44 -c 1
+./serra add 4ed/291 -c 1
+./serra add 4ed/292 -c 1
+./serra add mir/2 -c 1
+./serra add usg/231 -c 1
+./serra add mir/155 -c 1
+./serra add pcy/29 -c 2
+
+
+bash add_commands.sh
+```
 
 # Development
 
