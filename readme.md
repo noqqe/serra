@@ -215,6 +215,9 @@ head add_commands.sh
 ./serra add mir/155 -c 1
 ./serra add pcy/29 -c 2
 
+<do the upgrade of serra (download new binary>
+
+<delete the old mongodb or just empty it completly>
 
 bash add_commands.sh
 ```
