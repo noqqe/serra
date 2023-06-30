@@ -32,6 +32,7 @@ var updateCmd = &cobra.Command{
 		coll := &Collection{client.Database("serra").Collection("cards")}
 		totalcoll := &Collection{client.Database("serra").Collection("total")}
 
+		// predefine query for set analysis. used for total stats later
 		projectStage := bson.D{{"$project",
 			bson.D{
 				{"serra_count", true},
@@ -75,6 +76,7 @@ var updateCmd = &cobra.Command{
 					BarEnd:        fmt.Sprintf("| %s%s%s", Pink, set.Name, Reset),
 				}),
 			)
+
 			for _, card := range cards {
 				bar.Add(1)
 				updatedCard, err := fetchCard(card.Set, card.CollectorNumber)
@@ -109,7 +111,7 @@ var updateCmd = &cobra.Command{
 
 			// do the update
 			setUpdate := bson.M{
-				"$set":  bson.M{"serra_updated": p.Date, "card_count": set.CardCount},
+				"$set":  bson.M{"serra_updated": p.Date, "cardcount": set.CardCount},
 				"$push": bson.M{"serra_prices": p},
 			}
 			// fmt.Printf("Set %s%s%s (%s) is now worth %s%.02f EUR%s\n", Pink, set.Name, Reset, set.Code, Yellow, setvalue[0]["value"], Reset)
