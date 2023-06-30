@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Serra</title>
+  <title>{{.title}}{{ if .query.Set }} - Set: {{.query.Set}}{{end}}</title>
   <link rel="stylesheet" href="https://jenil.github.io/bulmaswatch/cosmo/bulmaswatch.min.css">
   <!-- <link rel="stylesheet" href="https://jenil.github.io/bulmaswatch/lumen/bulmaswatch.min.css"> -->
   <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"> -->
@@ -67,7 +67,7 @@
   <section class="hero is-black">
     <div class="hero-body">
       <p class="title">
-        {{ .title }}
+        <a href="/">{{ .title }}</a>
       </p>
       <p class="subtitle">
         <i>Magic: The Gathering</i> Collection
@@ -253,11 +253,8 @@
     var selectedSetVal = getParam("set");
     document.getElementById("set").value = selectedSetVal;
 
-    var selectedSetVal = getParam("page");
-    document.getElementById("page").value = selectedSetVal;
-
-    var selectedSetVal = getParam("limit");
-    document.getElementById("limit").value = selectedSetVal;
+    var selectedLimitVal = getParam("limit");
+    document.getElementById("limit").value = selectedLimitVal;
 
     var selectedSortVal = getParam("sort");
     document.getElementById("sort").value = selectedSortVal;
