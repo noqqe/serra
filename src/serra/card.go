@@ -80,7 +80,7 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 	var sortStage bson.D
 	switch sortby {
 	case "value":
-		if getCurrency() == "EUR" {
+		if getCurrency() == EUR {
 			sortStage = bson.D{{"prices.eur", 1}}
 		} else {
 			sortStage = bson.D{{"prices.usd", 1}}

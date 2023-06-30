@@ -92,7 +92,7 @@ func ShowSet(setname string) error {
 
 	// fetch all cards in set ordered by currently used currency
 	cardSortCurrency := bson.D{{"prices.usd", -1}}
-	if getCurrency() == "EUR" {
+	if getCurrency() == EUR {
 		cardSortCurrency = bson.D{{"prices.eur", -1}}
 	}
 	cards, err := coll.storageFind(bson.D{{"set", setname}}, cardSortCurrency, 0, 0)

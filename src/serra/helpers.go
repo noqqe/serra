@@ -167,14 +167,16 @@ func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 
 		var value float64
 		if total {
-			value = e.Usd + e.UsdFoil + e.UsdEtched
-			if getCurrency() == "EUR" {
+			if getCurrency() == EUR {
 				value = e.Eur + e.EurFoil
+			} else {
+				value = e.Usd + e.UsdFoil
 			}
 		} else {
-			value = e.Usd
-			if getCurrency() == "EUR" {
+			if getCurrency() == EUR {
 				value = e.Eur
+			} else {
+				value = e.Usd
 			}
 		}
 

@@ -57,7 +57,7 @@ func Gains(limit float64, sort int) error {
 	}
 
 	currencyField := "$serra_prices.usd"
-	if getCurrency() == "EUR" {
+	if getCurrency() == EUR {
 		currencyField = "$serra_prices.eur"
 	}
 

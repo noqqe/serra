@@ -119,7 +119,7 @@ type Card struct {
 
 // Getter for currency specific value
 func (c Card) getValue(foil bool) float64 {
-	if getCurrency() == "EUR" {
+	if getCurrency() == EUR {
 		if foil {
 			return c.Prices.EurFoil
 		}
