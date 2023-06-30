@@ -247,7 +247,7 @@
   <script>
     function getParam(paramName) {
       return decodeURI(
-        (RegExp(paramName + '=' + '(.+?)(&|$)').exec(location.search) || [, null])[1]
+        (RegExp(paramName + '=' + '(.+?)(&|$)').exec(location.search) || [, 500])[1]
       );
     }
     var selectedSetVal = getParam("set");
