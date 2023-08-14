@@ -89,8 +89,19 @@ func addCards(cards []string, unique bool, count int64) error {
 	// Loop over different cards
 	for _, card := range cards {
 		// Extract collector number and set name from card input & trim any leading 0 from collector number
-		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
+
+		if !strings.Contains(card, "/") {
+			LogMessage(fmt.Sprintf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card), "red")
+			continue
+		}
+
 		setName := strings.Split(card, "/")[0]
+		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
+
+		if collectorNumber == "" {
+			LogMessage(fmt.Sprintf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card), "red")
+			continue
+		}
 
 		// Check if card is already in collection
 		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{}, 0, 0)
