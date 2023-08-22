@@ -36,7 +36,7 @@ func checkCards(cards []string, detail bool) error {
 
 		// Extract collector number and set name from card input & trim any leading 0 from collector number
 		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
-		setName := strings.Split(card, "/")[0]
+		setName := strings.ToLower(strings.Split(card, "/")[0])
 
 		// Check if card is already in collection
 		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{}, 0, 0)

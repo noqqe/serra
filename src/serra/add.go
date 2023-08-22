@@ -95,7 +95,7 @@ func addCards(cards []string, unique bool, count int64) error {
 			continue
 		}
 
-		setName := strings.Split(card, "/")[0]
+		setName := strings.ToLower(strings.Split(card, "/")[0])
 		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
 
 		if collectorNumber == "" {
