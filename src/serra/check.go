@@ -48,16 +48,16 @@ func checkCards(cards []string, detail bool) error {
 		// If Card is in collection, print yes.
 		if len(co) >= 1 {
 			c := co[0]
-			LogMessage(fmt.Sprintf("Yes - %s \"%s\" (%s, %.2f%s) is in your Collection", card, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "green")
+			LogMessage(fmt.Sprintf("PRESENT %s \"%s\" (%s, %.2f%s)", card, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "green")
 			continue
 		} else {
 			if detail {
 				// fetch card from scyrfall if --detail was given
 				c, _ := fetchCard(setName, collectorNumber)
-				LogMessage(fmt.Sprintf("No - %s \"%s\" (%s, %.2f%s) is not in your Collection.", card, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "red")
+				LogMessage(fmt.Sprintf("MISSING %s \"%s\" (%s, %.2f%s)", card, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "red")
 			} else {
 				// Just print, the card name was not found
-				LogMessage(fmt.Sprintf("No \"%s\" is not in your Collection.", card), "red")
+				LogMessage(fmt.Sprintf("MISSING \"%s\"", card), "red")
 			}
 		}
 	}
