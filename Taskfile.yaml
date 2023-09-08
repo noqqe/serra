@@ -15,7 +15,7 @@ tasks:
   release:
     interactive: true
     cmds:
-      - git tag | tail -5
+      - git tag | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -5
       - read -p "Version v1.1.1 " version ; git tag $version
       - git push --tags
       - goreleaser release --clean
