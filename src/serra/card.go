@@ -119,10 +119,7 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 		filter = append(filter, bson.E{"serra_count_foil", bson.D{{"$gt", 0}}})
 	}
 
-	if count > 0 {
-		filter = append(filter, bson.E{"serra_count", bson.D{{"$gte", count}}})
-	}
-
+	fmt.Println(filter)
 	cards, _ := coll.storageFind(filter, sortStage, skip, limit)
 
 	// This is needed because collectornumbers are strings (ie. "23a") but still we
@@ -132,6 +129,17 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 			return filterForDigits(cards[i].CollectorNumber) < filterForDigits(cards[j].CollectorNumber)
 		})
 	}
+
+	// filter out cards that do not reach the minimum amount (--min-count)
+	// this is done after query result because find query constructed does not support
+	// aggregating fields (of count and countFoil).
+	temp := cards[:0]
+	for _, card := range cards {
+		if (card.SerraCount + card.SerraCountFoil) >= count {
+			temp = append(temp, card)
+		}
+	}
+	cards = temp
 
 	return cards
 }
