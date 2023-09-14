@@ -114,7 +114,7 @@ func addCards(cards []string, unique bool, count int64) error {
 			c := co[0]
 
 			if unique {
-				l.Warnf("Not adding \"%s\" (%s, %.2f%s) because it already exists.", c.Name, c.Rarity, c.getValue(foil), getCurrency())
+				l.Warnf("%dx \"%s\" (%s, %.2f%s) not added, because it already exists", count, c.Name, c.Rarity, c.getValue(foil), getCurrency())
 				continue
 			}
 
@@ -127,7 +127,7 @@ func addCards(cards []string, unique bool, count int64) error {
 				total = c.SerraCount + count
 			}
 			// Give feedback of successfully added card
-			l.Infof("%dx \"%s\" (%s, %.2f%s) added.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+			l.Infof("%dx \"%s\" (%s, %.2f%s) added", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
 
 			// If card is not already in collection, fetching from scyfall
 		} else {
@@ -154,7 +154,7 @@ func addCards(cards []string, unique bool, count int64) error {
 			}
 
 			// Give feedback of successfully added card
-			l.Infof("%dx \"%s\" (%s, %.2f%s) added to Collection.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+			l.Infof("%dx \"%s\" (%s, %.2f%s) added", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
 		}
 	}
 	storageDisconnect(client)
