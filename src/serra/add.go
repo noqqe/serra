@@ -2,7 +2,6 @@ package serra
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -37,9 +36,9 @@ var addCmd = &cobra.Command{
 }
 
 func addCardsInteractive(unique bool, set string) {
+	l := Logger()
 	if len(set) == 0 {
-		LogMessage("Error: --set must be given in interactive mode", "red")
-		os.Exit(1)
+		l.Fatal("Option --set <set> must be given in interactive mode")
 	}
 
 	rl, err := readline.New(fmt.Sprintf("%s> ", set))
@@ -84,6 +83,7 @@ func addCardsInteractive(unique bool, set string) {
 func addCards(cards []string, unique bool, count int64) error {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	l := Logger()
 	defer storageDisconnect(client)
 
 	// Loop over different cards
@@ -91,7 +91,7 @@ func addCards(cards []string, unique bool, count int64) error {
 		// Extract collector number and set name from card input & trim any leading 0 from collector number
 
 		if !strings.Contains(card, "/") {
-			LogMessage(fmt.Sprintf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card), "red")
+			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
 			continue
 		}
 
@@ -99,14 +99,14 @@ func addCards(cards []string, unique bool, count int64) error {
 		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
 
 		if collectorNumber == "" {
-			LogMessage(fmt.Sprintf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card), "red")
+			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
 			continue
 		}
 
 		// Check if card is already in collection
 		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{}, 0, 0)
 		if err != nil {
-			LogMessage(fmt.Sprintf("%v", err), "red")
+			l.Error(err)
 			continue
 		}
 
@@ -114,7 +114,7 @@ func addCards(cards []string, unique bool, count int64) error {
 			c := co[0]
 
 			if unique {
-				LogMessage(fmt.Sprintf("Not adding \"%s\" (%s, %.2f%s) to Collection because it already exists.", c.Name, c.Rarity, c.getValue(foil), getCurrency()), "red")
+				l.Warnf("Not adding \"%s\" (%s, %.2f%s) because it already exists.", c.Name, c.Rarity, c.getValue(foil), getCurrency())
 				continue
 			}
 
@@ -127,14 +127,14 @@ func addCards(cards []string, unique bool, count int64) error {
 				total = c.SerraCount + count
 			}
 			// Give feedback of successfully added card
-			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f%s) added to Collection.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "green")
+			l.Infof("%dx \"%s\" (%s, %.2f%s) added.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
 
 			// If card is not already in collection, fetching from scyfall
 		} else {
 			// Fetch card from scryfall
 			c, err := fetchCard(setName, collectorNumber)
 			if err != nil {
-				LogMessage(fmt.Sprintf("%v", err), "red")
+				l.Warn(err)
 				continue
 			}
 
@@ -149,12 +149,12 @@ func addCards(cards []string, unique bool, count int64) error {
 			}
 			err = coll.storageAdd(c)
 			if err != nil {
-				LogMessage(fmt.Sprintf("%v", err), "red")
+				l.Warn(err)
 				continue
 			}
 
 			// Give feedback of successfully added card
-			LogMessage(fmt.Sprintf("%dx \"%s\" (%s, %.2f%s) added to Collection.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "green")
+			l.Infof("%dx \"%s\" (%s, %.2f%s) added to Collection.", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
 		}
 	}
 	storageDisconnect(client)

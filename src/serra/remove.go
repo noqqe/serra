@@ -2,7 +2,6 @@ package serra
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -36,9 +35,10 @@ var removeCmd = &cobra.Command{
 }
 
 func removeCardsInteractive(unique bool, set string) {
+	l := Logger()
+
 	if len(set) == 0 {
-		LogMessage("Error: --set must be given in interactive mode", "red")
-		os.Exit(1)
+		l.Fatal("Option --set must be given in interactive mode")
 	}
 
 	rl, err := readline.New(fmt.Sprintf("%s> ", set))
@@ -66,6 +66,7 @@ func removeCards(cards []string, count int64) error {
 	// Connect to the DB & load the collection
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	l := Logger()
 	defer storageDisconnect(client)
 
 	// Loop over different cards
@@ -77,23 +78,23 @@ func removeCards(cards []string, count int64) error {
 		// Fetch card from scryfall
 		c, err := findCardByCollectorNumber(coll, setName, collectorNumber)
 		if err != nil {
-			LogMessage(fmt.Sprintf("%v", err), "red")
+			l.Error(err)
 			continue
 		}
 
 		if foil && c.SerraCountFoil < 1 {
-			LogMessage(fmt.Sprintf("Error: No Foil \"%s\" in the Collection.", c.Name), "red")
+			l.Errorf("No foil \"%s\" in the collection", c.Name)
 			continue
 		}
 
 		if !foil && c.SerraCount < 1 {
-			LogMessage(fmt.Sprintf("Error: No normal \"%s\" in the Collection.", c.Name), "red")
+			l.Errorf("No normal \"%s\" in the collection", c.Name)
 			continue
 		}
 
 		if foil && c.SerraCountFoil == 1 && c.SerraCount == 0 || !foil && c.SerraCount == 1 && c.SerraCountFoil == 0 {
 			coll.storageRemove(bson.M{"_id": c.ID})
-			LogMessage(fmt.Sprintf("\"%s\" (%.2f%s) removed from the Collection.", c.Name, c.getValue(foil), getCurrency()), "green")
+			l.Infof("\"%s\" (%.2f%s) removed", c.Name, c.getValue(foil), getCurrency())
 		} else {
 			modifyCardCount(coll, c, -count, foil)
 		}

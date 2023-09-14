@@ -23,6 +23,7 @@ var statsCmd = &cobra.Command{
 		client := storageConnect()
 		coll := &Collection{client.Database("serra").Collection("cards")}
 		totalcoll := &Collection{client.Database("serra").Collection("total")}
+		l := Logger()
 		defer storageDisconnect(client)
 
 		// Colors
@@ -149,12 +150,12 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
 		normalValue, err := getFloat64(stats[0]["value"])
 		if err != nil {
-			LogMessage(fmt.Sprintf("Error: %v", err), "red")
+			l.Error(err)
 			normalValue = 0
 		}
 		foilValue, err := getFloat64(stats[0]["value_foil"])
 		if err != nil {
-			LogMessage(fmt.Sprintf("Error: %v", err), "red")
+			l.Error(err)
 			foilValue = 0
 		}
 		totalValue := normalValue + foilValue

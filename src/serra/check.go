@@ -30,6 +30,7 @@ func checkCards(cards []string, detail bool) error {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storageDisconnect(client)
+	l := Logger()
 
 	// Loop over different cards
 	for _, card := range cards {
@@ -41,23 +42,23 @@ func checkCards(cards []string, detail bool) error {
 		// Check if card is already in collection
 		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{}, 0, 0)
 		if err != nil {
-			LogMessage(fmt.Sprintf("%v", err), "red")
+			l.Warn(err)
 			continue
 		}
 
 		// If Card is in collection, print yes.
 		if len(co) >= 1 {
 			c := co[0]
-			LogMessage(fmt.Sprintf("PRESENT %s \"%s\" (%s, %.2f%s)", card, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "green")
+			fmt.Sprintf("PRESENT %s \"%s\" (%s, %.2f%s)", card, c.Name, c.Rarity, c.getValue(foil), getCurrency())
 			continue
 		} else {
 			if detail {
 				// fetch card from scyrfall if --detail was given
 				c, _ := fetchCard(setName, collectorNumber)
-				LogMessage(fmt.Sprintf("MISSING %s \"%s\" (%s, %.2f%s)", card, c.Name, c.Rarity, c.getValue(foil), getCurrency()), "red")
+				fmt.Sprintf("MISSING %s \"%s\" (%s, %.2f%s)", card, c.Name, c.Rarity, c.getValue(foil), getCurrency())
 			} else {
 				// Just print, the card name was not found
-				LogMessage(fmt.Sprintf("MISSING \"%s\"", card), "red")
+				fmt.Sprintf("MISSING \"%s\"", card)
 			}
 		}
 	}

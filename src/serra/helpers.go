@@ -4,16 +4,41 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"time"
 	"unicode"
 
+	"github.com/charmbracelet/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Rarities struct {
 	Rares, Uncommons, Commons, Mythics float64
+}
+
+var (
+	Icon        = "\U0001F9D9\U0001F3FC"
+	Reset       = "\033[0m"
+	Background  = "\033[38;5;59m"
+	CurrentLine = "\033[38;5;60m"
+	Foreground  = "\033[38;5;231m"
+	Comment     = "\033[38;5;103m"
+	Cyan        = "\033[38;5;159m"
+	Green       = "\033[38;5;120m"
+	Orange      = "\033[38;5;222m"
+	Pink        = "\033[38;5;212m"
+	Purple      = "\033[38;5;183m"
+	Red         = "\033[38;5;210m"
+	Yellow      = "\033[38;5;229m"
+)
+
+func Logger() *log.Logger {
+
+	l := log.New(os.Stderr)
+	l.SetReportTimestamp(false)
+	return l
 }
 
 func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
@@ -47,7 +72,7 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	} else {
 		total = storedCard.SerraCount + amount
 	}
-	LogMessage(fmt.Sprintf("Updating Card \"%s\" amount to %d", storedCard.Name, total), "purple")
+	fmt.Sprintf("Updating Card \"%s\" amount to %d", storedCard.Name, total)
 	return nil
 }
 

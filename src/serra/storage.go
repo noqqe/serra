@@ -3,7 +3,6 @@ package serra
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -46,12 +45,12 @@ func getCurrencyField(foil bool) string {
 }
 
 func storageConnect() *mongo.Client {
+	l := Logger()
 	uri := getMongoDBURI()
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		LogMessage(fmt.Sprintf("Could not connect to mongodb at %s", uri), "red")
-		os.Exit(1)
+		l.Fatalf("Could not connect to mongodb at %s", uri)
 	}
 
 	return client
@@ -104,14 +103,15 @@ func (coll Collection) storageAddTotal(p PriceEntry) error {
 func (coll Collection) storageFind(filter, sort bson.D, skip, limit int64) ([]Card, error) {
 	opts := options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
+	l := Logger()
+
 	if err != nil {
-		LogMessage(fmt.Sprintf("Could not query data due to connection errors to database: %s", err.Error()), "red")
-		os.Exit(1)
+		l.Fatalf("Could not query data due to connection errors to database: %s", err.Error())
 	}
 
 	var results []Card
 	if err = cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
+		l.Fatal(err)
 		return []Card{}, err
 	}
 	return results, nil
@@ -119,17 +119,17 @@ func (coll Collection) storageFind(filter, sort bson.D, skip, limit int64) ([]Ca
 }
 
 func (coll Collection) storageFindSet(filter, sort bson.D) ([]Set, error) {
+	l := Logger()
 	opts := options.Find().SetSort(sort)
 
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
-		LogMessage(fmt.Sprintf("Could not query set data due to connection errors to database: %s", err.Error()), "red")
-		os.Exit(1)
+		l.Fatalf("Could not query set data due to connection errors to database: %s", err.Error())
 	}
 
 	var results []Set
 	if err = cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
+		l.Fatal(err)
 		return []Set{}, err
 	}
 
@@ -138,27 +138,29 @@ func (coll Collection) storageFindSet(filter, sort bson.D) ([]Set, error) {
 
 func (coll Collection) storageFindTotal() (Total, error) {
 	var total Total
+	l := Logger()
 
 	err := coll.FindOne(context.TODO(), bson.D{{"_id", "1"}}).Decode(&total)
 	if err != nil {
-		LogMessage(fmt.Sprintf("Could not query total data due to connection errors to database: %s", err.Error()), "red")
-		os.Exit(1)
+		l.Fatalf("Could not query total data due to connection errors to database: %s", err.Error())
 	}
 
 	return total, nil
 }
 
 func (coll Collection) storageRemove(filter bson.M) error {
+	l := Logger()
+
 	_, err := coll.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		LogMessage(fmt.Sprintf("Could remove card data due to connection errors to database: %s", err.Error()), "red")
-		os.Exit(1)
+		l.Fatalf("Could remove card data due to connection errors to database: %s", err.Error())
 	}
 
 	return nil
 }
 
 func (coll Collection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M, error) {
+	l := Logger()
 	opts := options.Aggregate()
 
 	cursor, err := coll.Aggregate(
@@ -166,21 +168,21 @@ func (coll Collection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M,
 		pipeline,
 		opts)
 	if err != nil {
-		LogMessage(fmt.Sprintf("Could not aggregate data due to connection errors to database: %s", err.Error()), "red")
-		os.Exit(1)
+		l.Fatalf("Could not aggregate data due to connection errors to database: %s", err.Error())
 	}
 
 	// Get a list of all returned documents and print them out.
 	// See the mongo.Cursor documentation for more examples of using cursors.
 	var results []bson.M
 	if err = cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
+		l.Fatal(err)
 	}
 
 	return results, nil
 }
 
 func (coll Collection) storageUpdate(filter, update bson.M) error {
+	l := Logger()
 	// Call the driver's UpdateOne() method and pass filter and update to it
 	_, err := coll.UpdateOne(
 		context.Background(),
@@ -188,8 +190,7 @@ func (coll Collection) storageUpdate(filter, update bson.M) error {
 		update,
 	)
 	if err != nil {
-		LogMessage(fmt.Sprintf("Could not update data due to connection errors to database: %s", err.Error()), "red")
-		os.Exit(1)
+		l.Fatalf("Could not update data due to connection errors to database: %s", err.Error())
 	}
 
 	return nil

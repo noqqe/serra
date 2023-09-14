@@ -1,7 +1,6 @@
 package serra
 
 import (
-	"log"
 	"os"
 )
 
@@ -9,9 +8,10 @@ const EUR = "€"
 const USD = "$"
 
 func getMongoDBURI() string {
+	l := Logger()
 	uri := os.Getenv("MONGODB_URI")
 	if uri == "" {
-		log.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://docs.mongodb.com/drivers/go/current/usage-examples/#environment-variable")
+		l.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://docs.mongodb.com/drivers/go/current/usage-examples/#environment-variable")
 	}
 
 	return uri
@@ -20,13 +20,14 @@ func getMongoDBURI() string {
 // Returns configured human readable name for
 // the configured currency of the user
 func getCurrency() string {
+	l := Logger()
 	switch os.Getenv("SERRA_CURRENCY") {
 	case "EUR":
 		return EUR
 	case "USD":
 		return USD
 	default:
-		LogMessage("Warning: You did not configure SERRA_CURRENCY. Assuming \"USD\"", "yellow")
+		l.Warn("Warning: You did not configure SERRA_CURRENCY. Assuming \"USD\"")
 		return "$"
 	}
 }

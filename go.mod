@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/bytedance/sonic v1.10.0 // indirect
+	github.com/charmbracelet/log v0.2.4 // indirect
 	github.com/chzyer/readline v1.5.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/validator/v10 v10.15.3 // indirect

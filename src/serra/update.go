@@ -25,6 +25,7 @@ var updateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		client := storageConnect()
+		l := Logger()
 		defer storageDisconnect(client)
 
 		// update sets
@@ -81,7 +82,7 @@ var updateCmd = &cobra.Command{
 				bar.Add(1)
 				updatedCard, err := fetchCard(card.Set, card.CollectorNumber)
 				if err != nil {
-					LogMessage(fmt.Sprintf("%v", err), "red")
+					l.Error(err)
 					continue
 				}
 

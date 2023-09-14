@@ -88,6 +88,7 @@ func ShowSet(setname string) error {
 
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	l := Logger()
 	defer storageDisconnect(client)
 
 	// fetch all cards in set ordered by currently used currency
@@ -97,7 +98,7 @@ func ShowSet(setname string) error {
 	}
 	cards, err := coll.storageFind(bson.D{{"set", setname}}, cardSortCurrency, 0, 0)
 	if (err != nil) || len(cards) == 0 {
-		LogMessage(fmt.Sprintf("Error: Set %s not found or no card in your collection.", setname), "red")
+		l.Errorf("Set %s not found or no card in your collection.", setname)
 		return err
 	}
 
@@ -142,7 +143,7 @@ func ShowSet(setname string) error {
 
 	ri := convertRarities(rar)
 
-	LogMessage(sets[0].Name, "green")
+	fmt.Printf(sets[0].Name)
 	fmt.Printf("Released: %s\n", sets[0].ReleasedAt)
 	fmt.Printf("Set Cards: %d/%d\n", len(cards), sets[0].CardCount)
 	fmt.Printf("Total Cards: %.0f\n", stats[0]["count"])
@@ -150,12 +151,12 @@ func ShowSet(setname string) error {
 
 	normalValue, err := getFloat64(stats[0]["value"])
 	if err != nil {
-		LogMessage(fmt.Sprintf("Error: %v", err), "red")
+		l.Error(err)
 		normalValue = 0
 	}
 	foilValue, err := getFloat64(stats[0]["value_foil"])
 	if err != nil {
-		LogMessage(fmt.Sprintf("Error: %v", err), "red")
+		l.Error(err)
 		foilValue = 0
 	}
 	totalValue := normalValue + foilValue

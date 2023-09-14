@@ -45,11 +45,12 @@ otherwise you'll get a list of cards as a search result.`,
 func ShowCard(cardids []string) {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
+	l := Logger()
 	defer storageDisconnect(client)
 
 	for _, v := range cardids {
 		if len(strings.Split(v, "/")) < 2 || strings.Split(v, "/")[1] == "" {
-			LogMessage(fmt.Sprintf("Invalid card %s", v), "red")
+			l.Warnf("Invalid card %s", v)
 			continue
 		}
 
