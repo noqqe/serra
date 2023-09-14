@@ -72,7 +72,7 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	} else {
 		total = storedCard.SerraCount + amount
 	}
-	fmt.Sprintf("Updating Card \"%s\" amount to %d", storedCard.Name, total)
+	fmt.Printf("Updating Card \"%s\" amount to %d", storedCard.Name, total)
 	return nil
 }
 

@@ -74,7 +74,7 @@ var updateCmd = &cobra.Command{
 					SaucerHead:    "[green]>[reset]",
 					SaucerPadding: " ",
 					BarStart:      "|",
-					BarEnd:        fmt.Sprintf("| %s%s%s", Pink, set.Name, Reset),
+					BarEnd:        set.Name,
 				}),
 			)
 
