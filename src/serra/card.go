@@ -119,7 +119,6 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 		filter = append(filter, bson.E{"serra_count_foil", bson.D{{"$gt", 0}}})
 	}
 
-	fmt.Println(filter)
 	cards, _ := coll.storageFind(filter, sortStage, skip, limit)
 
 	// This is needed because collectornumbers are strings (ie. "23a") but still we
