@@ -46,6 +46,7 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	// find already existing card
 	sort := bson.D{{"_id", 1}}
 	searchFilter := bson.D{{"_id", c.ID}}
+	l := Logger()
 	storedCards, err := coll.storageFind(searchFilter, sort, 0, 0)
 	if err != nil {
 		return err
@@ -69,10 +70,20 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	var total int64
 	if foil {
 		total = storedCard.SerraCountFoil + amount
+		if amount < 0 {
+			l.Infof("Reduced card amount of \"%s\" (foil) from %d to %d", storedCard.Name, storedCard.SerraCountFoil, total)
+		} else {
+			l.Infof("Increased card amount of \"%s\" (foil) from %d to %d", storedCard.Name, storedCard.SerraCountFoil, total)
+		}
 	} else {
 		total = storedCard.SerraCount + amount
+		if amount < 0 {
+			l.Infof("Reduced card amount of \"%s\" from %d to %d", storedCard.Name, storedCard.SerraCount, total)
+		} else {
+			l.Infof("Increased card amount of \"%s\" from %d to %d", storedCard.Name, storedCard.SerraCount, total)
+		}
 	}
-	fmt.Printf("Updating Card \"%s\" amount to %d", storedCard.Name, total)
+
 	return nil
 }
 
@@ -131,7 +142,6 @@ func convertManaSymbols(sym []interface{}) string {
 	var mana string
 
 	if len(sym) == 0 {
-		// mana = mana + "\U0001F6AB" //probibited sign for lands
 		mana = mana + "None" //probibited sign for lands
 	}
 
@@ -139,19 +149,14 @@ func convertManaSymbols(sym []interface{}) string {
 		switch v {
 		case "B":
 			mana = mana + "Black" //black
-			//mana = mana + "\U000026AB" //black
 		case "R":
 			mana = mana + "Red" //red
-			// mana = mana + "\U0001F534" //red
 		case "G":
 			mana = mana + "Green" //green
-			// mana = mana + "\U0001F7E2" //green
 		case "U":
 			mana = mana + "Blue" //blue
-			//mana = mana + "\U0001F535" //blue
 		case "W":
 			mana = mana + "White" //white
-			// mana = mana + "\U000026AA" //white
 		}
 	}
 	return mana

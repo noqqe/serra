@@ -120,16 +120,6 @@ func addCards(cards []string, unique bool, count int64) error {
 
 			modifyCardCount(coll, &c, count, foil)
 
-			var total int64 = 0
-			if foil {
-				total = c.SerraCountFoil + count
-			} else {
-				total = c.SerraCount + count
-			}
-			// Give feedback of successfully added card
-			l.Infof("%dx \"%s\" (%s, %.2f%s) added", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
-
-			// If card is not already in collection, fetching from scyfall
 		} else {
 			// Fetch card from scryfall
 			c, err := fetchCard(setName, collectorNumber)
