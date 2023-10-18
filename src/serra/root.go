@@ -11,6 +11,7 @@ var (
 	count           int64
 	detail          bool
 	foil            bool
+	format          string
 	interactive     bool
 	limit           float64
 	name            string

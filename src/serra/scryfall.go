@@ -26,6 +26,7 @@ type Card struct {
 	Booster         bool     `json:"booster"`
 	BorderColor     string   `json:"border_color"`
 	CardBackID      string   `json:"card_back_id"`
+	CardmarketID    string   `json:"cardmarket_id"`
 	Cmc             float64  `json:"cmc"`
 	CollectorNumber string   `json:"collector_number"`
 	ColorIdentity   []string `json:"color_identity"`
@@ -112,6 +113,7 @@ type Card struct {
 	SetURI         string `json:"set_uri"`
 	StorySpotlight bool   `json:"story_spotlight"`
 	Textless       bool   `json:"textless"`
+	TCGPlayerID    string `json:"tcgplayer_id"`
 	TypeLine       string `json:"type_line"`
 	URI            string `json:"uri"`
 	Variation      bool   `json:"variation"`
