@@ -1,6 +1,7 @@
 package serra
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -8,7 +9,7 @@ import (
 
 func init() {
 	exportCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
-	exportCmd.Flags().StringVarP(&format, "format", "f", "tcgpowertools", "Choose format to export (tcgpowertools)")
+	exportCmd.Flags().StringVarP(&format, "format", "f", "tcgpowertools", "Choose format to export (tcgpowertools/json)")
 	rootCmd.AddCommand(exportCmd)
 }
 
@@ -25,6 +26,8 @@ var exportCmd = &cobra.Command{
 		switch format {
 		case "tcgpowertools":
 			exportTCGPowertools(cardList)
+		case "json":
+			exportJson(cardList)
 		}
 		return nil
 	},
@@ -40,4 +43,9 @@ func exportTCGPowertools(cards []Card) {
 	for _, card := range cards {
 		fmt.Printf("%.0f,%d,%s,%s,EX,German,false,false,,,%.2f,\n", card.CardmarketID, card.SerraCount, card.Name, card.SetName, card.getValue(false))
 	}
+}
+
+func exportJson(cards []Card) {
+	ehj, _ := json.MarshalIndent(cards, "", "  ")
+	fmt.Println(string(ehj))
 }
