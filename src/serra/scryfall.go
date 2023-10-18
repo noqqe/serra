@@ -26,7 +26,7 @@ type Card struct {
 	Booster         bool     `json:"booster"`
 	BorderColor     string   `json:"border_color"`
 	CardBackID      string   `json:"card_back_id"`
-	CardmarketID    string   `json:"cardmarket_id"`
+	CardmarketID    float64  `json:"cardmarket_id"`
 	Cmc             float64  `json:"cmc"`
 	CollectorNumber string   `json:"collector_number"`
 	ColorIdentity   []string `json:"color_identity"`
@@ -99,24 +99,24 @@ type Card struct {
 		TcgplayerInfiniteArticles string `json:"tcgplayer_infinite_articles"`
 		TcgplayerInfiniteDecks    string `json:"tcgplayer_infinite_decks"`
 	} `json:"related_uris"`
-	ReleasedAt     string `json:"released_at"`
-	Reprint        bool   `json:"reprint"`
-	Reserved       bool   `json:"reserved"`
-	RulingsURI     string `json:"rulings_uri"`
-	ScryfallSetURI string `json:"scryfall_set_uri"`
-	ScryfallURI    string `json:"scryfall_uri"`
-	Set            string `json:"set"`
-	SetID          string `json:"set_id"`
-	SetName        string `json:"set_name"`
-	SetSearchURI   string `json:"set_search_uri"`
-	SetType        string `json:"set_type"`
-	SetURI         string `json:"set_uri"`
-	StorySpotlight bool   `json:"story_spotlight"`
-	Textless       bool   `json:"textless"`
-	TCGPlayerID    string `json:"tcgplayer_id"`
-	TypeLine       string `json:"type_line"`
-	URI            string `json:"uri"`
-	Variation      bool   `json:"variation"`
+	ReleasedAt     string  `json:"released_at"`
+	Reprint        bool    `json:"reprint"`
+	Reserved       bool    `json:"reserved"`
+	RulingsURI     string  `json:"rulings_uri"`
+	ScryfallSetURI string  `json:"scryfall_set_uri"`
+	ScryfallURI    string  `json:"scryfall_uri"`
+	Set            string  `json:"set"`
+	SetID          string  `json:"set_id"`
+	SetName        string  `json:"set_name"`
+	SetSearchURI   string  `json:"set_search_uri"`
+	SetType        string  `json:"set_type"`
+	SetURI         string  `json:"set_uri"`
+	StorySpotlight bool    `json:"story_spotlight"`
+	Textless       bool    `json:"textless"`
+	TCGPlayerID    float64 `json:"tcgplayer_id"`
+	TypeLine       string  `json:"type_line"`
+	URI            string  `json:"uri"`
+	Variation      bool    `json:"variation"`
 }
 
 // Getter for currency specific value

@@ -15,9 +15,9 @@ func init() {
 var exportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export cards from your collection",
-	Long: `Search and show cards from your collection.
-If you directly put a card as an argument, it will be displayed
-otherwise you'll get a list of cards as a search result.`,
+	Long: `Export cards from your collection.
+		Your data. Your choice.
+		Supports multiple output formats depending on where you want to export your collection.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0)
@@ -37,8 +37,7 @@ func exportTCGPowertools(cards []Card) {
 	// 260009,1,Totally Lost,Gatecrash,GD,English,true,true,,,1000,
 	// 260009,1,Totally Lost,Gatecrash,NM,English,true,true,,,1000,
 
-	fmt.Println("idProduct,quantity,name,set,condition,language,isFoil,isPlayset,isSigned,isFirstEd,price,comment")
 	for _, card := range cards {
-		fmt.Printf("%s,%d,%s,%s,EX,German,false,false,,,%.2f,,\n", card.CardmarketID, card.SerraCount, card.Name, card.SetName, card.getValue(false))
+		fmt.Printf("%.0f,%d,%s,%s,EX,German,false,false,,,%.2f,\n", card.CardmarketID, card.SerraCount, card.Name, card.SetName, card.getValue(false))
 	}
 }
