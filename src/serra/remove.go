@@ -71,9 +71,20 @@ func removeCards(cards []string, count int64) error {
 
 	// Loop over different cards
 	for _, card := range cards {
+
+		if !strings.Contains(card, "/") {
+			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
+			continue
+		}
+
 		// Extract collector number and set name from input & remove leading zeros
 		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
 		setName := strings.Split(card, "/")[0]
+
+		if collectorNumber == "" {
+			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
+			continue
+		}
 
 		// Fetch card from scryfall
 		c, err := findCardByCollectorNumber(coll, setName, collectorNumber)
