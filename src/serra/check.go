@@ -35,9 +35,19 @@ func checkCards(cards []string, detail bool) error {
 	// Loop over different cards
 	for _, card := range cards {
 
+		if !strings.Contains(card, "/") {
+			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
+			continue
+		}
+
 		// Extract collector number and set name from card input & trim any leading 0 from collector number
 		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
 		setName := strings.ToLower(strings.Split(card, "/")[0])
+
+		if collectorNumber == "" {
+			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
+			continue
+		}
 
 		// Check if card is already in collection
 		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{}, 0, 0)
