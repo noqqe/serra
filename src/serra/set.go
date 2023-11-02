@@ -143,7 +143,7 @@ func ShowSet(setname string) error {
 
 	ri := convertRarities(rar)
 
-	fmt.Printf(sets[0].Name)
+	fmt.Printf("%s\n", sets[0].Name)
 	fmt.Printf("Released: %s\n", sets[0].ReleasedAt)
 	fmt.Printf("Set Cards: %d/%d\n", len(cards), sets[0].CardCount)
 	fmt.Printf("Total Cards: %.0f\n", stats[0]["count"])
