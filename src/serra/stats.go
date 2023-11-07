@@ -3,6 +3,7 @@ package serra
 import (
 	"fmt"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -144,6 +145,46 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("\n%sMana Curve%s\n", Green, Reset)
 		for _, mc := range cmc {
 			fmt.Printf("%.0f: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
+		}
+
+		// Show cards added per month
+		// db.cards.aggregate({ $project: {
+		//  month:
+		// { $month: "$serra_created" },
+		// year:
+		// { $year: "$serra_created" }, name: 1 } },
+
+		// { $group: { _id:
+		// { month: "$month", year: "$year" }, count: { $sum: 1 } } })
+		fmt.Printf("\n%sCards added over time%s\n", Green, Reset)
+		type Caot struct {
+			Id struct {
+				Year  int32 `mapstructure:"year"`
+				Month int32 `mapstructure:"month"`
+			} `mapstructure:"_id"`
+			Count int32 `mapstructure:"count"`
+		}
+		caot, _ := coll.storageAggregate(mongo.Pipeline{
+			bson.D{
+				{"$project", bson.D{
+					{"month", bson.D{
+						{"$month", "$serra_created"}}},
+					{"year", bson.D{
+						{"$year", "$serra_created"}},
+					}},
+				}},
+			bson.D{
+				{"$group", bson.D{
+					{"_id", bson.D{{"month", "$month"}, {"year", "$year"}}},
+					{"count", bson.D{{"$sum", 1}}},
+				}},
+			},
+		})
+		for _, mo := range caot {
+			moo := new(Caot)
+			mapstructure.Decode(mo, moo)
+			fmt.Printf("%d-%02d\t%d\n", moo.Id.Year, moo.Id.Month, moo.Count)
+			// fmt.Printf("%.0f: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
 		}
 
 		// Total Value
