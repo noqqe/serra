@@ -27,28 +27,6 @@ var statsCmd = &cobra.Command{
 		l := Logger()
 		defer storageDisconnect(client)
 
-		// Colors
-		sets, _ := coll.storageAggregate(mongo.Pipeline{
-			bson.D{
-				{"$match", bson.D{
-					{"coloridentity", bson.D{{"$size", 1}}}}}},
-			bson.D{
-				{"$group", bson.D{
-					{"_id", "$coloridentity"},
-					{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-				}}},
-			bson.D{
-				{"$sort", bson.D{
-					{"count", -1},
-				}}},
-		})
-		fmt.Printf("%sColors%s\n", Green, Reset)
-		for _, set := range sets {
-			x, _ := set["_id"].(primitive.A)
-			s := []interface{}(x)
-			fmt.Printf("%s: %s%.0f%s\n", convertManaSymbols(s), Purple, set["count"], Reset)
-		}
-
 		// Value and Card Numbers
 		stats, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
@@ -68,7 +46,7 @@ var statsCmd = &cobra.Command{
 				}},
 			},
 		})
-		fmt.Printf("\n%sCards %s\n", Green, Reset)
+		fmt.Printf("%sCards %s\n", Green, Reset)
 		fmt.Printf("Total: %s%.0f%s\n", Yellow, stats[0]["count_all"], Reset)
 		fmt.Printf("Unique: %s%d%s\n", Purple, stats[0]["unique"], Reset)
 		fmt.Printf("Normal: %s%.0f%s\n", Purple, stats[0]["count"], Reset)
@@ -110,6 +88,28 @@ var statsCmd = &cobra.Command{
 		fmt.Printf("Uncommons: %s%.0f%s\n", Yellow, ri.Uncommons, Reset)
 		fmt.Printf("Commons: %s%.0f%s\n", Purple, ri.Commons, Reset)
 
+		// Colors
+		sets, _ := coll.storageAggregate(mongo.Pipeline{
+			bson.D{
+				{"$match", bson.D{
+					{"coloridentity", bson.D{{"$size", 1}}}}}},
+			bson.D{
+				{"$group", bson.D{
+					{"_id", "$coloridentity"},
+					{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+				}}},
+			bson.D{
+				{"$sort", bson.D{
+					{"count", -1},
+				}}},
+		})
+
+		fmt.Printf("\n%sColors%s\n", Green, Reset)
+		for _, set := range sets {
+			x, _ := set["_id"].(primitive.A)
+			s := []interface{}(x)
+			fmt.Printf("%s: %s%.0f%s\n", convertManaSymbols(s), Purple, set["count"], Reset)
+		}
 		// Artists
 		artists, _ := coll.storageAggregate(mongo.Pipeline{
 			bson.D{
@@ -178,7 +178,7 @@ var statsCmd = &cobra.Command{
 		for _, mo := range caot {
 			moo := new(Caot)
 			mapstructure.Decode(mo, moo)
-			fmt.Printf("%d-%02d\t%s%d%s\n", moo.Id.Year, moo.Id.Month, Purple, moo.Count, Reset)
+			fmt.Printf("%d-%02d: %s%d%s\n", moo.Id.Year, moo.Id.Month, Purple, moo.Count, Reset)
 		}
 
 		// Total Value
@@ -193,10 +193,16 @@ var statsCmd = &cobra.Command{
 			l.Error(err)
 			foilValue = 0
 		}
+		count_all, err := getFloat64(stats[0]["count_all"])
+		if err != nil {
+			l.Error(err)
+			foilValue = 0
+		}
 		totalValue := normalValue + foilValue
 		fmt.Printf("Total: %s%.2f%s%s\n", Pink, totalValue, getCurrency(), Reset)
 		fmt.Printf("Normal: %s%.2f%s%s\n", Pink, normalValue, getCurrency(), Reset)
 		fmt.Printf("Foils: %s%.2f%s%s\n", Pink, foilValue, getCurrency(), Reset)
+		fmt.Printf("Average Card: %s%.2f%s%s\n", Pink, totalValue/count_all, getCurrency(), Reset)
 		total, _ := totalcoll.storageFindTotal()
 
 		fmt.Printf("History: \n")
