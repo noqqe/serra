@@ -148,14 +148,6 @@ var statsCmd = &cobra.Command{
 		}
 
 		// Show cards added per month
-		// db.cards.aggregate({ $project: {
-		//  month:
-		// { $month: "$serra_created" },
-		// year:
-		// { $year: "$serra_created" }, name: 1 } },
-
-		// { $group: { _id:
-		// { month: "$month", year: "$year" }, count: { $sum: 1 } } })
 		fmt.Printf("\n%sCards added over time%s\n", Green, Reset)
 		type Caot struct {
 			Id struct {
@@ -179,12 +171,14 @@ var statsCmd = &cobra.Command{
 					{"count", bson.D{{"$sum", 1}}},
 				}},
 			},
+			bson.D{
+				{"$sort", bson.D{{"_id.year", 1}, {"_id.month", 1}}},
+			},
 		})
 		for _, mo := range caot {
 			moo := new(Caot)
 			mapstructure.Decode(mo, moo)
-			fmt.Printf("%d-%02d\t%d\n", moo.Id.Year, moo.Id.Month, moo.Count)
-			// fmt.Printf("%.0f: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
+			fmt.Printf("%d-%02d\t%s%d%s\n", moo.Id.Year, moo.Id.Month, Purple, moo.Count, Reset)
 		}
 
 		// Total Value
