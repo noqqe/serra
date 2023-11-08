@@ -72,7 +72,23 @@ func addCardsInteractive(unique bool, set string) {
 				}
 			}
 		} else {
-			card = append(card, fmt.Sprintf("%s/%s", set, strings.TrimSpace(line)))
+			card = append(card, fmt.Sprintf("%s/%s", set, strings.Split(line, " ")[0]))
+		}
+
+		// Are there extra arguments?
+		if len(strings.Split(line, " ")) == 2 {
+
+			// foil shortcut
+			if strings.Split(line, " ")[1] == "f" {
+				foil = true
+			}
+
+			// amount shortcut
+			if amount, err := strconv.Atoi(strings.Split(line, " ")[1]); err == nil {
+				if amount > 1 {
+					count = int64(amount)
+				}
+			}
 		}
 
 		addCards(card, unique, count)
@@ -144,7 +160,11 @@ func addCards(cards []string, unique bool, count int64) error {
 			}
 
 			// Give feedback of successfully added card
-			l.Infof("%dx \"%s\" (%s, %.2f%s) added", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+			if foil {
+				l.Infof("%dx \"%s\" (%s, %.2f%s, foil) added", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+			} else {
+				l.Infof("%dx \"%s\" (%s, %.2f%s) added", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+			}
 		}
 	}
 	storageDisconnect(client)
