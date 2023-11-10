@@ -53,6 +53,9 @@ func addCardsInteractive(unique bool, set string) {
 			break
 		}
 
+		// default is no foil
+		foil = false
+
 		// construct card input for addCards
 		card := []string{}
 
