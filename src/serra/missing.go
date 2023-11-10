@@ -38,7 +38,7 @@ cards you dont own (yet) :)`,
 		sets, _ := setcoll.storageFindSet(bson.D{{"code", setName[0]}}, bson.D{{"_id", 1}})
 		set := sets[0]
 
-		fmt.Printf("Missing cards in %s", sets[0].Name)
+		fmt.Printf("Missing cards in %s\n", sets[0].Name)
 
 		// generate set with all setnumbers
 		var (
