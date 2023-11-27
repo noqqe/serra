@@ -10,6 +10,7 @@ import (
 func init() {
 	exportCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
 	exportCmd.Flags().StringVarP(&format, "format", "f", "tcgpowertools", "Choose format to export (tcgpowertools/json)")
+	exportCmd.Flags().Int64VarP(&count, "min-count", "c", 0, "Occource more than X in your collection")
 	rootCmd.AddCommand(exportCmd)
 }
 
@@ -22,6 +23,17 @@ var exportCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0)
+
+		// filter out cards that do not reach the minimum amount (--min-count)
+		// this is done after query result because find query constructed does not support
+		// aggregating fields (of count and countFoil).
+		temp := cardList[:0]
+		for _, card := range cardList {
+			if (card.SerraCount + card.SerraCountFoil) >= count {
+				temp = append(temp, card)
+			}
+		}
+		cardList = temp
 
 		switch format {
 		case "tcgpowertools":
@@ -40,8 +52,9 @@ func exportTCGPowertools(cards []Card) {
 	// 260009,1,Totally Lost,Gatecrash,GD,English,true,true,,,1000,
 	// 260009,1,Totally Lost,Gatecrash,NM,English,true,true,,,1000,
 
+	fmt.Println("cardmarketId,quantity,name,set,condition,language,isFoil,isPlayset,price,comment")
 	for _, card := range cards {
-		fmt.Printf("%.0f,%d,%s,%s,EX,German,false,false,,,%.2f,\n", card.CardmarketID, card.SerraCount, card.Name, card.SetName, card.getValue(false))
+		fmt.Printf("%.0f,%d,%s,%s,EX,German,false,false,%.2f,\n", card.CardmarketID, card.SerraCount, card.Name, card.SetName, card.getValue(false))
 	}
 }
 
