@@ -8,6 +8,7 @@ var (
 	Version         = "unknown"
 	address         string
 	cardType        string
+	color           string
 	count           int64
 	detail          bool
 	foil            bool

@@ -14,6 +14,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
 	cardCmd.Flags().StringVarP(&sortby, "sort", "s", "name", "How to sort cards (value/number/name/added)")
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
+	cardCmd.Flags().StringVarP(&color, "color", "i", "", "Color identity of card (w,u,b,r,g)")
 	cardCmd.Flags().StringVarP(&oracle, "oracle", "o", "", "Contains string in card text")
 	cardCmd.Flags().StringVarP(&cardType, "type", "t", "", "Contains string in card type line")
 	cardCmd.Flags().Int64VarP(&count, "min-count", "c", 0, "Occource more than X in your collection")
@@ -110,6 +111,12 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 
 	if len(cardType) > 0 {
 		filter = append(filter, bson.E{"typeline", bson.D{{"$regex", ".*" + cardType + ".*"}, {"$options", "i"}}})
+	}
+
+	if len(color) > 0 {
+		colorArr := strings.Split(strings.ToUpper(color), ",")
+		fmt.Println(colorArr)
+		filter = append(filter, bson.E{"coloridentity", colorArr})
 	}
 
 	if reserved {
