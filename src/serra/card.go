@@ -115,7 +115,6 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 
 	if len(color) > 0 {
 		colorArr := strings.Split(strings.ToUpper(color), ",")
-		fmt.Println(colorArr)
 		filter = append(filter, bson.E{"coloridentity", colorArr})
 	}
 
