@@ -14,6 +14,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
 	cardCmd.Flags().StringVarP(&sortby, "sort", "s", "name", "How to sort cards (value/number/name/added)")
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
+	cardCmd.Flags().Int64VarP(&cmc, "cmc", "m", -1, "Cumulative mana cost of card")
 	cardCmd.Flags().StringVarP(&color, "color", "i", "", "Color identity of card (w,u,b,r,g)")
 	cardCmd.Flags().StringVarP(&oracle, "oracle", "o", "", "Contains string in card text")
 	cardCmd.Flags().StringVarP(&cardType, "type", "t", "", "Contains string in card type line")
@@ -103,6 +104,10 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 
 	if len(name) > 0 {
 		filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + name + ".*"}, {"$options", "i"}}})
+	}
+
+	if cmc > -1 {
+		filter = append(filter, bson.E{"cmc", cmc})
 	}
 
 	if len(oracle) > 0 {

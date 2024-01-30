@@ -9,6 +9,7 @@ var (
 	address         string
 	cardType        string
 	color           string
+	cmc             int64
 	count           int64
 	detail          bool
 	foil            bool
