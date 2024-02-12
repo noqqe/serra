@@ -10,6 +10,7 @@ import (
 )
 
 func init() {
+	cardCmd.Flags().StringVarP(&artist, "artist", "a", "", "Filter by name of artist")
 	cardCmd.Flags().StringVarP(&rarity, "rarity", "r", "", "Filter by rarity of cards (mythic, rare, uncommon, common)")
 	cardCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
 	cardCmd.Flags().StringVarP(&sortby, "sort", "s", "name", "How to sort cards (value/number/name/added)")
@@ -104,6 +105,10 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 
 	if len(name) > 0 {
 		filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + name + ".*"}, {"$options", "i"}}})
+	}
+
+	if len(artist) > 0 {
+		filter = append(filter, bson.E{"artist", bson.D{{"$regex", ".*" + artist + ".*"}, {"$options", "i"}}})
 	}
 
 	if cmc > -1 {

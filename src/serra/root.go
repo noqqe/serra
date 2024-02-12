@@ -7,6 +7,7 @@ import (
 var (
 	Version         = "unknown"
 	address         string
+	artist          string
 	cardType        string
 	color           string
 	cmc             int64
