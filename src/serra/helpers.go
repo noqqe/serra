@@ -71,16 +71,16 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	if foil {
 		total = storedCard.SerraCountFoil + amount
 		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (foil) from %d to %d", storedCard.Name, storedCard.SerraCountFoil, total)
+			l.Warnf("Reduced card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getValue(true), getCurrency(), storedCard.SerraCountFoil, total)
 		} else {
-			l.Warnf("Increased card amount of \"%s\" (foil) from %d to %d", storedCard.Name, storedCard.SerraCountFoil, total)
+			l.Warnf("Increased card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getValue(true), getCurrency(), storedCard.SerraCountFoil, total)
 		}
 	} else {
 		total = storedCard.SerraCount + amount
 		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" from %d to %d", storedCard.Name, storedCard.SerraCount, total)
+			l.Warnf("Reduced card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(false), getCurrency(), storedCard.SerraCount, total)
 		} else {
-			l.Warnf("Increased card amount of \"%s\" from %d to %d", storedCard.Name, storedCard.SerraCount, total)
+			l.Warnf("Increased card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(false), getCurrency(), storedCard.SerraCount, total)
 		}
 	}
 
