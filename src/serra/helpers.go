@@ -251,6 +251,6 @@ func getFloat64(unknown interface{}) (float64, error) {
 	case uint:
 		return float64(i), nil
 	default:
-		return math.NaN(), errors.New("Non-numeric type could not be converted to float")
+		return math.NaN(), errors.New("non-numeric type could not be converted to float")
 	}
 }
