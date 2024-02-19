@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -182,7 +182,7 @@ func fetchCard(setName, collectorNumber string) (*Card, error) {
 	}
 
 	//We Read the response body on the line below.
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("%s", err)
 		return &Card{}, err
@@ -220,7 +220,7 @@ func fetchSets() (*SetList, error) {
 	}
 
 	//We Read the response body on the line below.
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalln(err)
 		return &SetList{}, err
