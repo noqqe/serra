@@ -52,9 +52,9 @@ func exportTCGPowertools(cards []Card) {
 	// 260009,1,Totally Lost,Gatecrash,GD,English,true,true,,,1000,
 	// 260009,1,Totally Lost,Gatecrash,NM,English,true,true,,,1000,
 
-	fmt.Println("cardmarketId,quantity,name,set,condition,language,isFoil,isPlayset,price,comment")
+	fmt.Println("quantity,cardmarketId,name,set,condition,language,isFoil,isPlayset,price,comment")
 	for _, card := range cards {
-		fmt.Printf("%.0f,%d,%s,%s,EX,German,false,false,%.2f,\n", card.CardmarketID, card.SerraCount, card.Name, card.SetName, card.getValue(false))
+		fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.SerraCount, card.CardmarketID, card.Name, card.SetName, card.getValue(false))
 	}
 }
 
