@@ -79,6 +79,8 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 		filter = append(filter, bson.E{"rarity", "common"})
 	case "rare":
 		filter = append(filter, bson.E{"rarity", "rare"})
+	case "mythic":
+		filter = append(filter, bson.E{"rarity", "mythic"})
 	}
 
 	var sortStage bson.D
