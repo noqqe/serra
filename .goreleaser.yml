@@ -18,6 +18,7 @@ builds:
       - -X github.com/noqqe/serra/pkg/serra.Version={{.Tag}}
     flags:
       - -v
+    main: cmd/serra
 archives:
   - id: serra
     name_template: >-
