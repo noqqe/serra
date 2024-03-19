@@ -11,7 +11,7 @@ COPY go.sum /go/src/app/go.sum
 COPY .git /go/src/app/.git
 
 # build
-RUN go build -ldflags "-X github.com/noqqe/serra/src/serra.Version=`git describe --tags`"  -v cmd/serra/serra.go
+RUN go build -ldflags "-X github.com/noqqe/serra/pkg/serra.Version=`git describe --tags`"  -v cmd/serra/serra.go
 
 # copy
 FROM scratch
