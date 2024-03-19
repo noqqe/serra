@@ -89,7 +89,12 @@ func landingPage(c *gin.Context) {
 				}}},
 		})
 		defer storageDisconnect(client)
-		numCards := counts[0]["count"].(int32)
+
+		// Catch index error on no results
+		var numCards int32
+		if len(counts) != 0 {
+			numCards = counts[0]["count"].(int32)
+		}
 
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title":    "Serra",
