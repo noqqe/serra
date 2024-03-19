@@ -5,10 +5,10 @@ version: '3'
 tasks:
   build:
     cmds:
-      - go build -ldflags "-X github.com/noqqe/serra/src/serra.Version=`git describe --tags`"  -v serra.go
+      - go build -ldflags "-X github.com/noqqe/serra/pkg/serra.Version=`git describe --tags`"  -v cmd/serra/serra.go
     sources:
-      - "src/serra/**/*.go"
-      - "serra.go"
+      - "pkg/serra/**/*.go"
+      - "cmd/serra/serra.go"
     generates:
       - "./serra"
 
