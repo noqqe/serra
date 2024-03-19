@@ -29,7 +29,6 @@ func Stats() {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	totalcoll := &Collection{client.Database("serra").Collection("total")}
-	l := Logger()
 	defer storageDisconnect(client)
 
 	// Show Value Stats
@@ -52,10 +51,10 @@ func Stats() {
 
 	// Show cards added per month
 	showCardsAddedPerMonth(coll)
-
 }
 
 func showValueStats(coll *Collection, totalcoll *Collection) {
+	l := Logger()
 	// Value and Card Numbers
 	stats, _ := coll.storageAggregate(mongo.Pipeline{
 		bson.D{
