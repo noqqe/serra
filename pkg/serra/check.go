@@ -59,13 +59,13 @@ func checkCards(cards []string, detail bool) error {
 		// If Card is in collection, print yes.
 		if len(co) >= 1 {
 			c := co[0]
-			fmt.Printf("PRESENT %s \"%s\" (%s, %.2f%s)\n", card, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+			fmt.Printf("PRESENT %s \"%s\" (%s, %.2f%s) %s\n", card, c.Name, c.Rarity, c.getValue(foil), getCurrency(), strings.Replace(c.ScryfallURI, "?utm_source=api", "", 1))
 			continue
 		} else {
 			if detail {
 				// fetch card from scyrfall if --detail was given
 				c, _ := fetchCard(setName, collectorNumber)
-				fmt.Printf("MISSING %s \"%s\" (%s, %.2f%s)\n", card, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+				fmt.Printf("MISSING %s \"%s\" (%s, %.2f%s) %s\n", card, c.Name, c.Rarity, c.getValue(foil), getCurrency(), strings.Replace(c.ScryfallURI, "?utm_source=api", "", 1))
 			} else {
 				// Just print, the card name was not found
 				fmt.Printf("MISSING \"%s\"\n", card)
