@@ -37,6 +37,7 @@ brews:
       owner: noqqe
       name: homebrew-tap
     download_strategy: CurlDownloadStrategy
+    directory: Formula
     commit_author:
       name: goreleaserbot
       email: goreleaser@carlosbecker.com
