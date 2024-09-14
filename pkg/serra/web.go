@@ -3,6 +3,7 @@ package serra
 import (
 	"net/http"
 	"strconv"
+	"text/template"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
@@ -14,6 +15,10 @@ func init() {
 	webCmd.Flags().StringVarP(&address, "address", "a", "0.0.0.0", "Address to listen on")
 	webCmd.Flags().Uint64VarP(&port, "port", "p", 8080, "Port to listen on")
 	rootCmd.AddCommand(webCmd)
+}
+
+func add(a, b int64) int64 {
+	return a + b
 }
 
 var webCmd = &cobra.Command{
@@ -38,6 +43,9 @@ type Query struct {
 
 func startWeb() error {
 	router := gin.Default()
+	router.SetFuncMap(template.FuncMap{
+		"add": add,
+	})
 	router.LoadHTMLGlob("templates/*.tmpl")
 	router.Static("/assets", "./assets")
 
