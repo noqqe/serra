@@ -1,4 +1,4 @@
-#!usr/bin/env fish
+#!/usr/bin/env fish
 set SET $argv[1]
 
 
