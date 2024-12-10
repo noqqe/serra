@@ -134,9 +134,10 @@ func addCards(cards []string, unique bool, count int64) error {
 
 		if len(co) >= 1 {
 			c := co[0]
+			outputColor := coloredValue(c.getValue(foil))
 
 			if unique {
-				l.Warnf("%dx \"%s\" (%s, %.2f%s) not added, because it already exists", count, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+				l.Warnf("%dx \"%s\" (%s, %s%.2f%s%s) not added, because it already exists", count, c.Name, c.Rarity, outputColor, c.getValue(foil), getCurrency(), Reset)
 				continue
 			}
 
@@ -145,6 +146,7 @@ func addCards(cards []string, unique bool, count int64) error {
 		} else {
 			// Fetch card from scryfall
 			c, err := fetchCard(setName, collectorNumber)
+			outputColor := coloredValue(c.getValue(foil))
 			if err != nil {
 				l.Warn(err)
 				continue
@@ -167,9 +169,9 @@ func addCards(cards []string, unique bool, count int64) error {
 
 			// Give feedback of successfully added card
 			if foil {
-				l.Infof("%dx \"%s\" (%s, %.2f%s, foil) added", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+				l.Infof("%dx \"%s\" (%s, %s%.2f%s%s, foil) added", total, c.Name, c.Rarity, outputColor, c.getValue(foil), getCurrency(), Reset)
 			} else {
-				l.Infof("%dx \"%s\" (%s, %.2f%s) added", total, c.Name, c.Rarity, c.getValue(foil), getCurrency())
+				l.Infof("%dx \"%s\" (%s, %s%.2f%s%s) added", total, c.Name, c.Rarity, outputColor, c.getValue(foil), getCurrency(), Reset)
 			}
 		}
 	}

@@ -254,3 +254,20 @@ func getFloat64(unknown interface{}) (float64, error) {
 		return math.NaN(), errors.New("non-numeric type could not be converted to float")
 	}
 }
+
+func coloredValue(value float64) string {
+
+	outputColor := Reset
+
+	if value > 1 {
+		outputColor = Green
+	}
+	if value > 5 {
+		outputColor = Yellow
+	}
+	if value > 10 {
+		outputColor = Red
+	}
+
+	return outputColor
+}
