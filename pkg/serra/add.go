@@ -37,6 +37,7 @@ var addCmd = &cobra.Command{
 
 func addCardsInteractive(unique bool, set string) {
 	l := Logger()
+
 	if len(set) == 0 {
 		l.Fatal("Option --set <set> must be given in interactive mode")
 	}
@@ -121,6 +122,7 @@ func addCards(cards []string, unique bool, count int64) error {
 		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
 
 		if collectorNumber == "" {
+			go playSoundNegative()
 			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
 			continue
 		}
@@ -135,6 +137,7 @@ func addCards(cards []string, unique bool, count int64) error {
 		if len(co) >= 1 {
 			c := co[0]
 			outputColor := coloredValue(c.getValue(foil))
+			go playSoundNegative()
 
 			if unique {
 				l.Warnf("%dx \"%s\" (%s, %s%.2f%s%s) not added, because it already exists", count, c.Name, c.Rarity, outputColor, c.getValue(foil), getCurrency(), Reset)
@@ -169,8 +172,10 @@ func addCards(cards []string, unique bool, count int64) error {
 
 			// Give feedback of successfully added card
 			if foil {
+				go playSoundPositive()
 				l.Infof("%dx \"%s\" (%s, %s%.2f%s%s, foil) added", total, c.Name, c.Rarity, outputColor, c.getValue(foil), getCurrency(), Reset)
 			} else {
+				go playSoundPositive()
 				l.Infof("%dx \"%s\" (%s, %s%.2f%s%s) added", total, c.Name, c.Rarity, outputColor, c.getValue(foil), getCurrency(), Reset)
 			}
 		}

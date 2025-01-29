@@ -260,12 +260,15 @@ func coloredValue(value float64) string {
 	outputColor := Reset
 
 	if value > 1 {
+		go playSoundCash()
 		outputColor = Green
 	}
 	if value > 5 {
+		go playSoundCash()
 		outputColor = Yellow
 	}
 	if value > 10 {
+		go playSoundCash()
 		outputColor = Red
 	}
 
