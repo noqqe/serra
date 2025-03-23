@@ -76,7 +76,7 @@ cards you dont own (yet) :)`,
 		})
 
 		for _, card := range missingCards {
-			fmt.Printf("%s%s/%s%s %s%.02f%s%s\t%s (%s)\n", Purple, card.Set, card.CollectorNumber, Reset, Green, card.getValue(false), Reset, getCurrency(), card.Name, card.SetName)
+			fmt.Printf("%s%s/%s\t%s(%s, %shttps://scryfall.com/card/%s/%s%s)\t%s%.02f%s%s\t%s (%s)\n", Purple, card.Set, card.CollectorNumber, Reset, string([]rune(card.Rarity)[0]), Background, card.Set, card.CollectorNumber, Reset, Green, card.getValue(false), Reset, getCurrency(), card.Name, card.SetName)
 		}
 
 		return nil
