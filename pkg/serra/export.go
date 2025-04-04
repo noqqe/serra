@@ -61,7 +61,7 @@ func exportTCGPowertools(cards []Card) {
 
 	fmt.Println("quantity,cardmarketId,name,set,condition,language,isFoil,isPlayset,price,comment")
 	for _, card := range cards {
-		fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.SerraCount, card.CardmarketID, card.Name, card.SetName, card.getValue(false))
+		fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.SerraCount+card.SerraCountFoil, card.CardmarketID, card.Name, card.SetName, card.getValue(false))
 	}
 }
 
@@ -77,7 +77,7 @@ func exportMoxfield(cards []Card) {
 
 	for _, card := range cards {
 		records = append(records,
-			[]string{fmt.Sprintf("%d", card.SerraCount), card.Name, card.Set, "NM", "English", "FALSE", card.CollectorNumber, "FALSE", "FALSE", ""})
+			[]string{fmt.Sprintf("%d", card.SerraCount+card.SerraCountFoil), card.Name, card.Set, "NM", "English", "FALSE", card.CollectorNumber, "FALSE", "FALSE", ""})
 	}
 
 	for _, record := range records {
@@ -105,7 +105,7 @@ func exportTCGHome(cards []Card) {
 
 	for _, card := range cards {
 		records = append(records,
-			[]string{fmt.Sprintf("%d", card.SerraCount), card.Name, "", card.Set, card.CollectorNumber, "English", "EX", card.ID, ""})
+			[]string{fmt.Sprintf("%d", card.SerraCount+card.SerraCountFoil), card.Name, "", card.Set, card.CollectorNumber, "English", "EX", card.ID, ""})
 	}
 
 	for _, record := range records {
