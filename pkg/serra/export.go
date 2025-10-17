@@ -46,7 +46,7 @@ var exportCmd = &cobra.Command{
 		case "moxfield":
 			exportMoxfield(cardList)
 		case "json":
-			exportJson(cardList)
+			exportJSON(cardList)
 		}
 		return nil
 	},
@@ -121,7 +121,7 @@ func exportTCGHome(cards []Card) {
 	}
 }
 
-func exportJson(cards []Card) {
+func exportJSON(cards []Card) {
 	ehj, _ := json.MarshalIndent(cards, "", "  ")
 	fmt.Println(string(ehj))
 }
