@@ -92,7 +92,7 @@ func showValueStats(coll *Collection, totalcoll *Collection) {
 		l.Error(err)
 		foilValue = 0
 	}
-	count_all, err := getFloat64(stats[0]["count_all"])
+	countAll, err := getFloat64(stats[0]["count_all"])
 	if err != nil {
 		l.Error(err)
 		foilValue = 0
@@ -101,7 +101,7 @@ func showValueStats(coll *Collection, totalcoll *Collection) {
 	fmt.Printf("Total: %s%.2f%s%s\n", Pink, totalValue, getCurrency(), Reset)
 	fmt.Printf("Normal: %s%.2f%s%s\n", Pink, normalValue, getCurrency(), Reset)
 	fmt.Printf("Foils: %s%.2f%s%s\n", Pink, foilValue, getCurrency(), Reset)
-	fmt.Printf("Average Card: %s%.2f%s%s\n", Pink, totalValue/count_all, getCurrency(), Reset)
+	fmt.Printf("Average Card: %s%.2f%s%s\n", Pink, totalValue/countAll, getCurrency(), Reset)
 	total, _ := totalcoll.storageFindTotal()
 
 	fmt.Printf("History: \n")
