@@ -1,3 +1,7 @@
+// Package serra
+//
+// It implements base functions and also cli wrappers
+// The entire tool consists only of this one package.
 package serra
 
 import (
