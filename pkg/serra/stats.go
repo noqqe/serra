@@ -150,7 +150,7 @@ func showRarityStats(coll *Collection) {
 func showCardsAddedPerMonth(coll *Collection) {
 	fmt.Printf("\n%sCards added over time%s\n", Green, Reset)
 	type Caot struct {
-		Id struct {
+		ID struct {
 			Year  int32 `mapstructure:"year"`
 			Month int32 `mapstructure:"month"`
 		} `mapstructure:"_id"`
@@ -178,7 +178,7 @@ func showCardsAddedPerMonth(coll *Collection) {
 	for _, mo := range caot {
 		moo := new(Caot)
 		mapstructure.Decode(mo, moo)
-		fmt.Printf("%d-%02d: %s%d%s\n", moo.Id.Year, moo.Id.Month, Purple, moo.Count, Reset)
+		fmt.Printf("%d-%02d: %s%d%s\n", moo.ID.Year, moo.ID.Month, Purple, moo.Count, Reset)
 	}
 }
 
