@@ -26,7 +26,7 @@ var removeCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, cards []string) error {
 
 		if interactive {
-			removeCardsInteractive(unique, set)
+			removeCardsInteractive(set)
 		} else {
 			removeCards(cards, count)
 		}
@@ -34,7 +34,7 @@ var removeCmd = &cobra.Command{
 	},
 }
 
-func removeCardsInteractive(unique bool, set string) {
+func removeCardsInteractive(set string) {
 	l := Logger()
 
 	if len(set) == 0 {
