@@ -120,11 +120,11 @@ func showReservedListStats(coll *Collection) {
 			}}},
 	})
 
-	var count_reserved int32
+	var countReserved int32
 	if len(reserved) > 0 {
-		count_reserved = reserved[0]["count"].(int32)
+		countReserved = reserved[0]["count"].(int32)
 	}
-	fmt.Printf("Reserved List: %s%d%s\n", Yellow, count_reserved, Reset)
+	fmt.Printf("Reserved List: %s%d%s\n", Yellow, countReserved, Reset)
 }
 
 func showRarityStats(coll *Collection) {
