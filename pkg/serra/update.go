@@ -19,8 +19,8 @@ func init() {
 var updateCmd = &cobra.Command{
 	Aliases:       []string{"u"},
 	Use:           "update",
-	Short:         "Update card values from scryfall",
-	Long:          `The update mechanism iterates over each card in your collection and fetches its price. After all cards you own in a set are updated, the set value will update. After all Sets are updated, the whole collection value is updated.`,
+	Short:         "update card values from scryfall",
+	Long:          `the update mechanism iterates over each card in your collection and fetches its price. after all cards you own in a set are updated, the set value will update. after all sets are updated, the whole collection value is updated.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -49,11 +49,32 @@ var updateCmd = &cobra.Command{
 				{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
 			}}}
 
+		l.Info("Fetching bulk data from scryfall...")
+		downloadURL, err := fetchBulkDownloadURL()
+		if err != nil {
+			l.Error("Could not extract bulk download URL:", err)
+		}
+		l.Infof("Found latest bulkfile url: %s", downloadURL)
+
+		l.Info("Downloading bulk data file...")
+		bulkFilePath, err := downloadBulkData(downloadURL)
+		if err != nil {
+			l.Error("Could not fetch bulk json from scryfall", err)
+		}
+
+		l.Info("Loading bulk data file...")
+		updatedCards, err := loadBulkFile(bulkFilePath)
+		if err != nil {
+			l.Error("Could not load bulk file:", err)
+		}
+		l.Infof("Successfully loaded %d cards. Starting Update.", len(updatedCards))
+
 		sets, _ := fetchSets()
 		for _, set := range sets.Data {
 
 			// When downloading new sets, PriceList needs to be initialized
 			// This query silently fails if set was already downloaded. Not nice but ok for now.
+			// TODO: make this not fail silently
 			set.SerraPrices = []PriceEntry{}
 			setscoll.storageAddSet(&set)
 
@@ -74,13 +95,13 @@ var updateCmd = &cobra.Command{
 					SaucerHead:    "[green]>[reset]",
 					SaucerPadding: " ",
 					BarStart:      "|",
-					BarEnd:        set.Name,
+					BarEnd:        "| " + set.Name,
 				}),
 			)
 
 			for _, card := range cards {
 				bar.Add(1)
-				updatedCard, err := fetchCard(card.Set, card.CollectorNumber)
+				updatedCard, err := getCardFromBulk(updatedCards, card.Set, card.CollectorNumber)
 				if err != nil {
 					l.Error(err)
 					continue
@@ -115,7 +136,6 @@ var updateCmd = &cobra.Command{
 				"$set":  bson.M{"serra_updated": p.Date, "cardcount": set.CardCount},
 				"$push": bson.M{"serra_prices": p},
 			}
-			// fmt.Printf("Set %s%s%s (%s) is now worth %s%.02f EUR%s\n", Pink, set.Name, Reset, set.Code, Yellow, setvalue[0]["value"], Reset)
 			setscoll.storageUpdate(bson.M{"code": bson.M{"$eq": set.Code}}, setUpdate)
 		}
 
@@ -130,7 +150,7 @@ var updateCmd = &cobra.Command{
 		tmpCard := Card{}
 		tmpCard.Prices = t
 
-		fmt.Printf("\n%sUpdating total value of collection to: %s%.02f%s%s\n", Green, Yellow, tmpCard.getValue(false)+tmpCard.getValue(true), getCurrency(), Reset)
+		l.Info("\n%sUpdating total value of collection to: %s%.02f%s%s\n", Green, Yellow, tmpCard.getValue(false)+tmpCard.getValue(true), getCurrency(), Reset)
 		totalcoll.storageAddTotal(t)
 
 		return nil

@@ -17,7 +17,8 @@ type Total struct {
 	Value []PriceEntry `bson:"value"`
 }
 
-// https://siongui.github.io/2017/02/11/go-add-method-function-to-type-in-external-package/
+// Collection Struct
+// reason: https://siongui.github.io/2017/02/11/go-add-method-function-to-type-in-external-package/
 type Collection struct {
 	*mongo.Collection
 }
