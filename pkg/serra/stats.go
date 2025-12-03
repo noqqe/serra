@@ -34,11 +34,11 @@ func Stats() {
 	// Show Value Stats
 	showValueStats(coll, totalcoll)
 
-	// Reserved List
-	showReservedListStats(coll)
-
 	// Rarities
 	showRarityStats(coll)
+
+	// Reserved List
+	showReservedListStats(coll)
 
 	// Colors
 	showColorStats(coll)
