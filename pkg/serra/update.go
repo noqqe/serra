@@ -53,6 +53,7 @@ var updateCmd = &cobra.Command{
 		downloadURL, err := fetchBulkDownloadURL()
 		if err != nil {
 			l.Error("Could not extract bulk download URL:", err)
+			return err
 		}
 		l.Infof("Found latest bulkfile url: %s", downloadURL)
 
@@ -60,12 +61,14 @@ var updateCmd = &cobra.Command{
 		bulkFilePath, err := downloadBulkData(downloadURL)
 		if err != nil {
 			l.Error("Could not fetch bulk json from scryfall", err)
+			return err
 		}
 
 		l.Info("Loading bulk data file...")
 		updatedCards, err := loadBulkFile(bulkFilePath)
 		if err != nil {
 			l.Error("Could not load bulk file:", err)
+			return err
 		}
 		l.Infof("Successfully loaded %d cards. Starting Update.", len(updatedCards))
 
