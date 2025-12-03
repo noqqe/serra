@@ -196,7 +196,7 @@ func showManaCurveStats(coll *Collection) {
 	})
 	fmt.Printf("\n%sMana Curve%s\n", Green, Reset)
 	for _, mc := range cmc {
-		fmt.Printf("%.0f: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
+		fmt.Printf("%.1f: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
 	}
 }
 

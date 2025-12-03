@@ -153,7 +153,7 @@ var updateCmd = &cobra.Command{
 		tmpCard := Card{}
 		tmpCard.Prices = t
 
-		l.Info("\n%sUpdating total value of collection to: %s%.02f%s%s\n", Green, Yellow, tmpCard.getValue(false)+tmpCard.getValue(true), getCurrency(), Reset)
+		l.Infof("\nUpdating total value of collection to: %s%.02f%s%s\n", Yellow, tmpCard.getValue(false)+tmpCard.getValue(true), getCurrency(), Reset)
 		totalcoll.storageAddTotal(t)
 
 		return nil
