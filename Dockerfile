@@ -1,6 +1,6 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.25-alpine AS build
 
-RUN apk update && apk add --no-cache git
+RUN apk update && apk add --no-cache git ca-certificates curl
 
 WORKDIR /go/src/app
 COPY pkg /go/src/app/pkg
@@ -16,7 +16,9 @@ RUN go build -ldflags "-X github.com/noqqe/serra/pkg/serra.Version=`git describe
 # copy
 FROM scratch
 WORKDIR /go/src/app
-COPY --from=builder /go/src/app/serra /go/src/app/serra
+COPY --from=build /go/src/app/serra /go/src/app/serra
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build /tmp /tmp
 COPY templates /go/src/app/templates
 
 # run
