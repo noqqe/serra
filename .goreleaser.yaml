@@ -9,7 +9,6 @@ builds:
     goos:
       - linux
       - darwin
-      - openbsd
     ldflags:
       - -X github.com/noqqe/serra/pkg/serra.Version={{.Tag}}
     flags:
