@@ -8,6 +8,7 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
+      - windows
       - darwin
       - openbsd
     ldflags:
@@ -46,6 +47,5 @@ brews:
     test: |
       system "#{bin}/serra --version"
     install: |
-      (share/"sounds").install "sounds/*mp3"
       bin.install "serra"
 

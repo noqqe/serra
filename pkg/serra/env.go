@@ -31,15 +31,3 @@ func getCurrency() string {
 		return "$"
 	}
 }
-
-func getSoundFlag() bool {
-	switch os.Getenv("SERRA_SOUND") {
-	case "true":
-		return true
-	case "True":
-		return true
-	default:
-		return false
-	}
-
-}
