@@ -193,9 +193,12 @@ func convertRarities(rar []primitive.M) Rarities {
 func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 
 	var before float64
-	for _, e := range prices {
+	last := len(prices)
+	for i, e := range prices {
 
 		var value float64
+
+		// check if a total sum is going to be printed
 		if total {
 			if getCurrency() == EUR {
 				value = e.Eur + e.EurFoil
@@ -210,14 +213,28 @@ func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 			}
 		}
 
-		if value > before && before != 0 {
-			fmt.Printf("%s%s%s %.2f%s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Green, value, getCurrency(), Reset, (value/before*100)-100, value-before, getCurrency())
-		} else if value < before {
-			fmt.Printf("%s%s%s %.2f%s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Red, value, getCurrency(), Reset, (value/before*100)-100, value-before, getCurrency())
-		} else {
+		// calculate percent difference
+		diffPercent := (value / before * 100) - 100
+
+		// always display first history entry
+		if i == 0 {
 			fmt.Printf("%s%s %.2f%s%s\n", prefix, stringToTime(e.Date), value, getCurrency(), Reset)
+			before = value
+			continue
 		}
+
+		// price increased or first or last element in history
+		if (value >= before && before != 0) && (diffPercent > 5 || i+1 == last) {
+			fmt.Printf("%s%s%s %.2f%s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Green, value, getCurrency(), Reset, diffPercent, value-before, getCurrency())
+		}
+
+		// price decreased or first or last element in history
+		if (value < before) && (diffPercent < -5 || i == last) {
+			fmt.Printf("%s%s%s %.2f%s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Red, value, getCurrency(), Reset, diffPercent, value-before, getCurrency())
+		}
+
 		before = value
+
 	}
 }
 
