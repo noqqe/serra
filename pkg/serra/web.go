@@ -71,7 +71,7 @@ func landingPage(c *gin.Context) {
 		sets := Sets("release")
 
 		// Fetch all results based on filter criteria
-		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page*int64(limit), limit)
+		cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page*int64(limit), limit, "", "")
 
 		// Construct quick way for counting results
 		filter := bson.D{}

@@ -23,6 +23,8 @@ func init() {
 	cardCmd.Flags().BoolVarP(&detail, "detail", "d", false, "Show details for cards (url)")
 	cardCmd.Flags().BoolVarP(&reserved, "reserved", "w", false, "If card is on reserved list")
 	cardCmd.Flags().BoolVarP(&foil, "foil", "f", false, "If card is foil list")
+	cardCmd.Flags().StringVarP(&is, "is", "y", "", "If card has certain attribute")
+	cardCmd.Flags().StringVarP(&isNot, "isnot", "x", "", "If card does not have certain attribute")
 	rootCmd.AddCommand(cardCmd)
 }
 
@@ -36,7 +38,7 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0)
+			cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0, is, isNot)
 			showCardList(cardList, detail)
 		} else {
 			ShowCard(cards)
@@ -65,7 +67,7 @@ func ShowCard(cardids []string) {
 	}
 }
 
-func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bool, skip, limit int64) []Card {
+func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot string) []Card {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storageDisconnect(client)
@@ -128,6 +130,14 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 	if len(color) > 0 {
 		colorArr := strings.Split(strings.ToUpper(color), ",")
 		filter = append(filter, bson.E{"coloridentity", colorArr})
+	}
+
+	if len(is) > 0 {
+		filter = append(filter, bson.E{is, true})
+	}
+
+	if len(isNot) > 0 {
+		filter = append(filter, bson.E{isNot, false})
 	}
 
 	if reserved {

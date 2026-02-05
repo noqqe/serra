@@ -20,6 +20,8 @@ var (
 	foil            bool
 	format          string
 	interactive     bool
+	is              string
+	isNot           string
 	limit           float64
 	name            string
 	oracle          string
