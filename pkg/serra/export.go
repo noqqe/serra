@@ -12,7 +12,7 @@ import (
 
 func init() {
 	exportCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
-	exportCmd.Flags().StringVarP(&format, "format", "f", "tcgpowertools", "Choose format to export (tcgpowertools/json)")
+	exportCmd.Flags().StringVarP(&format, "format", "f", "tcgpowertools", "Choose format to export (tcgpowertools/moxfield/json)")
 	exportCmd.Flags().Int64VarP(&count, "min-count", "c", 0, "Occource more than X in your collection")
 	rootCmd.AddCommand(exportCmd)
 }
@@ -41,8 +41,6 @@ var exportCmd = &cobra.Command{
 		switch format {
 		case "tcgpowertools":
 			exportTCGPowertools(cardList)
-		case "tcghome":
-			exportTCGHome(cardList)
 		case "moxfield":
 			exportMoxfield(cardList)
 		case "json":
@@ -61,7 +59,16 @@ func exportTCGPowertools(cards []Card) {
 
 	fmt.Println("quantity,cardmarketId,name,set,condition,language,isFoil,isPlayset,price,comment")
 	for _, card := range cards {
-		fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.SerraCount+card.SerraCountFoil, card.CardmarketID, card.Name, card.SetName, card.getValue(false))
+
+		// nonfoil
+		if card.SerraCount > 0 {
+			fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.SerraCount, card.CardmarketID, card.Name, card.SetName, card.getValue(false))
+		}
+
+		// foil
+		if card.SerraCountFoil > 0 {
+			fmt.Printf("%d,%.0f,%s,%s,EX,German,true,false,%.2f,\n", card.SerraCountFoil, card.CardmarketID, card.Name, card.SetName, card.getValue(true))
+		}
 	}
 }
 
@@ -69,43 +76,25 @@ func exportMoxfield(cards []Card) {
 
 	// Structure
 	// https://www.moxfield.com/help/importing-collection
-
 	records := [][]string{{
-		"Count", "Name", "Edition", "Condition", "Language", "Foil", "Collector Number", "Alter", "Proxy", "Purchase Price"}}
+		"Count", "Name", "Edition", "Condition", "Language", "Finish", "Collector Number", "Alter", "Proxy", "Purchase Price"}}
 
 	w := csv.NewWriter(os.Stdout)
 
 	for _, card := range cards {
-		records = append(records,
-			[]string{fmt.Sprintf("%d", card.SerraCount+card.SerraCountFoil), card.Name, card.Set, "NM", "English", "FALSE", card.CollectorNumber, "FALSE", "FALSE", ""})
-	}
 
-	for _, record := range records {
-		if err := w.Write(record); err != nil {
-			log.Fatalln("error writing record to csv:", err)
+		// nonfoil
+		if card.SerraCount > 0 {
+			records = append(records,
+				[]string{fmt.Sprintf("%d", card.SerraCount), card.Name, card.Set, "NM", "English", "Non-foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getValue(false))})
 		}
-	}
 
-	w.Flush()
+		// foil
+		if card.SerraCountFoil > 0 {
+			records = append(records,
+				[]string{fmt.Sprintf("%d", card.SerraCountFoil), card.Name, card.Set, "NM", "English", "Foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getValue(true))})
+		}
 
-	if err := w.Error(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func exportTCGHome(cards []Card) {
-
-	// Strucutre
-	// https://app.tcg-home.com/e686ea62-7078-4f52-bd6f-515e18c7dc6a
-
-	records := [][]string{{
-		"amount", "name", "finish", "set", "collector_number", "language", "condition", "scryfall_id", "purchase_price"}}
-
-	w := csv.NewWriter(os.Stdout)
-
-	for _, card := range cards {
-		records = append(records,
-			[]string{fmt.Sprintf("%d", card.SerraCount+card.SerraCountFoil), card.Name, "", card.Set, card.CollectorNumber, "English", "EX", card.ID, ""})
 	}
 
 	for _, record := range records {
