@@ -140,11 +140,10 @@ type BulkIndex struct {
 }
 
 func fetchBulkDownloadURL() (string, error) {
-	url := "https://api.scryfall.com/bulk-data"
 	downloadURL := ""
 
 	// Make an HTTP GET request
-	resp, err := http.Get(url)
+	resp, err := queryScryfall("bulk-data")
 	if err != nil {
 		log.Fatalf("Error fetching data: %v", err)
 	}
@@ -287,8 +286,18 @@ func (c Card) getValue(foil bool) float64 {
 	return c.Prices.Usd
 }
 
+func queryScryfall(query string) (*http.Response, error) {
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", fmt.Sprintf("https://api.scryfall.com/%s", query), nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json;q=0.9,*/*;q=0.8")
+	req.Header.Set("User-Agent", fmt.Sprintf("Serra/%s", Version))
+	return client.Do(req)
+}
+
 func fetchCard(setName, collectorNumber string) (*Card, error) {
-	resp, err := http.Get(fmt.Sprintf("https://api.scryfall.com/cards/%s/%s/", setName, collectorNumber))
+	resp, err := queryScryfall(fmt.Sprintf("cards/%s/%s", setName, collectorNumber))
 	if err != nil {
 		log.Fatalln(err)
 		return &Card{}, err
@@ -325,8 +334,7 @@ func fetchCard(setName, collectorNumber string) (*Card, error) {
 }
 
 func fetchSets() (*SetList, error) {
-	// TODO: better URL Building...
-	resp, err := http.Get("https://api.scryfall.com/sets")
+	resp, err := queryScryfall("sets")
 	if err != nil {
 		log.Fatalln(err)
 		return &SetList{}, err
