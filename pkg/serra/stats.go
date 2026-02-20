@@ -239,7 +239,7 @@ func showColorStats(coll *Collection) {
 	fmt.Printf("\n%sColors%s\n", Green, Reset)
 	for _, set := range sets {
 		x, _ := set["_id"].(primitive.A)
-		s := []interface{}(x)
+		s := []any(x)
 		fmt.Printf("%s: %s%.0f%s\n", convertManaSymbols(s), Purple, set["count"], Reset)
 	}
 }

@@ -51,9 +51,9 @@ type Card struct {
 		Png        string `json:"png"`
 		Small      string `json:"small"`
 	} `json:"image_uris"`
-	Keywords   []interface{} `json:"keywords"`
-	Lang       string        `json:"lang"`
-	Layout     string        `json:"layout"`
+	Keywords   []any  `json:"keywords"`
+	Lang       string `json:"lang"`
+	Layout     string `json:"layout"`
 	Legalities struct {
 		Alchemy         string `json:"alchemy"`
 		Brawl           string `json:"brawl"`
@@ -74,20 +74,20 @@ type Card struct {
 		Standard        string `json:"standard"`
 		Vintage         string `json:"vintage"`
 	} `json:"legalities"`
-	ManaCost        string        `json:"mana_cost"`
-	MultiverseIds   []interface{} `json:"multiverse_ids"`
-	Name            string        `json:"name"`
-	Nonfoil         bool          `json:"nonfoil"`
-	Object          string        `json:"object"`
-	OracleID        string        `json:"oracle_id"`
-	OracleText      string        `json:"oracle_text"`
-	Oversized       bool          `json:"oversized"`
-	Prices          PriceEntry    `json:"prices"`
-	PrintedName     string        `json:"printed_name"`
-	PrintedText     string        `json:"printed_text"`
-	PrintedTypeLine string        `json:"printed_type_line"`
-	PrintsSearchURI string        `json:"prints_search_uri"`
-	Promo           bool          `json:"promo"`
+	ManaCost        string     `json:"mana_cost"`
+	MultiverseIds   []any      `json:"multiverse_ids"`
+	Name            string     `json:"name"`
+	Nonfoil         bool       `json:"nonfoil"`
+	Object          string     `json:"object"`
+	OracleID        string     `json:"oracle_id"`
+	OracleText      string     `json:"oracle_text"`
+	Oversized       bool       `json:"oversized"`
+	Prices          PriceEntry `json:"prices"`
+	PrintedName     string     `json:"printed_name"`
+	PrintedText     string     `json:"printed_text"`
+	PrintedTypeLine string     `json:"printed_type_line"`
+	PrintsSearchURI string     `json:"prints_search_uri"`
+	Promo           bool       `json:"promo"`
 	PurchaseUris    struct {
 		Cardhoarder string `json:"cardhoarder"`
 		Cardmarket  string `json:"cardmarket"`

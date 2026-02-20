@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 	"unicode"
 
@@ -138,7 +139,7 @@ func findSetByCode(coll *Collection, setcode string) (*Set, error) {
 	return &storedSets[0], nil
 }
 
-func convertManaSymbols(sym []interface{}) string {
+func convertManaSymbols(sym []any) string {
 	var mana string
 
 	if len(sym) == 0 {
@@ -239,17 +240,17 @@ func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 }
 
 func filterForDigits(str string) int {
-	var numStr string
+	var numStr strings.Builder
 	for _, c := range str {
 		if unicode.IsDigit(c) {
-			numStr += string(c)
+			numStr.WriteString(string(c))
 		}
 	}
-	s, _ := strconv.Atoi(numStr)
+	s, _ := strconv.Atoi(numStr.String())
 	return s
 }
 
-func getFloat64(unknown interface{}) (float64, error) {
+func getFloat64(unknown any) (float64, error) {
 	switch i := unknown.(type) {
 	case float64:
 		return i, nil
