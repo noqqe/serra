@@ -272,17 +272,61 @@ type Set struct {
 }
 
 // Getter for currency specific value
-func (c Card) getValue(foil bool) float64 {
+func (c Card) getValue() float64 {
 	if getCurrency() == EUR {
-		if foil {
-			return c.Prices.EurFoil
-		}
 		return c.Prices.Eur
 	}
-	if foil {
-		return c.Prices.UsdFoil
-	}
 	return c.Prices.Usd
+}
+
+// Getter for currency specific value
+func (c Card) getFoilValue() float64 {
+	if getCurrency() == EUR {
+		return c.Prices.EurFoil
+	}
+	return c.Prices.UsdFoil
+}
+
+// Getter for currency specific value
+func (c Card) getColoredValue() string {
+
+	var value float64
+	if getCurrency() == EUR {
+		value = c.Prices.Eur
+	}
+	value = c.Prices.Usd
+
+	if value > 1 {
+		return Green(value)
+	}
+	if value > 5 {
+		return Yellow(value)
+	}
+	if value > 10 {
+		return Red(value)
+	}
+
+}
+
+// Getter for currency specific value
+func (c Card) getColoredFoilValue() string {
+
+	var value float64
+	if getCurrency() == EUR {
+		value = c.Prices.EurFoil
+	}
+	value = c.Prices.UsdFoil
+
+	if value > 1 {
+		return Green(value)
+	}
+	if value > 5 {
+		return Yellow(value)
+	}
+	if value > 10 {
+		return Red(value)
+	}
+
 }
 
 func queryScryfall(url string) (*http.Response, error) {

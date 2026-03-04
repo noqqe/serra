@@ -72,16 +72,16 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	if foil {
 		total = storedCard.SerraCountFoil + amount
 		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getValue(true), getCurrency(), storedCard.SerraCountFoil, total)
+			l.Warnf("Reduced card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.SerraCountFoil, total)
 		} else {
-			l.Warnf("Increased card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getValue(true), getCurrency(), storedCard.SerraCountFoil, total)
+			l.Warnf("Increased card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.SerraCountFoil, total)
 		}
 	} else {
 		total = storedCard.SerraCount + amount
 		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(false), getCurrency(), storedCard.SerraCount, total)
+			l.Warnf("Reduced card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.SerraCount, total)
 		} else {
-			l.Warnf("Increased card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(false), getCurrency(), storedCard.SerraCount, total)
+			l.Warnf("Increased card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.SerraCount, total)
 		}
 	}
 
@@ -271,21 +271,4 @@ func getFloat64(unknown any) (float64, error) {
 	default:
 		return math.NaN(), errors.New("non-numeric type could not be converted to float")
 	}
-}
-
-func coloredValue(value float64) string {
-
-	outputColor := Reset
-
-	if value > 1 {
-		outputColor = Green
-	}
-	if value > 5 {
-		outputColor = Yellow
-	}
-	if value > 10 {
-		outputColor = Red
-	}
-
-	return outputColor
 }

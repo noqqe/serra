@@ -62,12 +62,12 @@ func exportTCGPowertools(cards []Card) {
 
 		// nonfoil
 		if card.SerraCount > 0 {
-			fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.SerraCount, card.CardmarketID, card.Name, card.SetName, card.getValue(false))
+			fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.SerraCount, card.CardmarketID, card.Name, card.SetName, card.getValue())
 		}
 
 		// foil
 		if card.SerraCountFoil > 0 {
-			fmt.Printf("%d,%.0f,%s,%s,EX,German,true,false,%.2f,\n", card.SerraCountFoil, card.CardmarketID, card.Name, card.SetName, card.getValue(true))
+			fmt.Printf("%d,%.0f,%s,%s,EX,German,true,false,%.2f,\n", card.SerraCountFoil, card.CardmarketID, card.Name, card.SetName, card.getFoilValue())
 		}
 	}
 }
@@ -86,13 +86,13 @@ func exportMoxfield(cards []Card) {
 		// nonfoil
 		if card.SerraCount > 0 {
 			records = append(records,
-				[]string{fmt.Sprintf("%d", card.SerraCount), card.Name, card.Set, "NM", "English", "Non-foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getValue(false))})
+				[]string{fmt.Sprintf("%d", card.SerraCount), card.Name, card.Set, "NM", "English", "Non-foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getValue())})
 		}
 
 		// foil
 		if card.SerraCountFoil > 0 {
 			records = append(records,
-				[]string{fmt.Sprintf("%d", card.SerraCountFoil), card.Name, card.Set, "NM", "English", "Foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getValue(true))})
+				[]string{fmt.Sprintf("%d", card.SerraCountFoil), card.Name, card.Set, "NM", "English", "Foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getFoilValue())})
 		}
 
 	}

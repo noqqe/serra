@@ -177,13 +177,13 @@ func showCardList(cards []Card, detail bool) {
 	var total float64
 	if detail {
 		for _, card := range cards {
-			fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f%s %s %s %s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Background, strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1), Reset)
-			total = total + card.getValue(false)*float64(card.SerraCount) + card.getValue(true)*float64(card.SerraCountFoil)
+			fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f%s %s %s %s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Background, strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1), Reset)
+			total = total + card.getValue()*float64(card.SerraCount) + card.getFoilValue()*float64(card.SerraCountFoil)
 		}
 	} else {
 		for _, card := range cards {
-			fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f%s%s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(false), getCurrency(), Reset)
-			total = total + card.getValue(false)*float64(card.SerraCount) + card.getValue(true)*float64(card.SerraCountFoil)
+			fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f%s%s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Reset)
+			total = total + card.getValue()*float64(card.SerraCount) + card.getFoilValue()*float64(card.SerraCountFoil)
 		}
 	}
 
@@ -198,9 +198,9 @@ func showCardDetails(card *Card) error {
 	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
 
 	fmt.Printf("\n%sCurrent Value%s\n", Green, Reset)
-	fmt.Printf("* Normal: %dx %s%.2f%s%s\n", card.SerraCount, Yellow, card.getValue(false), getCurrency(), Reset)
+	fmt.Printf("* Normal: %dx %s%.2f%s%s\n", card.SerraCount, Yellow, card.getValue(), getCurrency(), Reset)
 	if card.SerraCountFoil > 0 {
-		fmt.Printf("* Foil: %dx %s%.2f%s%s\n", card.SerraCountFoil, Yellow, card.getValue(true), getCurrency(), Reset)
+		fmt.Printf("* Foil: %dx %s%.2f%s%s\n", card.SerraCountFoil, Yellow, card.getFoilValue(), getCurrency(), Reset)
 	}
 
 	fmt.Printf("\n%sValue History%s\n", Green, Reset)
