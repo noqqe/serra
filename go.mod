@@ -7,6 +7,7 @@ toolchain go1.25.4
 require (
 	github.com/charmbracelet/log v0.4.2
 	github.com/chzyer/readline v1.5.1
+	github.com/fatih/color v1.18.0
 	github.com/gin-gonic/gin v1.11.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/schollz/progressbar/v3 v3.19.0
@@ -42,6 +43,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect

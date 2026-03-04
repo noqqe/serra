@@ -293,18 +293,21 @@ func (c Card) getColoredValue() string {
 	var value float64
 	if getCurrency() == EUR {
 		value = c.Prices.Eur
+	} else {
+		value = c.Prices.Usd
 	}
-	value = c.Prices.Usd
 
-	if value > 1 {
-		return Green(value)
+	if value > 10 {
+		return Red("%.2f", value)
 	}
 	if value > 5 {
-		return Yellow(value)
+		return Yellow("%.2f", value)
 	}
-	if value > 10 {
-		return Red(value)
+	if value > 1 {
+		return Green("%.2f", value)
 	}
+
+	return fmt.Sprintf("%.2f", value)
 
 }
 
@@ -314,18 +317,21 @@ func (c Card) getColoredFoilValue() string {
 	var value float64
 	if getCurrency() == EUR {
 		value = c.Prices.EurFoil
+	} else {
+		value = c.Prices.UsdFoil
 	}
-	value = c.Prices.UsdFoil
 
-	if value > 1 {
-		return Green(value)
+	if value > 10 {
+		return Red("%.2f", value)
 	}
 	if value > 5 {
-		return Yellow(value)
+		return Yellow("%.2f", value)
 	}
-	if value > 10 {
-		return Red(value)
+	if value > 1 {
+		return Green("%.2f", value)
 	}
+
+	return fmt.Sprintf("%.2f", value)
 
 }
 

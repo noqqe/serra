@@ -61,7 +61,7 @@ func Gains(limit float64, sort int) error {
 		currencyField = "$serra_prices.eur"
 	}
 
-	raisePipeline := mongo.Pipeline{
+	cardRaisePipeline := mongo.Pipeline{
 		bson.D{{"$project",
 			bson.D{
 				{"name", true},
@@ -109,9 +109,9 @@ func Gains(limit float64, sort int) error {
 			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 20}},
 	}
-	raise, _ := coll.storageAggregate(raisePipeline)
+	cardRaise, _ := coll.storageAggregate(cardRaisePipeline)
 
-	sraisePipeline := mongo.Pipeline{
+	setRaisePipeline := mongo.Pipeline{
 		bson.D{{"$project",
 			bson.D{
 				{"name", true},
@@ -157,25 +157,18 @@ func Gains(limit float64, sort int) error {
 			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 10}},
 	}
-	sraise, _ := setcoll.storageAggregate(sraisePipeline)
+	setRaise, _ := setcoll.storageAggregate(setRaisePipeline)
 
-	// percentage coloring
-	var pColor string
-	if sort == 1 {
-		pColor = Red
-	} else {
-		pColor = Green
-	}
-
-	fmt.Printf("%sCards%s\n", Purple, Reset)
+	// TODO: bring back color coding for gains and losses
+	fmt.Printf("%s\n", Purple("Cards"))
 	// print each card
-	for _, e := range raise {
-		fmt.Printf("%s%+.0f%%%s %s %s(%s/%s)%s (%.2f->%s%.2f%s%s) \n", pColor, e["rate"], Reset, e["name"], Yellow, e["set"], e["collectornumber"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
+	for _, e := range cardRaise {
+		fmt.Printf("%+.0f%% %s %s (%.2f->%s%s) \n", e["rate"], e["name"], Yellow("(%s/%s)", e["set"], fmt.Sprint(e["collectornumber"])), e["old"], Green("%.2f", e["current"]), Green(getCurrency()))
 	}
 
-	fmt.Printf("\n%sSets%s\n", Purple, Reset)
-	for _, e := range sraise {
-		fmt.Printf("%s%+.0f%%%s %s %s(%s)%s (%.2f->%s%.2f%s%s) \n", pColor, e["rate"], Reset, e["name"], Yellow, e["code"], Reset, e["old"], Green, e["current"], getCurrency(), Reset)
+	fmt.Printf("\n%s\n", Purple("Sets"))
+	for _, e := range setRaise {
+		fmt.Printf("%+.0f%% %s %s (%.2f->%s%s)\n", e["rate"], e["name"], Yellow("(%s)", e["code"]), e["old"], Green("%.2f", e["current"]), Green(getCurrency()))
 	}
 	return nil
 

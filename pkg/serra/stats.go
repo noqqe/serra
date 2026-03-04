@@ -74,14 +74,14 @@ func showValueStats(coll *Collection, totalcoll *Collection) {
 			}},
 		},
 	})
-	fmt.Printf("%sCards %s\n", Green, Reset)
-	fmt.Printf("Total: %s%.0f%s\n", Yellow, stats[0]["count_all"], Reset)
-	fmt.Printf("Unique: %s%d%s\n", Purple, stats[0]["unique"], Reset)
-	fmt.Printf("Normal: %s%.0f%s\n", Purple, stats[0]["count"], Reset)
-	fmt.Printf("Foil: %s%d%s\n", Purple, stats[0]["count_foil"], Reset)
+	fmt.Printf("%s\n", Green("Cards"))
+	fmt.Printf("Total: %s\n", Yellow("%.0f", stats[0]["count_all"]))
+	fmt.Printf("Unique: %s\n", Purple("%d", stats[0]["unique"]))
+	fmt.Printf("Normal: %s\n", Purple("%.0f", stats[0]["count"]))
+	fmt.Printf("Foil: %s\n", Purple("%d", stats[0]["count_foil"]))
 
 	// Total Value
-	fmt.Printf("\n%sTotal Value%s\n", Green, Reset)
+	fmt.Printf("\n%s\n", Green("Total Value"))
 	normalValue, err := getFloat64(stats[0]["value"])
 	if err != nil {
 		l.Error(err)
@@ -98,10 +98,10 @@ func showValueStats(coll *Collection, totalcoll *Collection) {
 		foilValue = 0
 	}
 	totalValue := normalValue + foilValue
-	fmt.Printf("Total: %s%.2f%s%s\n", Pink, totalValue, getCurrency(), Reset)
-	fmt.Printf("Normal: %s%.2f%s%s\n", Pink, normalValue, getCurrency(), Reset)
-	fmt.Printf("Foils: %s%.2f%s%s\n", Pink, foilValue, getCurrency(), Reset)
-	fmt.Printf("Average Card: %s%.2f%s%s\n", Pink, totalValue/countAll, getCurrency(), Reset)
+	fmt.Printf("Total: %s%s\n", Pink("%.2f", totalValue), Pink(getCurrency()))
+	fmt.Printf("Normal: %s%s\n", Pink("%.2f", normalValue), Pink(getCurrency()))
+	fmt.Printf("Foils: %s%s\n", Pink("%.2f", foilValue), Pink(getCurrency()))
+	fmt.Printf("Average Card: %s%s\n", Pink("%.2f", totalValue/countAll), Pink(getCurrency()))
 	total, _ := totalcoll.storageFindTotal()
 
 	fmt.Printf("History: \n")
@@ -124,7 +124,7 @@ func showReservedListStats(coll *Collection) {
 	if len(reserved) > 0 {
 		countReserved = reserved[0]["count"].(int32)
 	}
-	fmt.Printf("Reserved List: %s%d%s\n", Yellow, countReserved, Reset)
+	fmt.Printf("Reserved List: %s\n", Yellow("%d", countReserved))
 }
 
 func showRarityStats(coll *Collection) {
@@ -140,16 +140,16 @@ func showRarityStats(coll *Collection) {
 			}}},
 	})
 	ri := convertRarities(rar)
-	fmt.Printf("\n%sRarity%s\n", Green, Reset)
-	fmt.Printf("Mythics: %s%.0f%s\n", Pink, ri.Mythics, Reset)
-	fmt.Printf("Rares: %s%.0f%s\n", Pink, ri.Rares, Reset)
-	fmt.Printf("Uncommons: %s%.0f%s\n", Yellow, ri.Uncommons, Reset)
-	fmt.Printf("Commons: %s%.0f%s\n", Purple, ri.Commons, Reset)
+	fmt.Printf("\n%s\n", Green("Rarity"))
+	fmt.Printf("Mythics: %s\n", Pink("%.0f", ri.Mythics))
+	fmt.Printf("Rares: %s\n", Pink("%.0f", ri.Rares))
+	fmt.Printf("Uncommons: %s\n", Yellow("%.0f", ri.Uncommons))
+	fmt.Printf("Commons: %s\n", Purple("%.0f", ri.Commons))
 }
 
 func showCardsAddedPerMonth(coll *Collection) {
-	fmt.Printf("\n%sCards added over time%s\n", Green, Reset)
-	type Caot struct {
+	fmt.Printf("\n%s\n", Green("Cards added over time"))
+	type cardsAddedOverTime struct {
 		ID struct {
 			Year  int32 `mapstructure:"year"`
 			Month int32 `mapstructure:"month"`
@@ -175,10 +175,10 @@ func showCardsAddedPerMonth(coll *Collection) {
 			{"$sort", bson.D{{"_id.year", 1}, {"_id.month", 1}}},
 		},
 	})
-	for _, mo := range caot {
-		moo := new(Caot)
-		mapstructure.Decode(mo, moo)
-		fmt.Printf("%d-%02d: %s%d%s\n", moo.ID.Year, moo.ID.Month, Purple, moo.Count, Reset)
+	for _, month := range caot {
+		thisMonth := new(cardsAddedOverTime)
+		mapstructure.Decode(month, thisMonth)
+		fmt.Printf("%d-%02d: %s\n", thisMonth.ID.Year, thisMonth.ID.Month, Purple("%d", thisMonth.Count))
 	}
 }
 
@@ -194,9 +194,9 @@ func showManaCurveStats(coll *Collection) {
 				{"_id", 1},
 			}}},
 	})
-	fmt.Printf("\n%sMana Curve%s\n", Green, Reset)
+	fmt.Printf("\n%s\n", Green("Mana Curve"))
 	for _, mc := range cmc {
-		fmt.Printf("%.1f: %s%d%s\n", mc["_id"], Purple, mc["count"], Reset)
+		fmt.Printf("%.0f: %s\n", mc["_id"], Purple("%d", mc["count"]))
 	}
 }
 
@@ -214,9 +214,9 @@ func showArtistStats(coll *Collection) {
 		bson.D{
 			{"$limit", 10}},
 	})
-	fmt.Printf("\n%sTop Artists%s\n", Green, Reset)
+	fmt.Printf("\n%s\n", Green("Top Artists"))
 	for _, artist := range artists {
-		fmt.Printf("%s: %s%d%s\n", artist["_id"].(string), Purple, artist["count"], Reset)
+		fmt.Printf("%s: %s\n", artist["_id"], Purple("%d", artist["count"]))
 	}
 }
 
@@ -236,10 +236,10 @@ func showColorStats(coll *Collection) {
 			}}},
 	})
 
-	fmt.Printf("\n%sColors%s\n", Green, Reset)
+	fmt.Printf("\n%s\n", Green("Colors"))
 	for _, set := range sets {
 		x, _ := set["_id"].(primitive.A)
 		s := []any(x)
-		fmt.Printf("%s: %s%.0f%s\n", convertManaSymbols(s), Purple, set["count"], Reset)
+		fmt.Printf("%s: %s\n", convertManaSymbols(s), Purple("%.0f", set["count"]))
 	}
 }

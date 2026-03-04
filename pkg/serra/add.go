@@ -126,6 +126,7 @@ func addCards(cards []string, unique bool, count int64) error {
 		}
 
 		// Check if card is already in collection
+		// TODO: replace with helper findCardByCollectorNumber ?
 		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{}, 0, 0)
 		if err != nil {
 			l.Error(err)
@@ -136,7 +137,7 @@ func addCards(cards []string, unique bool, count int64) error {
 			c := co[0]
 
 			if unique {
-				l.Warnf("%dx \"%s\" (%s, %.2f%s) not added, because it already exists", count, c.Name, c.Rarity, c.getColoredFoilValue(), getCurrency())
+				l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, c.Name, c.Rarity, c.getColoredFoilValue(), getCurrency())
 				continue
 			}
 
@@ -167,9 +168,9 @@ func addCards(cards []string, unique bool, count int64) error {
 
 			// Give feedback of successfully added card
 			if foil {
-				l.Infof("%dx \"%s\" (%s, %.2f%s, foil) added", total, c.Name, c.Rarity, c.getColoredFoilValue(), getCurrency())
+				l.Infof("%dx \"%s\" (%s, %s%s, foil) added", total, c.Name, c.Rarity, c.getColoredFoilValue(), getCurrency())
 			} else {
-				l.Infof("%dx \"%s\" (%s, %.2f%s) added", total, c.Name, c.Rarity, c.getColoredValue(), getCurrency())
+				l.Infof("%dx \"%s\" (%s, %s%s) added", total, c.Name, c.Rarity, c.getColoredValue(), getCurrency())
 			}
 		}
 	}

@@ -90,7 +90,7 @@ var updateCmd = &cobra.Command{
 
 			bar := progressbar.NewOptions(len(cards),
 				progressbar.OptionSetWidth(50),
-				progressbar.OptionSetDescription(fmt.Sprintf("%s, %s%s%s\t", set.ReleasedAt[0:4], Yellow, set.Code, Reset)),
+				progressbar.OptionSetDescription(fmt.Sprintf("%s, %s\t", set.ReleasedAt[0:4], Yellow(set.Code))),
 				progressbar.OptionEnableColorCodes(true),
 				progressbar.OptionShowCount(),
 				progressbar.OptionSetTheme(progressbar.Theme{
@@ -153,7 +153,7 @@ var updateCmd = &cobra.Command{
 		tmpCard := Card{}
 		tmpCard.Prices = t
 
-		l.Infof("\nUpdating total value of collection to: %s%.02f%s%s\n", Yellow, tmpCard.getValue(false)+tmpCard.getValue(true), getCurrency(), Reset)
+		l.Infof("\nUpdating total value of collection to: %s%s\n", Yellow("%.02f", tmpCard.getValue()+tmpCard.getFoilValue()), Yellow(getCurrency()))
 		totalcoll.storageAddTotal(t)
 
 		return nil

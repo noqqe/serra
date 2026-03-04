@@ -11,6 +11,7 @@ import (
 	"unicode"
 
 	"github.com/charmbracelet/log"
+	termColor "github.com/fatih/color"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -20,19 +21,16 @@ type Rarities struct {
 }
 
 var (
-	Icon        = "\U0001F9D9\U0001F3FC"
-	Reset       = "\033[0m"
-	Background  = "\033[38;5;59m"
-	CurrentLine = "\033[38;5;60m"
-	Foreground  = "\033[38;5;231m"
-	Comment     = "\033[38;5;103m"
-	Cyan        = "\033[38;5;159m"
-	Green       = "\033[38;5;120m"
-	Orange      = "\033[38;5;222m"
-	Pink        = "\033[38;5;212m"
-	Purple      = "\033[38;5;183m"
-	Red         = "\033[38;5;210m"
-	Yellow      = "\033[38;5;229m"
+	Icon = "\U0001F9D9\U0001F3FC"
+
+	DarkGray  = termColor.New(termColor.FgHiBlack).SprintfFunc()
+	LightGray = termColor.New(termColor.FgWhite).SprintfFunc()
+	Cyan      = termColor.New(termColor.FgHiCyan).SprintfFunc()
+	Green     = termColor.New(termColor.FgGreen).SprintfFunc()
+	Pink      = termColor.New(termColor.FgHiMagenta).SprintfFunc()
+	Purple    = termColor.New(termColor.FgMagenta).SprintfFunc()
+	Red       = termColor.New(termColor.FgRed).SprintfFunc()
+	Yellow    = termColor.New(termColor.FgYellow).SprintfFunc()
 )
 
 func Logger() *log.Logger {
@@ -219,19 +217,19 @@ func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 
 		// always display first history entry
 		if i == 0 {
-			fmt.Printf("%s%s %.2f%s%s\n", prefix, stringToTime(e.Date), value, getCurrency(), Reset)
+			fmt.Printf("%s%s %.2f%s\n", prefix, stringToTime(e.Date), value, getCurrency())
 			before = value
 			continue
 		}
 
 		// price increased or first or last element in history
 		if (value >= before && before != 0) && (diffPercent > 5 || i+1 == last) {
-			fmt.Printf("%s%s%s %.2f%s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Green, value, getCurrency(), Reset, diffPercent, value-before, getCurrency())
+			fmt.Printf("%s%s %s%s (%.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Green("%+.2f", value), Green(getCurrency()), diffPercent, value-before, getCurrency())
 		}
 
 		// price decreased or first or last element in history
 		if (value < before) && (diffPercent < -5 || i == last) {
-			fmt.Printf("%s%s%s %.2f%s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Red, value, getCurrency(), Reset, diffPercent, value-before, getCurrency())
+			fmt.Printf("%s%s %s%s (%.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Red("%+.2f", value), Red(getCurrency()), diffPercent, value-before, getCurrency())
 		}
 
 		before = value

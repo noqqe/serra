@@ -77,9 +77,9 @@ func showSetList(sets []primitive.M) {
 
 	for _, set := range sets {
 		setobj, _ := findSetByCode(setscoll, set["code"].(string))
-		fmt.Printf("* %s %s%s%s (%s%s%s)\n", set["release"].(string)[0:4], Purple, set["_id"], Reset, Cyan, set["code"], Reset)
-		fmt.Printf("  Cards: %s%d/%d%s Total: %.0f \n", Yellow, set["unique"], setobj.CardCount, Reset, set["count"])
-		fmt.Printf("  Value: %s%.2f%s%s\n", Pink, set["value"], getCurrency(), Reset)
+		fmt.Printf("* %s %s (%s)\n", set["release"].(string)[0:4], Purple(set["_id"].(string)), Cyan(set["code"].(string)))
+		fmt.Printf("  Cards: %s Total: %.0f \n", Yellow("%d/%d", set["unique"], setobj.CardCount), set["count"])
+		fmt.Printf("  Value: %s%s\n", Pink(set["value"].(string)), Pink(getCurrency()))
 		fmt.Println()
 	}
 }
@@ -143,7 +143,7 @@ func ShowSet(setname string) error {
 
 	ri := convertRarities(rar)
 
-	fmt.Printf("%s%s%s\n", Green, sets[0].Name, Reset)
+	fmt.Printf("%s\n", Green(sets[0].Name))
 	fmt.Printf("Released: %s\n", sets[0].ReleasedAt)
 	fmt.Printf("Set Cards: %d/%d\n", len(cards), sets[0].CardCount)
 	fmt.Printf("Total Cards: %.0f\n", stats[0]["count"])
@@ -164,33 +164,26 @@ func ShowSet(setname string) error {
 	normalCount, _ := getFloat64(stats[0]["count"])
 	foilCount, _ := getFloat64(stats[0]["count_foil"])
 
-	fmt.Printf("\n%sCurrent Value%s\n", Purple, Reset)
-	fmt.Printf("Total: %.0fx %s%.2f%s%s\n", normalCount+foilCount, Yellow, totalValue, getCurrency(), Reset)
-	fmt.Printf("Normal: %.0fx %s%.2f%s%s\n", stats[0]["count"], Yellow, normalValue, getCurrency(), Reset)
-	fmt.Printf("Foil: %.0fx %s%.2f%s%s\n", stats[0]["count_foil"], Yellow, foilValue, getCurrency(), Reset)
+	fmt.Printf("\n%s\n", Purple("Current Value"))
+	fmt.Printf("Total: %.0fx %s%s\n", normalCount+foilCount, Yellow("%.2f", totalValue), Yellow(getCurrency()))
+	fmt.Printf("Normal: %.0fx %s%s\n", stats[0]["count"], Yellow("%.2f", normalValue), Yellow(getCurrency()))
+	fmt.Printf("Foil: %.0fx %s%s\n", stats[0]["count_foil"], Yellow("%.2f", foilValue), Yellow(getCurrency()))
 
-	fmt.Printf("\n%sRarities%s\n", Purple, Reset)
+	fmt.Printf("\n%s\n", Purple("Rarities"))
 	fmt.Printf("Mythics: %.0f\n", ri.Mythics)
 	fmt.Printf("Rares: %.0f\n", ri.Rares)
 	fmt.Printf("Uncommons: %.0f\n", ri.Uncommons)
 	fmt.Printf("Commons: %.0f\n", ri.Commons)
 
-	fmt.Printf("\n%sPrice History:%s\n", Pink, Reset)
+	fmt.Printf("\n%s\n", Pink("Price History"))
 	showPriceHistory(sets[0].SerraPrices, "* ", true)
 
-	fmt.Printf("\n%sMost valuable cards%s\n", Pink, Reset)
+	fmt.Printf("\n%s\n", Pink("Most valuable cards"))
 
 	// Calc counter to show 10 cards or less
-	ccards := 0
-	if len(cards) < 10 {
-		ccards = len(cards)
-	} else {
-		ccards = 10
-	}
-
-	for i := 0; i < ccards; i++ {
-		card := cards[i]
-		fmt.Printf("* %s%s%s (%s/%s) %s%.2f%s%s\n", Purple, card.Name, Reset, sets[0].Code, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Reset)
+	ccards := min(10, len(cards))
+	for _, card := range cards[:ccards] {
+		fmt.Printf("* %s (%s/%s) %s%s\n", Purple(card.Name), sets[0].Code, card.CollectorNumber, Yellow("%.2f", card.getValue()), Yellow(getCurrency()))
 	}
 
 	return nil

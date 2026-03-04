@@ -105,7 +105,8 @@ func removeCards(cards []string, count int64) error {
 
 		if foil && c.SerraCountFoil == 1 && c.SerraCount == 0 || !foil && c.SerraCount == 1 && c.SerraCountFoil == 0 {
 			coll.storageRemove(bson.M{"_id": c.ID})
-			l.Infof("\"%s\" (%.2f%s) removed", c.Name, c.getValue(foil), getCurrency())
+			// TODO: Show foil price
+			l.Infof("\"%s\" (%.2f%s) removed", c.Name, c.getValue(), getCurrency())
 		} else {
 			modifyCardCount(coll, c, -count, foil)
 		}

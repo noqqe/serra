@@ -59,6 +59,7 @@ func ShowCard(cardids []string) {
 			continue
 		}
 
+		// TODO: should be replaced by findCardByID
 		cards, _ := coll.storageFind(bson.D{{"set", strings.Split(v, "/")[0]}, {"collectornumber", strings.Split(v, "/")[1]}}, bson.D{{"name", 1}}, 0, 0)
 
 		for _, card := range cards {
@@ -67,6 +68,8 @@ func ShowCard(cardids []string) {
 	}
 }
 
+// Cards fetches card based on search parameters
+// TODO:Create search object instead of a bazillion parameters
 func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot string) []Card {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
@@ -177,34 +180,33 @@ func showCardList(cards []Card, detail bool) {
 	var total float64
 	if detail {
 		for _, card := range cards {
-			fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f%s %s %s %s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Background, strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1), Reset)
+			fmt.Printf("* %dx %s %s%s%s %s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple(card.Name), card.Set, card.CollectorNumber, Yellow("(%s/%s)", card.getValue(), getCurrency()), DarkGray(strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1)))
 			total = total + card.getValue()*float64(card.SerraCount) + card.getFoilValue()*float64(card.SerraCountFoil)
 		}
 	} else {
 		for _, card := range cards {
-			fmt.Printf("* %dx %s%s%s (%s/%s) %s%.2f%s%s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple, card.Name, Reset, card.Set, card.CollectorNumber, Yellow, card.getValue(), getCurrency(), Reset)
+			fmt.Printf("* %dx %s %s %s%s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple(card.Name), card.Set, card.CollectorNumber, Yellow("(%s/%s)", card.getValue(), getCurrency()))
 			total = total + card.getValue()*float64(card.SerraCount) + card.getFoilValue()*float64(card.SerraCountFoil)
 		}
 	}
 
-	fmt.Printf("\nTotal Value: %s%.2f%s%s\n", Yellow, total, getCurrency(), Reset)
+	fmt.Printf("\nTotal Value: %s%s\n", Yellow("%.2f", total), Yellow(getCurrency()))
 
 }
 
 func showCardDetails(card *Card) error {
-	fmt.Printf("%s%s%s (%s/%s)\n", Purple, card.Name, Reset, card.Set, card.CollectorNumber)
+	fmt.Printf("%s (%s/%s)\n", Purple(card.Name), card.Set, card.CollectorNumber)
 	fmt.Printf("Added: %s\n", stringToTime(card.SerraCreated))
 	fmt.Printf("Rarity: %s\n", card.Rarity)
 	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
 
-	fmt.Printf("\n%sCurrent Value%s\n", Green, Reset)
-	fmt.Printf("* Normal: %dx %s%.2f%s%s\n", card.SerraCount, Yellow, card.getValue(), getCurrency(), Reset)
+	fmt.Printf("\n%s\n", Green("Current Values"))
+	fmt.Printf("* Normal: %dx %s%s\n", card.SerraCount, Yellow("%.2f", card.getValue()), Yellow(getCurrency()))
 	if card.SerraCountFoil > 0 {
-		fmt.Printf("* Foil: %dx %s%.2f%s%s\n", card.SerraCountFoil, Yellow, card.getFoilValue(), getCurrency(), Reset)
+		fmt.Printf("* Foil: %dx %s%s\n", card.SerraCountFoil, Yellow("%.2f", card.getFoilValue()), Yellow(getCurrency()))
 	}
 
-	fmt.Printf("\n%sValue History%s\n", Green, Reset)
+	fmt.Printf("\n%s\n", Green("Value History"))
 	showPriceHistory(card.SerraPrices, "* ", false)
-	fmt.Println()
 	return nil
 }
