@@ -41,31 +41,10 @@ otherwise you'll get a list of cards as a search result.`,
 			cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0, is, isNot)
 			showCardList(cardList, detail)
 		} else {
-			ShowCard(cards)
+			showCard(cards)
 		}
 		return nil
 	},
-}
-
-func ShowCard(cardids []string) {
-	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
-	l := Logger()
-	defer storageDisconnect(client)
-
-	for _, v := range cardids {
-		if len(strings.Split(v, "/")) < 2 || strings.Split(v, "/")[1] == "" {
-			l.Warnf("Invalid card %s", v)
-			continue
-		}
-
-		// TODO: should be replaced by findCardByID
-		cards, _ := coll.storageFind(bson.D{{"set", strings.Split(v, "/")[0]}, {"collectornumber", strings.Split(v, "/")[1]}}, bson.D{{"name", 1}}, 0, 0)
-
-		for _, card := range cards {
-			showCardDetails(&card)
-		}
-	}
 }
 
 // Cards fetches card based on search parameters
@@ -173,6 +152,30 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 	cards = temp
 
 	return cards
+}
+
+func showCard(cardids []string) {
+	client := storageConnect()
+	coll := &Collection{client.Database("serra").Collection("cards")}
+	l := Logger()
+	defer storageDisconnect(client)
+
+	for _, v := range cardids {
+		if len(strings.Split(v, "/")) < 2 || strings.Split(v, "/")[1] == "" {
+			l.Warnf("Invalid card %s", v)
+			continue
+		}
+
+		setCode := strings.Split(v, "/")[0]
+		collectorNumber := strings.Split(v, "/")[1]
+		card, err := findCardByCollectorNumber(coll, setCode, collectorNumber)
+		if err != nil {
+			l.Errorf("Card %s not found in collection", v)
+			continue
+		}
+
+		showCardDetails(card)
+	}
 }
 
 func showCardList(cards []Card, detail bool) {
