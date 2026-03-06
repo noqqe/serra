@@ -22,12 +22,14 @@ var setCmd = &cobra.Command{
 If you directly put a setcode as an argument, it will be displayed
 otherwise you'll get a list of sets as a search result.`,
 	SilenceErrors: true,
-	RunE: func(cmd *cobra.Command, set []string) error {
+	RunE: func(cmd *cobra.Command, sets []string) error {
 		if len(set) == 0 {
 			setList := Sets(sortby)
 			showSetList(setList)
 		} else {
-			ShowSet(set[0])
+			for _, set := range sets {
+				ShowSet(set)
+			}
 		}
 		return nil
 	},
