@@ -15,68 +15,73 @@ func init() {
 
 var missingCmd = &cobra.Command{
 	Aliases: []string{"m"},
-	Use:     "missing <set>",
+	Use:     "missing <set>...",
 	Short:   "Display missing cards from a set",
 	Long: `In case you are a set collector, you can generate a list of
 cards you dont own (yet) :)`,
 	SilenceErrors: true,
-	RunE: func(cmd *cobra.Command, setName []string) error {
+	RunE: func(cmd *cobra.Command, setNames []string) error {
 		client := storageConnect()
 		coll := &Collection{client.Database("serra").Collection("cards")}
 		l := Logger()
 		defer storageDisconnect(client)
 
-		// fetch all cards in set
-		cards, err := coll.storageFind(bson.D{{"set", setName[0]}}, bson.D{{"collectornumber", 1}}, 0, 0)
-		if (err != nil) || len(cards) == 0 {
-			l.Errorf("Set %s not found or no card in your collection.", setName[0])
-			return err
-		}
-
-		// fetch set informations
-		setcoll := &Collection{client.Database("serra").Collection("sets")}
-		sets, _ := setcoll.storageFindSet(bson.D{{"code", setName[0]}}, bson.D{{"_id", 1}})
-		set := sets[0]
-
-		fmt.Printf("Missing cards in %s\n", sets[0].Name)
-
-		// generate set with all setnumbers
-		var (
-			completeSet []string
-			i           int64
-		)
-		for i = 1; i <= set.CardCount; i++ {
-			completeSet = append(completeSet, strconv.FormatInt(i, 10))
-		}
-
-		// iterate over all cards in collection
-		var inCollection []string
-		for _, c := range cards {
-			inCollection = append(inCollection, c.CollectorNumber)
-		}
-
-		misses := missing(inCollection, completeSet)
-
-		// Fetch all missing cards
-		missingCards := []*Card{}
-		for _, m := range misses {
-			card, err := fetchCard(setName[0], m)
-			if err != nil {
-				continue
+		for _, setName := range setNames {
+			// fetch all cards in set
+			cards, err := coll.storageFind(bson.D{{"set", setName[0]}}, bson.D{{"collectornumber", 1}}, 0, 0)
+			if (err != nil) || len(cards) == 0 {
+				l.Errorf("Set %s not found or no card in your collection.", setName)
+				return err
 			}
 
-			missingCards = append(missingCards, card)
-		}
+			// fetch set informations
+			setcoll := &Collection{client.Database("serra").Collection("sets")}
+			set, _ := findSetByCode(setcoll, setName)
+			if err != nil {
+				l.Errorf("Set %s not found. Make sure to have it in your collection.", setName)
+				return err
+			}
 
-		// Sort the missing cards by ID
-		sort.Slice(missingCards, func(i, j int) bool {
-			id1, _ := strconv.Atoi(missingCards[i].CollectorNumber)
-			id2, _ := strconv.Atoi(missingCards[j].CollectorNumber)
-			return id1 < id2
-		})
+			fmt.Printf("Missing cards in %s\n", set.Name)
 
-		for _, card := range missingCards {
-			fmt.Printf("%s\t(%s, %s)\t%s%s\t%s (%s)\n", Purple("%s/%s", card.Set, card.CollectorNumber), string([]rune(card.Rarity)[0]), DarkGray("https://scryfall.com/card/%s/%s", card.Set, card.CollectorNumber), Green("%.02f", card.getValue()), Green(getCurrency()), card.Name, card.SetName)
+			// generate set with all setnumbers
+			var (
+				completeSet []string
+				i           int64
+			)
+			for i = 1; i <= set.CardCount; i++ {
+				completeSet = append(completeSet, strconv.FormatInt(i, 10))
+			}
+
+			// iterate over all cards in collection
+			var inCollection []string
+			for _, c := range cards {
+				inCollection = append(inCollection, c.CollectorNumber)
+			}
+
+			misses := missing(inCollection, completeSet)
+
+			// Fetch all missing cards
+			missingCards := []*Card{}
+			for _, m := range misses {
+				card, err := fetchCard(setName, m)
+				if err != nil {
+					continue
+				}
+
+				missingCards = append(missingCards, card)
+			}
+
+			// Sort the missing cards by ID
+			sort.Slice(missingCards, func(i, j int) bool {
+				id1, _ := strconv.Atoi(missingCards[i].CollectorNumber)
+				id2, _ := strconv.Atoi(missingCards[j].CollectorNumber)
+				return id1 < id2
+			})
+
+			for _, card := range missingCards {
+				fmt.Printf("%s\t(%s, %s)\t%s%s\t%s (%s)\n", Purple("%s/%s", card.Set, card.CollectorNumber), string([]rune(card.Rarity)[0]), DarkGray("https://scryfall.com/card/%s/%s", card.Set, card.CollectorNumber), Green("%.02f", card.getValue()), Green(getCurrency()), card.Name, card.SetName)
+			}
 		}
 
 		return nil
