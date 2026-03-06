@@ -162,15 +162,15 @@ func convertManaSymbols(sym []any) string {
 
 }
 
+// HACK:
+// this is maybe the ugliest way someone could choose to verify, if a rarity type is missing
+// [
+// { _id: { rarity: 'common' }, count: 20 },
+// { _id: { rarity: 'uncommon' }, count: 2 }
+// ]
+// if a result like this is there, 1 rarity type "rare" is not in the array. and needs to be
+// initialized with 0, otherwise we get a panic
 func convertRarities(rar []primitive.M) Rarities {
-
-	// this is maybe the ugliest way someone could choose to verify, if a rarity type is missing
-	// [
-	// { _id: { rarity: 'common' }, count: 20 },
-	// { _id: { rarity: 'uncommon' }, count: 2 }
-	// ]
-	// if a result like this is there, 1 rarity type "rare" is not in the array. and needs to be
-	// initialized with 0, otherwise we get a panic
 
 	var ri Rarities
 	for _, r := range rar {
@@ -190,7 +190,6 @@ func convertRarities(rar []primitive.M) Rarities {
 }
 
 func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
-
 	var before float64
 	last := len(prices)
 	for i, e := range prices {

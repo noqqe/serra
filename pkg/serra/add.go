@@ -7,7 +7,6 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func init() {
@@ -110,8 +109,8 @@ func addCards(cards []string, unique bool, count int64) error {
 
 	// Loop over different cards
 	for _, card := range cards {
-		// Extract collector number and set name from card input & trim any leading 0 from collector number
 
+		// Extract collector number and set name from card input & trim any leading 0 from collector number
 		if !strings.Contains(card, "/") {
 			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
 			continue
@@ -126,26 +125,20 @@ func addCards(cards []string, unique bool, count int64) error {
 		}
 
 		// Check if card is already in collection
-		// TODO: replace with helper findCardByCollectorNumber ?
-		co, err := coll.storageFind(bson.D{{"set", setName}, {"collectornumber", collectorNumber}}, bson.D{}, 0, 0)
-		if err != nil {
-			l.Error(err)
-			continue
-		}
-
-		if len(co) >= 1 {
-			c := co[0]
+		card, err := findCardByCollectorNumber(coll, setName, collectorNumber)
+		if err == nil {
 
 			if unique {
-				l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, c.Name, c.Rarity, c.getColoredFoilValue(), getCurrency())
+				l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
 				continue
 			}
 
-			modifyCardCount(coll, &c, count, foil)
+			// Increase card count
+			modifyCardCount(coll, card, count, foil)
 
 		} else {
 			// Fetch card from scryfall
-			c, err := fetchCard(setName, collectorNumber)
+			card, err := fetchCard(setName, collectorNumber)
 			if err != nil {
 				l.Warn(err)
 				continue
@@ -154,13 +147,13 @@ func addCards(cards []string, unique bool, count int64) error {
 			// Write card to mongodb
 			var total int64 = 0
 			if foil {
-				c.SerraCountFoil = count
-				total = c.SerraCountFoil
+				card.SerraCountFoil = count
+				total = card.SerraCountFoil
 			} else {
-				c.SerraCount = count
-				total = c.SerraCount
+				card.SerraCount = count
+				total = card.SerraCount
 			}
-			err = coll.storageAdd(c)
+			err = coll.storageAdd(card)
 			if err != nil {
 				l.Warn(err)
 				continue
@@ -168,9 +161,9 @@ func addCards(cards []string, unique bool, count int64) error {
 
 			// Give feedback of successfully added card
 			if foil {
-				l.Infof("%dx \"%s\" (%s, %s%s, foil) added", total, c.Name, c.Rarity, c.getColoredFoilValue(), getCurrency())
+				l.Infof("%dx \"%s\" (%s, %s%s, foil) added", total, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
 			} else {
-				l.Infof("%dx \"%s\" (%s, %s%s) added", total, c.Name, c.Rarity, c.getColoredValue(), getCurrency())
+				l.Infof("%dx \"%s\" (%s, %s%s) added", total, card.Name, card.Rarity, card.getColoredValue(), getCurrency())
 			}
 		}
 	}
