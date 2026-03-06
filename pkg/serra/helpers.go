@@ -21,8 +21,6 @@ type Rarities struct {
 }
 
 var (
-	Icon = "\U0001F9D9\U0001F3FC"
-
 	DarkGray  = termColor.New(termColor.FgHiBlack).SprintfFunc()
 	LightGray = termColor.New(termColor.FgWhite).SprintfFunc()
 	Cyan      = termColor.New(termColor.FgHiCyan).SprintfFunc()
