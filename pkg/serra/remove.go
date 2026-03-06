@@ -1,6 +1,7 @@
 package serra
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -28,7 +29,9 @@ var removeCmd = &cobra.Command{
 		if interactive {
 			removeCardsInteractive(set)
 		} else {
-			removeCards(cards, count)
+			for _, card := range cards {
+				removeCard(card, count)
+			}
 		}
 		return nil
 	},
@@ -53,16 +56,13 @@ func removeCardsInteractive(set string) {
 			break
 		}
 
-		// construct card input for addCards
-		card := []string{}
-		card = append(card, fmt.Sprintf("%s/%s", set, strings.TrimSpace(line)))
-
-		removeCards(card, count)
+		card := fmt.Sprintf("%s/%s", set, strings.TrimSpace(line))
+		removeCard(card, count)
 	}
 
 }
 
-func removeCards(cards []string, count int64) error {
+func removeCard(cardID string, count int64) error {
 	// Connect to the DB & load the collection
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
@@ -70,46 +70,35 @@ func removeCards(cards []string, count int64) error {
 	defer storageDisconnect(client)
 
 	// Loop over different cards
-	for _, card := range cards {
 
-		if !strings.Contains(card, "/") {
-			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
-			continue
-		}
+	setName, collectorNumber, err := parseCardID(cardID)
+	if err != nil {
+		return err
+	}
 
-		// Extract collector number and set name from input & remove leading zeros
-		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
-		setName := strings.Split(card, "/")[0]
+	// Fetch card from scryfall
+	c, err := findCardByCollectorNumber(coll, setName, collectorNumber)
+	if err != nil {
+		l.Error(err)
+		return err
+	}
 
-		if collectorNumber == "" {
-			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
-			continue
-		}
+	if foil && c.SerraCountFoil < 1 {
+		l.Errorf("No foil \"%s\" in the collection", c.Name)
+		return errors.New("no foil card in collection")
+	}
 
-		// Fetch card from scryfall
-		c, err := findCardByCollectorNumber(coll, setName, collectorNumber)
-		if err != nil {
-			l.Error(err)
-			continue
-		}
+	if !foil && c.SerraCount < 1 {
+		l.Errorf("No normal \"%s\" in the collection", c.Name)
+		return errors.New("no normal card in collection")
+	}
 
-		if foil && c.SerraCountFoil < 1 {
-			l.Errorf("No foil \"%s\" in the collection", c.Name)
-			continue
-		}
-
-		if !foil && c.SerraCount < 1 {
-			l.Errorf("No normal \"%s\" in the collection", c.Name)
-			continue
-		}
-
-		if foil && c.SerraCountFoil == 1 && c.SerraCount == 0 || !foil && c.SerraCount == 1 && c.SerraCountFoil == 0 {
-			coll.storageRemove(bson.M{"_id": c.ID})
-			// TODO: Show foil price
-			l.Infof("\"%s\" (%.2f%s) removed", c.Name, c.getValue(), getCurrency())
-		} else {
-			modifyCardCount(coll, c, -count, foil)
-		}
+	if foil && c.SerraCountFoil == 1 && c.SerraCount == 0 || !foil && c.SerraCount == 1 && c.SerraCountFoil == 0 {
+		coll.storageRemove(bson.M{"_id": c.ID})
+		// TODO: Show foil price
+		l.Infof("\"%s\" (%.2f%s) removed", c.Name, c.getValue(), getCurrency())
+	} else {
+		modifyCardCount(coll, c, -count, foil)
 	}
 
 	return nil

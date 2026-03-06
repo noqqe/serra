@@ -28,7 +28,9 @@ var addCmd = &cobra.Command{
 		if interactive {
 			addCardsInteractive(unique, set)
 		} else {
-			addCards(cards, unique, count)
+			for _, card := range cards {
+				addCard(card, unique, count)
+			}
 		}
 		return nil
 	},
@@ -47,6 +49,7 @@ func addCardsInteractive(unique bool, set string) {
 	defer rl.Close()
 
 	for {
+		var cardID string
 		line, err := rl.Readline()
 		if err != nil { // io.EOF
 			break
@@ -57,9 +60,6 @@ func addCardsInteractive(unique bool, set string) {
 
 		// default is count 1
 		count = 1
-
-		// construct card input for addCards
-		card := []string{}
 
 		// Detect if input contains a dash, if it does it means the user wants to add a range of cards
 		if strings.Contains(line, "-") {
@@ -72,12 +72,12 @@ func addCardsInteractive(unique bool, set string) {
 					start, _ := strconv.Atoi(parts[0])
 					end, _ := strconv.Atoi(parts[1])
 					for i := start; i <= end; i++ {
-						card = append(card, fmt.Sprintf("%s/%d", set, i))
+						cardID = fmt.Sprintf("%s/%d", set, i)
 					}
 				}
 			}
 		} else {
-			card = append(card, fmt.Sprintf("%s/%s", set, strings.Split(line, " ")[0]))
+			cardID = fmt.Sprintf("%s/%s", set, strings.Split(line, " ")[0])
 		}
 
 		// Are there extra arguments?
@@ -96,75 +96,62 @@ func addCardsInteractive(unique bool, set string) {
 			}
 		}
 
-		addCards(card, unique, count)
+		addCard(cardID, unique, count)
 	}
 
 }
 
-func addCards(cards []string, unique bool, count int64) error {
+func addCard(cardID string, unique bool, count int64) error {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	l := Logger()
 	defer storageDisconnect(client)
 
-	// Loop over different cards
-	for _, card := range cards {
+	setName, collectorNumber, err := parseCardID(cardID)
+	if err != nil {
+		return err
+	}
 
-		// Extract collector number and set name from card input & trim any leading 0 from collector number
-		if !strings.Contains(card, "/") {
-			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
-			continue
+	// Check if card is already in collection
+	card, err := findCardByCollectorNumber(coll, setName, collectorNumber)
+	if err == nil {
+
+		if unique {
+			l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
+			return nil
 		}
 
-		setName := strings.ToLower(strings.Split(card, "/")[0])
-		collectorNumber := strings.TrimLeft(strings.Split(card, "/")[1], "0")
+		// Increase card count
+		modifyCardCount(coll, card, count, foil)
 
-		if collectorNumber == "" {
-			l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", card)
-			continue
+	} else {
+		// Fetch card from scryfall
+		card, err := fetchCard(setName, collectorNumber)
+		if err != nil {
+			l.Warn(err)
+			return err
 		}
 
-		// Check if card is already in collection
-		card, err := findCardByCollectorNumber(coll, setName, collectorNumber)
-		if err == nil {
-
-			if unique {
-				l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
-				continue
-			}
-
-			// Increase card count
-			modifyCardCount(coll, card, count, foil)
-
+		// Write card to mongodb
+		var total int64 = 0
+		if foil {
+			card.SerraCountFoil = count
+			total = card.SerraCountFoil
 		} else {
-			// Fetch card from scryfall
-			card, err := fetchCard(setName, collectorNumber)
-			if err != nil {
-				l.Warn(err)
-				continue
-			}
+			card.SerraCount = count
+			total = card.SerraCount
+		}
+		err = coll.storageAdd(card)
+		if err != nil {
+			l.Warn(err)
+			return err
+		}
 
-			// Write card to mongodb
-			var total int64 = 0
-			if foil {
-				card.SerraCountFoil = count
-				total = card.SerraCountFoil
-			} else {
-				card.SerraCount = count
-				total = card.SerraCount
-			}
-			err = coll.storageAdd(card)
-			if err != nil {
-				l.Warn(err)
-				continue
-			}
-
-			// Give feedback of successfully added card
-			if foil {
-				l.Infof("%dx \"%s\" (%s, %s%s, foil) added", total, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
-			} else {
-				l.Infof("%dx \"%s\" (%s, %s%s) added", total, card.Name, card.Rarity, card.getColoredValue(), getCurrency())
-			}
+		// Give feedback of successfully added card
+		if foil {
+			l.Infof("%dx \"%s\" (%s, %s%s, foil) added", total, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
+		} else {
+			l.Infof("%dx \"%s\" (%s, %s%s) added", total, card.Name, card.Rarity, card.getColoredValue(), getCurrency())
 		}
 	}
 	storageDisconnect(client)

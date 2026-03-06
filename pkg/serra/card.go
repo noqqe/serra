@@ -41,7 +41,9 @@ otherwise you'll get a list of cards as a search result.`,
 			cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0, is, isNot)
 			showCardList(cardList, detail)
 		} else {
-			showCard(cards)
+			for _, card := range cards {
+				showCard(card)
+			}
 		}
 		return nil
 	},
@@ -154,28 +156,25 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 	return cards
 }
 
-func showCard(cardids []string) {
+func showCard(cardID string) error {
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	l := Logger()
 	defer storageDisconnect(client)
 
-	for _, v := range cardids {
-		if len(strings.Split(v, "/")) < 2 || strings.Split(v, "/")[1] == "" {
-			l.Warnf("Invalid card %s", v)
-			continue
-		}
-
-		setCode := strings.Split(v, "/")[0]
-		collectorNumber := strings.Split(v, "/")[1]
-		card, err := findCardByCollectorNumber(coll, setCode, collectorNumber)
-		if err != nil {
-			l.Errorf("Card %s not found in collection", v)
-			continue
-		}
-
-		showCardDetails(card)
+	setCode, collectorNumber, err := parseCardID(cardID)
+	if err != nil {
+		return err
 	}
+
+	card, err := findCardByCollectorNumber(coll, setCode, collectorNumber)
+	if err != nil {
+		l.Errorf("Card %s not found in collection", cardID)
+		return err
+	}
+
+	showCardDetails(card)
+	return nil
 }
 
 func showCardList(cards []Card, detail bool) {

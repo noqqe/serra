@@ -135,6 +135,27 @@ func findSetByCode(coll *Collection, setcode string) (*Set, error) {
 	return &storedSets[0], nil
 }
 
+// parseCardID parses a card ID in the format
+// "set/collector_number" and returns the set code and collector number.
+// Returns an error if the format is invalid
+func parseCardID(cardID string) (string, string, error) {
+	l := Logger()
+	if len(strings.Split(cardID, "/")) < 2 || strings.Split(cardID, "/")[1] == "" {
+		l.Warnf("Invalid card %s", cardID)
+		return "", "", errors.New("set code and collector number must be provided in format set/collector_number (ex. usg/23)")
+	}
+
+	setCode := strings.Split(cardID, "/")[0]
+	collectorNumber := strings.Split(cardID, "/")[1]
+
+	if collectorNumber == "" {
+		l.Errorf("Invalid card format %s. Needs to be set/collector number i.e. \"usg/13\"", cardID)
+		return "", "", errors.New("set code and collector number must be provided in format set/collector_number (ex. usg/23)")
+	}
+
+	return setCode, collectorNumber, nil
+}
+
 func convertManaSymbols(sym []any) string {
 	var mana string
 
