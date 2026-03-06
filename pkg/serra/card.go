@@ -13,7 +13,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&artist, "artist", "a", "", "Filter by name of artist")
 	cardCmd.Flags().StringVarP(&rarity, "rarity", "r", "", "Filter by rarity of cards (mythic, rare, uncommon, common)")
 	cardCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
-	cardCmd.Flags().StringVarP(&sortby, "sort", "s", "name", "How to sort cards (value/number/name/added)")
+	cardCmd.Flags().StringVarP(&sortBy, "sort", "s", "name", "How to sort cards (value/number/name/added)")
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
 	cardCmd.Flags().Int64VarP(&cmc, "cmc", "m", -1, "Cumulative mana cost of card")
 	cardCmd.Flags().StringVarP(&color, "color", "i", "", "Color identity of card (w,u,b,r,g)")
@@ -38,7 +38,7 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0, is, isNot)
+			cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, is, isNot)
 			showCardList(cardList, detail)
 		} else {
 			for _, card := range cards {

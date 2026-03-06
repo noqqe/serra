@@ -31,7 +31,7 @@ var (
 	set             string
 	sinceBeginning  bool
 	sinceLastUpdate bool
-	sortby          string
+	sortBy          string
 	unique          bool
 )
 

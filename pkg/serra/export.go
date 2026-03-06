@@ -25,7 +25,7 @@ var exportCmd = &cobra.Command{
 		Supports multiple output formats depending on where you want to export your collection.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cardList := Cards(rarity, set, sortby, name, oracle, cardType, reserved, foil, 0, 0, "", "")
+		cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, "", "")
 
 		// filter out cards that do not reach the minimum amount (--min-count)
 		// this is done after query result because find query constructed does not support

@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	setCmd.Flags().StringVarP(&sortby, "sort", "s", "release", "How to sort cards (release/value)")
+	setCmd.Flags().StringVarP(&sortBy, "sort", "s", "release", "How to sort cards (release/value)")
 	rootCmd.AddCommand(setCmd)
 }
 
@@ -24,7 +24,7 @@ otherwise you'll get a list of sets as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, sets []string) error {
 		if len(set) == 0 {
-			setList := Sets(sortby)
+			setList := Sets(sortBy)
 			showSetList(setList)
 		} else {
 			for _, set := range sets {
