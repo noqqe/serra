@@ -242,12 +242,12 @@ func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 
 		// price increased or first or last element in history
 		if (value >= before && before != 0) && (diffPercent > 5 || i+1 == last) {
-			fmt.Printf("%s%s %s%s (%.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Green("%+.2f", value), Green(getCurrency()), diffPercent, value-before, getCurrency())
+			fmt.Printf("%s%s %s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Green("%.2f", value), Green(getCurrency()), diffPercent, value-before, getCurrency())
 		}
 
 		// price decreased or first or last element in history
 		if (value < before) && (diffPercent < -5 || i == last) {
-			fmt.Printf("%s%s %s%s (%.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Red("%+.2f", value), Red(getCurrency()), diffPercent, value-before, getCurrency())
+			fmt.Printf("%s%s %s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Red("%.2f", value), Red(getCurrency()), diffPercent, value-before, getCurrency())
 		}
 
 		before = value
