@@ -38,17 +38,15 @@ func Logger() *log.Logger {
 	return l
 }
 
+// modifyCardCount modifies the amount of a card in the collection by a given
+// amount in foil or nonfoil
 func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 
-	// find already existing card
-	sort := bson.D{{"_id", 1}}
-	searchFilter := bson.D{{"_id", c.ID}}
 	l := Logger()
-	storedCards, err := coll.storageFind(searchFilter, sort, 0, 0)
+	storedCard, err := findCardByCollectorNumber(coll, c.Set, c.CollectorNumber)
 	if err != nil {
 		return err
 	}
-	storedCard := storedCards[0]
 
 	// update card amount
 	var update bson.M
@@ -84,6 +82,7 @@ func modifyCardCount(coll *Collection, c *Card, amount int64, foil bool) error {
 	return nil
 }
 
+// Find a card in the collection by set code and collector number. Returns an error if not found
 func findCardByCollectorNumber(coll *Collection, setCode string, collectorNumber string) (*Card, error) {
 	sort := bson.D{{"_id", 1}}
 	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
@@ -122,6 +121,7 @@ func missing(a, b []string) []string {
 	return diffs
 }
 
+// findSetByCode finds a set in the collection by its code. Returns an error if not found
 func findSetByCode(coll *Collection, setcode string) (*Set, error) {
 	storedSets, err := coll.storageFindSet(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
 	if err != nil {

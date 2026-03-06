@@ -104,7 +104,11 @@ func ShowSet(setname string) error {
 
 	// fetch set informations
 	setcoll := &Collection{client.Database("serra").Collection("sets")}
-	sets, _ := setcoll.storageFindSet(bson.D{{"code", setname}}, bson.D{{"_id", 1}})
+	set, err := findSetByCode(setcoll, setname)
+	if err != nil {
+		l.Errorf("Set %s not found or no card in your collection.", setname)
+		return err
+	}
 
 	// set values
 	matchStage := bson.D{
@@ -143,9 +147,9 @@ func ShowSet(setname string) error {
 
 	ri := convertRarities(rar)
 
-	fmt.Printf("%s\n", Green(sets[0].Name))
-	fmt.Printf("Released: %s\n", sets[0].ReleasedAt)
-	fmt.Printf("Set Cards: %d/%d\n", len(cards), sets[0].CardCount)
+	fmt.Printf("%s\n", Green(set.Name))
+	fmt.Printf("Released: %s\n", set.ReleasedAt)
+	fmt.Printf("Set Cards: %d/%d\n", len(cards), set.CardCount)
 	fmt.Printf("Total Cards: %.0f\n", stats[0]["count"])
 	fmt.Printf("Foil Cards: %.0f\n", stats[0]["count_foil"])
 
@@ -176,14 +180,14 @@ func ShowSet(setname string) error {
 	fmt.Printf("Commons: %.0f\n", ri.Commons)
 
 	fmt.Printf("\n%s\n", Pink("Price History"))
-	showPriceHistory(sets[0].SerraPrices, "* ", true)
+	showPriceHistory(set.SerraPrices, "* ", true)
 
 	fmt.Printf("\n%s\n", Pink("Most valuable cards"))
 
 	// Calc counter to show 10 cards or less
 	ccards := min(10, len(cards))
 	for _, card := range cards[:ccards] {
-		fmt.Printf("* %s (%s/%s) %s%s\n", Purple(card.Name), sets[0].Code, card.CollectorNumber, Yellow("%.2f", card.getValue()), Yellow(getCurrency()))
+		fmt.Printf("* %s (%s/%s) %s%s\n", Purple(card.Name), set.Code, card.CollectorNumber, Yellow("%.2f", card.getValue()), Yellow(getCurrency()))
 	}
 
 	return nil
