@@ -182,12 +182,12 @@ func showCardList(cards []Card, detail bool) {
 	var total float64
 	if detail {
 		for _, card := range cards {
-			fmt.Printf("* %dx %s %s%s%s %s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple(card.Name), card.Set, card.CollectorNumber, Yellow("(%s/%s)", card.getValue(), getCurrency()), DarkGray(strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1)))
+			fmt.Printf("* %dx %s (%s/%s) %s%s %s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple(card.Name), card.Set, card.CollectorNumber, Yellow("%.2f", card.getValue()), Yellow(getCurrency()), DarkGray(strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1)))
 			total = total + card.getValue()*float64(card.SerraCount) + card.getFoilValue()*float64(card.SerraCountFoil)
 		}
 	} else {
 		for _, card := range cards {
-			fmt.Printf("* %dx %s %s %s%s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple(card.Name), card.Set, card.CollectorNumber, Yellow("(%s/%s)", card.getValue(), getCurrency()))
+			fmt.Printf("* %dx %s (%s/%s) %s%s\n", card.SerraCount+card.SerraCountFoil+card.SerraCountEtched, Purple(card.Name), card.Set, card.CollectorNumber, Yellow("%.2f", card.getValue()), Yellow(getCurrency()))
 			total = total + card.getValue()*float64(card.SerraCount) + card.getFoilValue()*float64(card.SerraCountFoil)
 		}
 	}
