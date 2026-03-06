@@ -5,13 +5,22 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
 	setCmd.Flags().StringVarP(&sortBy, "sort", "s", "release", "How to sort cards (release/value)")
 	rootCmd.AddCommand(setCmd)
+}
+
+type SetsResult struct {
+	ID        string  `bson:"_id"`
+	Code      string  `bson:"code"`
+	Value     float64 `bson:"value"`
+	ValueFoil float64 `bson:"value_foil"`
+	Count     int32   `bson:"count"`
+	Unique    int32   `bson:"unique"`
+	Release   string  `bson:"release"`
 }
 
 var setCmd = &cobra.Command{
@@ -23,7 +32,7 @@ If you directly put a setcode as an argument, it will be displayed
 otherwise you'll get a list of sets as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, sets []string) error {
-		if len(set) == 0 {
+		if len(sets) == 0 {
 			setList := Sets(sortBy)
 			showSetList(setList)
 		} else {
@@ -35,11 +44,12 @@ otherwise you'll get a list of sets as a search result.`,
 	},
 }
 
-func Sets(sort string) []primitive.M {
+func Sets(sort string) []SetsResult {
 
 	client := storageConnect()
 	coll := &Collection{client.Database("serra").Collection("cards")}
 	defer storageDisconnect(client)
+	l := Logger()
 
 	groupStage := bson.D{
 		{"$group", bson.D{
@@ -67,21 +77,43 @@ func Sets(sort string) []primitive.M {
 			}}}
 	}
 
-	sets, _ := coll.storageAggregate(mongo.Pipeline{groupStage, sortStage})
+	bsonList, err := coll.storageAggregate(mongo.Pipeline{groupStage, sortStage})
+
+	if err != nil {
+		l.Error("Error fetching sets:", err)
+		return nil
+	}
+
+	sets := []SetsResult{}
+	for _, bsonEntry := range bsonList {
+		var item SetsResult
+		// Unmarshal bson.M into myStruct
+		bsonData, err := bson.Marshal(bsonEntry)
+		if err != nil {
+			l.Error("Error marshalling set result:", err)
+			return nil
+		}
+		err = bson.Unmarshal(bsonData, &item)
+		if err != nil {
+			l.Error("Error unmarshalling set result:", err)
+			return nil
+		}
+		sets = append(sets, item)
+	}
 	return sets
 
 }
 
-func showSetList(sets []primitive.M) {
+func showSetList(sets []SetsResult) {
 
 	client := storageConnect()
 	setscoll := &Collection{client.Database("serra").Collection("sets")}
 
 	for _, set := range sets {
-		setobj, _ := findSetByCode(setscoll, set["code"].(string))
-		fmt.Printf("* %s %s (%s)\n", set["release"].(string)[0:4], Purple(set["_id"].(string)), Cyan(set["code"].(string)))
-		fmt.Printf("  Cards: %s Total: %.0f \n", Yellow("%d/%d", set["unique"], setobj.CardCount), set["count"])
-		fmt.Printf("  Value: %s%s\n", Pink(set["value"].(string)), Pink(getCurrency()))
+		setobj, _ := findSetByCode(setscoll, set.Code)
+		fmt.Printf("* %s %s (%s)\n", fmt.Sprintf("%.4s", set.Release), Purple(set.ID), Cyan(set.Code))
+		fmt.Printf("  Cards: %s Total: %d \n", Yellow("%d/%d", set.Unique, setobj.CardCount), set.Count)
+		fmt.Printf("  Value: %s%s\n", Pink("%.2f", set.Value), Pink(getCurrency()))
 		fmt.Println()
 	}
 }

@@ -170,6 +170,7 @@ func (coll Collection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M,
 		opts)
 	if err != nil {
 		l.Fatalf("Could not aggregate data due to connection errors to database: %s", err.Error())
+		return []primitive.M{}, err
 	}
 
 	// Get a list of all returned documents and print them out.
@@ -177,6 +178,7 @@ func (coll Collection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M,
 	var results []bson.M
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		l.Fatal(err)
+		return []primitive.M{}, err
 	}
 
 	return results, nil
