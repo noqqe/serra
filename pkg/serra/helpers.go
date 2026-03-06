@@ -21,14 +21,14 @@ type Rarities struct {
 }
 
 var (
-	DarkGray  = termColor.New(termColor.FgHiBlack).SprintfFunc()
-	LightGray = termColor.New(termColor.FgWhite).SprintfFunc()
-	Cyan      = termColor.New(termColor.FgHiCyan).SprintfFunc()
-	Green     = termColor.New(termColor.FgGreen).SprintfFunc()
-	Pink      = termColor.New(termColor.FgHiMagenta).SprintfFunc()
-	Purple    = termColor.New(termColor.FgMagenta).SprintfFunc()
-	Red       = termColor.New(termColor.FgRed).SprintfFunc()
-	Yellow    = termColor.New(termColor.FgYellow).SprintfFunc()
+	DarkGray  = termColor.RGB(68, 71, 90).SprintfFunc()
+	LightGray = termColor.RGB(98, 114, 164).SprintfFunc()
+	Cyan      = termColor.RGB(139, 233, 253).SprintfFunc()
+	Green     = termColor.RGB(80, 250, 123).SprintfFunc()
+	Pink      = termColor.RGB(255, 121, 198).SprintfFunc()
+	Purple    = termColor.RGB(189, 147, 249).SprintfFunc()
+	Red       = termColor.RGB(255, 85, 85).SprintfFunc()
+	Yellow    = termColor.RGB(241, 250, 140).SprintfFunc()
 )
 
 func Logger() *log.Logger {
