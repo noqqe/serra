@@ -38,66 +38,6 @@ func Logger() *log.Logger {
 	return l
 }
 
-// modifyCardCount modifies the amount of a card in the collection by a given
-// amount in foil or nonfoil
-func modifyCardCount(coll CardsCollection, c *Card, amount int64, foil bool) error {
-
-	l := Logger()
-	storedCard, err := findCardByCollectorNumber(coll, c.Set, c.CollectorNumber)
-	if err != nil {
-		return err
-	}
-
-	// update card amount
-	var update bson.M
-	if foil {
-		update = bson.M{
-			"$set": bson.M{"serra_count_foil": storedCard.SerraCountFoil + amount},
-		}
-	} else {
-		update = bson.M{
-			"$set": bson.M{"serra_count": storedCard.SerraCount + amount},
-		}
-	}
-
-	coll.UpdateCards(bson.M{"_id": bson.M{"$eq": c.ID}}, update)
-
-	var total int64
-	if foil {
-		total = storedCard.SerraCountFoil + amount
-		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.SerraCountFoil, total)
-		} else {
-			l.Warnf("Increased card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.SerraCountFoil, total)
-		}
-	} else {
-		total = storedCard.SerraCount + amount
-		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.SerraCount, total)
-		} else {
-			l.Warnf("Increased card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.SerraCount, total)
-		}
-	}
-
-	return nil
-}
-
-// Find a card in the collection by set code and collector number. Returns an error if not found
-func findCardByCollectorNumber(coll CardsCollection, setCode string, collectorNumber string) (*Card, error) {
-	sort := bson.D{{"_id", 1}}
-	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
-	storedCards, err := coll.FindCards(searchFilter, sort, 0, 0)
-	if err != nil {
-		return &Card{}, err
-	}
-
-	if len(storedCards) < 1 {
-		return &Card{}, errors.New("Card not found")
-	}
-
-	return &storedCards[0], nil
-}
-
 func stringToTime(s primitive.DateTime) string {
 	return time.UnixMilli(int64(s)).Format("2006-01-02")
 }

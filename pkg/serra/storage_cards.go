@@ -2,6 +2,7 @@ package serra
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -48,6 +49,25 @@ func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([
 
 }
 
+// FindCardByCollectorNumber returns a card by set code and collector number.
+// If no card is found, an error is returned.
+func (coll CardsCollection) FindCardByCollectorNumber(setCode string, collectorNumber string) (*Card, error) {
+	sort := bson.D{{"_id", 1}}
+	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
+	storedCards, err := coll.FindCards(searchFilter, sort, 0, 0)
+	if err != nil {
+		return &Card{}, err
+	}
+
+	if len(storedCards) < 1 {
+		return &Card{}, errors.New("Card not found")
+	}
+
+	return &storedCards[0], nil
+}
+
+// RemoveCards removes cards from the collection by a given filter. If no card
+// is found, an error is returned.
 func (coll CardsCollection) RemoveCards(filter bson.M) error {
 	l := Logger()
 
@@ -59,6 +79,7 @@ func (coll CardsCollection) RemoveCards(filter bson.M) error {
 	return nil
 }
 
+// AggregateCards aggregates cards in the collection by a given pipeline.
 func (coll CardsCollection) AggregateCards(pipeline mongo.Pipeline) ([]primitive.M, error) {
 	l := Logger()
 	opts := options.Aggregate()
@@ -103,7 +124,7 @@ func (coll CardsCollection) UpdateCards(filter, update bson.M) error {
 func (coll CardsCollection) ModifyCardCount(c *Card, amount int64, foil bool) error {
 
 	l := Logger()
-	storedCard, err := findCardByCollectorNumber(coll, c.Set, c.CollectorNumber)
+	storedCard, err := coll.FindCardByCollectorNumber(c.Set, c.CollectorNumber)
 	if err != nil {
 		return err
 	}

@@ -167,7 +167,7 @@ func showCard(cardID string) error {
 		return err
 	}
 
-	card, err := findCardByCollectorNumber(coll, setCode, collectorNumber)
+	card, err := coll.FindCardByCollectorNumber(setCode, collectorNumber)
 	if err != nil {
 		l.Errorf("Card %s not found in collection", cardID)
 		return err

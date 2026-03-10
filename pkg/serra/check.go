@@ -38,7 +38,7 @@ func checkCard(cardID string, detail bool) error {
 		return err
 	}
 
-	card, err := findCardByCollectorNumber(coll, setName, collectorNumber)
+	card, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
 	if err == nil {
 		fmt.Printf("PRESENT %s \"%s\" (%s, %.2f%s) %s\n", cardID, card.Name, card.Rarity, card.getValue(), getCurrency(), strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
 	} else {

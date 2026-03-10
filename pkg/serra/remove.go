@@ -77,7 +77,7 @@ func removeCard(cardID string, count int64) error {
 	}
 
 	// Fetch card from scryfall
-	c, err := findCardByCollectorNumber(coll, setName, collectorNumber)
+	c, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
 	if err != nil {
 		l.Error(err)
 		return err

@@ -113,7 +113,7 @@ func addCard(cardID string, unique bool, count int64) error {
 	}
 
 	// Check if card is already in collection
-	card, err := findCardByCollectorNumber(coll, setName, collectorNumber)
+	card, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
 	if err == nil {
 
 		if unique {
