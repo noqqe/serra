@@ -122,7 +122,7 @@ func addCard(cardID string, unique bool, count int64) error {
 		}
 
 		// Increase card count
-		modifyCardCount(coll, card, count, foil)
+		coll.ModifyCardCount(card, count, foil)
 
 	} else {
 		// Fetch card from scryfall

@@ -98,7 +98,7 @@ func removeCard(cardID string, count int64) error {
 		// TODO: Show foil price
 		l.Infof("\"%s\" (%.2f%s) removed", c.Name, c.getValue(), getCurrency())
 	} else {
-		modifyCardCount(coll, c, -count, foil)
+		coll.ModifyCardCount(c, -count, foil)
 	}
 
 	return nil

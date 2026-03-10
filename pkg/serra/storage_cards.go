@@ -97,3 +97,47 @@ func (coll CardsCollection) UpdateCards(filter, update bson.M) error {
 
 	return nil
 }
+
+// ModifyCardCount modifies the amount of a card in the collection by a given
+// amount in foil or nonfoil
+func (coll CardsCollection) ModifyCardCount(c *Card, amount int64, foil bool) error {
+
+	l := Logger()
+	storedCard, err := findCardByCollectorNumber(coll, c.Set, c.CollectorNumber)
+	if err != nil {
+		return err
+	}
+
+	// update card amount
+	var update bson.M
+	if foil {
+		update = bson.M{
+			"$set": bson.M{"serra_count_foil": storedCard.SerraCountFoil + amount},
+		}
+	} else {
+		update = bson.M{
+			"$set": bson.M{"serra_count": storedCard.SerraCount + amount},
+		}
+	}
+
+	coll.UpdateCards(bson.M{"_id": bson.M{"$eq": c.ID}}, update)
+
+	var total int64
+	if foil {
+		total = storedCard.SerraCountFoil + amount
+		if amount < 0 {
+			l.Warnf("Reduced card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.SerraCountFoil, total)
+		} else {
+			l.Warnf("Increased card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.SerraCountFoil, total)
+		}
+	} else {
+		total = storedCard.SerraCount + amount
+		if amount < 0 {
+			l.Warnf("Reduced card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.SerraCount, total)
+		} else {
+			l.Warnf("Increased card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.SerraCount, total)
+		}
+	}
+
+	return nil
+}
