@@ -27,8 +27,8 @@ var statsCmd = &cobra.Command{
 
 func Stats() {
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
-	totalcoll := &Collection{client.Database("serra").Collection("total")}
+	coll := client.getCardsCollection()
+	totalcoll := client.getTotalCollection()
 	defer storageDisconnect(client)
 
 	// Show Value Stats
@@ -53,7 +53,7 @@ func Stats() {
 	showCardsAddedPerMonth(coll)
 }
 
-func showValueStats(coll *Collection, totalcoll *Collection) {
+func showValueStats(coll CardsCollection, totalcoll TotalCollection) {
 	l := Logger()
 	// Value and Card Numbers
 	stats, _ := coll.storageAggregate(mongo.Pipeline{
@@ -108,7 +108,7 @@ func showValueStats(coll *Collection, totalcoll *Collection) {
 	showPriceHistory(total.Value, "* ", true)
 }
 
-func showReservedListStats(coll *Collection) {
+func showReservedListStats(coll CardsCollection) {
 	reserved, _ := coll.storageAggregate(mongo.Pipeline{
 		bson.D{
 			{"$match", bson.D{
@@ -127,7 +127,7 @@ func showReservedListStats(coll *Collection) {
 	fmt.Printf("Reserved List: %s\n", Yellow("%d", countReserved))
 }
 
-func showRarityStats(coll *Collection) {
+func showRarityStats(coll CardsCollection) {
 	rar, _ := coll.storageAggregate(mongo.Pipeline{
 		bson.D{
 			{"$group", bson.D{
@@ -147,7 +147,7 @@ func showRarityStats(coll *Collection) {
 	fmt.Printf("Commons: %s\n", Purple("%.0f", ri.Commons))
 }
 
-func showCardsAddedPerMonth(coll *Collection) {
+func showCardsAddedPerMonth(coll CardsCollection) {
 	fmt.Printf("\n%s\n", Green("Cards added over time"))
 	type cardsAddedOverTime struct {
 		ID struct {
@@ -182,7 +182,7 @@ func showCardsAddedPerMonth(coll *Collection) {
 	}
 }
 
-func showManaCurveStats(coll *Collection) {
+func showManaCurveStats(coll CardsCollection) {
 	cmc, _ := coll.storageAggregate(mongo.Pipeline{
 		bson.D{
 			{"$group", bson.D{
@@ -200,7 +200,7 @@ func showManaCurveStats(coll *Collection) {
 	}
 }
 
-func showArtistStats(coll *Collection) {
+func showArtistStats(coll CardsCollection) {
 	artists, _ := coll.storageAggregate(mongo.Pipeline{
 		bson.D{
 			{"$group", bson.D{
@@ -220,7 +220,7 @@ func showArtistStats(coll *Collection) {
 	}
 }
 
-func showColorStats(coll *Collection) {
+func showColorStats(coll CardsCollection) {
 	sets, _ := coll.storageAggregate(mongo.Pipeline{
 		bson.D{
 			{"$match", bson.D{

@@ -53,7 +53,7 @@ otherwise you'll get a list of cards as a search result.`,
 // TODO:Create search object instead of a bazillion parameters
 func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot string) []Card {
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
+	coll := client.getCardsCollection()
 	defer storageDisconnect(client)
 
 	filter := bson.D{}
@@ -158,7 +158,7 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 
 func showCard(cardID string) error {
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
+	coll := client.getCardsCollection()
 	l := Logger()
 	defer storageDisconnect(client)
 

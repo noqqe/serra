@@ -103,7 +103,7 @@ func addCardsInteractive(unique bool, set string) {
 
 func addCard(cardID string, unique bool, count int64) error {
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
+	coll := client.getCardsCollection()
 	l := Logger()
 	defer storageDisconnect(client)
 

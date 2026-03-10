@@ -65,7 +65,7 @@ func removeCardsInteractive(set string) {
 func removeCard(cardID string, count int64) error {
 	// Connect to the DB & load the collection
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
+	coll := client.getCardsCollection()
 	l := Logger()
 	defer storageDisconnect(client)
 

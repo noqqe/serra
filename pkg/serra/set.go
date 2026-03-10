@@ -47,7 +47,7 @@ otherwise you'll get a list of sets as a search result.`,
 func Sets(sort string) []SetsResult {
 
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
+	coll := client.getCardsCollection()
 	defer storageDisconnect(client)
 	l := Logger()
 
@@ -107,7 +107,7 @@ func Sets(sort string) []SetsResult {
 func showSetList(sets []SetsResult) {
 
 	client := storageConnect()
-	setscoll := &Collection{client.Database("serra").Collection("sets")}
+	setscoll := client.getSetsCollection()
 
 	for _, set := range sets {
 		setobj, _ := findSetByCode(setscoll, set.Code)
@@ -121,7 +121,7 @@ func showSetList(sets []SetsResult) {
 func ShowSet(setname string) error {
 
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
+	coll := client.getCardsCollection()
 	l := Logger()
 	defer storageDisconnect(client)
 
@@ -137,7 +137,7 @@ func ShowSet(setname string) error {
 	}
 
 	// fetch set informations
-	setcoll := &Collection{client.Database("serra").Collection("sets")}
+	setcoll := client.getSetsCollection()
 	set, err := findSetByCode(setcoll, setname)
 	if err != nil {
 		l.Errorf("Set %s not found or no card in your collection.", setname)

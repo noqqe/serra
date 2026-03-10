@@ -22,7 +22,7 @@ cards you dont own (yet) :)`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, setNames []string) error {
 		client := storageConnect()
-		coll := &Collection{client.Database("serra").Collection("cards")}
+		coll := client.getCardsCollection()
 		l := Logger()
 		defer storageDisconnect(client)
 
@@ -35,7 +35,7 @@ cards you dont own (yet) :)`,
 			}
 
 			// fetch set informations
-			setcoll := &Collection{client.Database("serra").Collection("sets")}
+			setcoll := client.getSetsCollection()
 			set, err := findSetByCode(setcoll, setName)
 			if err != nil {
 				l.Errorf("Set %s not found. Make sure to have it in your collection.", setName)

@@ -29,9 +29,9 @@ var updateCmd = &cobra.Command{
 		defer storageDisconnect(client)
 
 		// update sets
-		setscoll := &Collection{client.Database("serra").Collection("sets")}
-		coll := &Collection{client.Database("serra").Collection("cards")}
-		totalcoll := &Collection{client.Database("serra").Collection("total")}
+		setscoll := client.getSetsCollection()
+		coll := client.getCardsCollection()
+		totalcoll := client.getTotalCollection()
 
 		// predefine query for set analysis. used for total stats later
 		projectStage := bson.D{{"$project",
@@ -139,7 +139,7 @@ var updateCmd = &cobra.Command{
 				"$set":  bson.M{"serra_updated": p.Date, "cardcount": set.CardCount},
 				"$push": bson.M{"serra_prices": p},
 			}
-			setscoll.storageUpdate(bson.M{"code": bson.M{"$eq": set.Code}}, setUpdate)
+			setscoll.Update(bson.M{"code": bson.M{"$eq": set.Code}}, setUpdate)
 		}
 
 		totalValue, _ := coll.storageAggregate(mongo.Pipeline{projectStage, groupStage})

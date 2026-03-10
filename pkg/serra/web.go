@@ -76,7 +76,7 @@ func landingPage(c *gin.Context) {
 		// Construct quick way for counting results
 		filter := bson.D{}
 		client := storageConnect()
-		coll := &Collection{client.Database("serra").Collection("cards")}
+		coll := client.getCardsCollection()
 
 		if query.Set != "" {
 			filter = append(filter, bson.E{"set", query.Set})

@@ -29,7 +29,7 @@ var checkCmd = &cobra.Command{
 
 func checkCard(cardID string, detail bool) error {
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
+	coll := client.getCardsCollection()
 	defer storageDisconnect(client)
 
 	// Loop over different cards

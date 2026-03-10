@@ -44,8 +44,8 @@ var flopsCmd = &cobra.Command{
 func Gains(limit float64, sort int) error {
 
 	client := storageConnect()
-	coll := &Collection{client.Database("serra").Collection("cards")}
-	setcoll := &Collection{client.Database("serra").Collection("sets")}
+	coll := client.getCardsCollection()
+	setcoll := client.getSetsCollection()
 	defer storageDisconnect(client)
 
 	var old int
