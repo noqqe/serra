@@ -36,7 +36,7 @@ cards you dont own (yet) :)`,
 
 			// fetch set informations
 			setcoll := client.getSetsCollection()
-			set, err := findSetByCode(setcoll, setName)
+			set, err := setcoll.FindSetByCode(setName)
 			if err != nil {
 				l.Errorf("Set %s not found. Make sure to have it in your collection.", setName)
 				return err

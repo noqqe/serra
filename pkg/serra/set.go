@@ -110,7 +110,7 @@ func showSetList(sets []SetsResult) {
 	setscoll := client.getSetsCollection()
 
 	for _, set := range sets {
-		setobj, _ := findSetByCode(setscoll, set.Code)
+		setobj, _ := setscoll.FindSetByCode(set.Code)
 		fmt.Printf("* %s %s (%s)\n", fmt.Sprintf("%.4s", set.Release), Purple(set.ID), Cyan(set.Code))
 		fmt.Printf("  Cards: %s Total: %d \n", Yellow("%d/%d", set.Unique, setobj.CardCount), set.Count)
 		fmt.Printf("  Value: %s%s\n", Pink("%.2f", set.Value), Pink(getCurrency()))
@@ -138,7 +138,7 @@ func ShowSet(setname string) error {
 
 	// fetch set informations
 	setcoll := client.getSetsCollection()
-	set, err := findSetByCode(setcoll, setname)
+	set, err := setcoll.FindSetByCode(setname)
 	if err != nil {
 		l.Errorf("Set %s not found or no card in your collection.", setname)
 		return err

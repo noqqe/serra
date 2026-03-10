@@ -12,7 +12,6 @@ import (
 
 	"github.com/charmbracelet/log"
 	termColor "github.com/fatih/color"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -61,20 +60,6 @@ func missing(a, b []string) []string {
 	return diffs
 }
 
-// findSetByCode finds a set in the collection by its code. Returns an error if not found
-func findSetByCode(coll SetsCollection, setcode string) (*Set, error) {
-	storedSets, err := coll.FindSet(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
-	if err != nil {
-		return &Set{}, err
-	}
-
-	if len(storedSets) < 1 {
-		return &Set{}, errors.New("Set not found")
-	}
-
-	return &storedSets[0], nil
-}
-
 // parseCardID parses a card ID in the format
 // "set/collector_number" and returns the set code and collector number.
 // Returns an error if the format is invalid
@@ -96,6 +81,10 @@ func parseCardID(cardID string) (string, string, error) {
 	return setCode, collectorNumber, nil
 }
 
+// convertManaSymbols converts a slice of mana symbols to a string of their
+// corresponding colors. If the slice is empty, "None" is returned (prohibited
+// sign for lands). The function iterates over the slice and appends the
+// corresponding color to the result string based on the symbol.
 func convertManaSymbols(sym []any) string {
 	var mana string
 

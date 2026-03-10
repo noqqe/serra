@@ -2,6 +2,7 @@ package serra
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -43,6 +44,20 @@ func (coll SetsCollection) FindSet(filter, sort bson.D) ([]Set, error) {
 	}
 
 	return results, nil
+}
+
+// FindSetByCode finds a set in the collection by its code. Returns an error if not found
+func (coll SetsCollection) FindSetByCode(setcode string) (*Set, error) {
+	storedSets, err := coll.FindSet(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
+	if err != nil {
+		return &Set{}, err
+	}
+
+	if len(storedSets) < 1 {
+		return &Set{}, errors.New("Set not found")
+	}
+
+	return &storedSets[0], nil
 }
 
 func (coll SetsCollection) UpdateSet(filter, update bson.M) error {
