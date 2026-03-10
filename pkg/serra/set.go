@@ -77,7 +77,7 @@ func Sets(sort string) []SetsResult {
 			}}}
 	}
 
-	bsonList, err := coll.storageAggregate(mongo.Pipeline{groupStage, sortStage})
+	bsonList, err := coll.AggregateCards(mongo.Pipeline{groupStage, sortStage})
 
 	if err != nil {
 		l.Error("Error fetching sets:", err)
@@ -130,7 +130,7 @@ func ShowSet(setname string) error {
 	if getCurrency() == EUR {
 		cardSortCurrency = bson.D{{"prices.eur", -1}}
 	}
-	cards, err := coll.storageFind(bson.D{{"set", setname}}, cardSortCurrency, 0, 0)
+	cards, err := coll.FindCards(bson.D{{"set", setname}}, cardSortCurrency, 0, 0)
 	if (err != nil) || len(cards) == 0 {
 		l.Errorf("Set %s not found or no card in your collection.", setname)
 		return err
@@ -159,7 +159,7 @@ func ShowSet(setname string) error {
 			{"count_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count_foil"}}}}}},
 		}},
 	}
-	stats, _ := coll.storageAggregate(mongo.Pipeline{matchStage, groupStage})
+	stats, _ := coll.AggregateCards(mongo.Pipeline{matchStage, groupStage})
 
 	// set rarities
 	matchStage = bson.D{
@@ -177,7 +177,7 @@ func ShowSet(setname string) error {
 		{"$sort", bson.D{
 			{"_id", 1},
 		}}}
-	rar, _ := coll.storageAggregate(mongo.Pipeline{matchStage, groupStage, sortStage})
+	rar, _ := coll.AggregateCards(mongo.Pipeline{matchStage, groupStage, sortStage})
 
 	ri := convertRarities(rar)
 

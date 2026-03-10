@@ -28,7 +28,7 @@ cards you dont own (yet) :)`,
 
 		for _, setName := range setNames {
 			// fetch all cards in set
-			cards, err := coll.storageFind(bson.D{{"set", setName}}, bson.D{{"collectornumber", 1}}, 0, 0)
+			cards, err := coll.FindCards(bson.D{{"set", setName}}, bson.D{{"collectornumber", 1}}, 0, 0)
 			if (err != nil) || len(cards) == 0 {
 				l.Errorf("Set %s not found or no card in your collection.", setName)
 				return err

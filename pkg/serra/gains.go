@@ -109,7 +109,7 @@ func Gains(limit float64, sort int) error {
 			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 20}},
 	}
-	cardRaise, _ := coll.storageAggregate(cardRaisePipeline)
+	cardRaise, _ := coll.AggregateCards(cardRaisePipeline)
 
 	setRaisePipeline := mongo.Pipeline{
 		bson.D{{"$project",
@@ -157,7 +157,7 @@ func Gains(limit float64, sort int) error {
 			bson.D{{"rate", sort}}}},
 		bson.D{{"$limit", 10}},
 	}
-	setRaise, _ := setcoll.storageAggregate(setRaisePipeline)
+	setRaise, _ := setcoll.AggregateSet(setRaisePipeline)
 
 	// TODO: bring back color coding for gains and losses
 	fmt.Printf("%s\n", Purple("Cards"))

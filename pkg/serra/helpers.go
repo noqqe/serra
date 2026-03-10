@@ -60,7 +60,7 @@ func modifyCardCount(coll CardsCollection, c *Card, amount int64, foil bool) err
 		}
 	}
 
-	coll.storageUpdate(bson.M{"_id": bson.M{"$eq": c.ID}}, update)
+	coll.UpdateCards(bson.M{"_id": bson.M{"$eq": c.ID}}, update)
 
 	var total int64
 	if foil {
@@ -86,7 +86,7 @@ func modifyCardCount(coll CardsCollection, c *Card, amount int64, foil bool) err
 func findCardByCollectorNumber(coll CardsCollection, setCode string, collectorNumber string) (*Card, error) {
 	sort := bson.D{{"_id", 1}}
 	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
-	storedCards, err := coll.storageFind(searchFilter, sort, 0, 0)
+	storedCards, err := coll.FindCards(searchFilter, sort, 0, 0)
 	if err != nil {
 		return &Card{}, err
 	}
@@ -123,7 +123,7 @@ func missing(a, b []string) []string {
 
 // findSetByCode finds a set in the collection by its code. Returns an error if not found
 func findSetByCode(coll SetsCollection, setcode string) (*Set, error) {
-	storedSets, err := coll.storageFindSet(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
+	storedSets, err := coll.FindSet(bson.D{{"code", setcode}}, bson.D{{"_id", 1}})
 	if err != nil {
 		return &Set{}, err
 	}

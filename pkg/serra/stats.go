@@ -56,7 +56,7 @@ func Stats() {
 func showValueStats(coll CardsCollection, totalcoll TotalCollection) {
 	l := Logger()
 	// Value and Card Numbers
-	stats, _ := coll.storageAggregate(mongo.Pipeline{
+	stats, _ := coll.AggregateCards(mongo.Pipeline{
 		bson.D{
 			{"$group", bson.D{
 				{"_id", nil},
@@ -102,14 +102,14 @@ func showValueStats(coll CardsCollection, totalcoll TotalCollection) {
 	fmt.Printf("Normal: %s%s\n", Pink("%.2f", normalValue), Pink(getCurrency()))
 	fmt.Printf("Foils: %s%s\n", Pink("%.2f", foilValue), Pink(getCurrency()))
 	fmt.Printf("Average Card: %s%s\n", Pink("%.2f", totalValue/countAll), Pink(getCurrency()))
-	total, _ := totalcoll.storageFindTotal()
+	total, _ := totalcoll.FindTotal()
 
 	fmt.Printf("History: \n")
 	showPriceHistory(total.Value, "* ", true)
 }
 
 func showReservedListStats(coll CardsCollection) {
-	reserved, _ := coll.storageAggregate(mongo.Pipeline{
+	reserved, _ := coll.AggregateCards(mongo.Pipeline{
 		bson.D{
 			{"$match", bson.D{
 				{"reserved", true}}}},
@@ -128,7 +128,7 @@ func showReservedListStats(coll CardsCollection) {
 }
 
 func showRarityStats(coll CardsCollection) {
-	rar, _ := coll.storageAggregate(mongo.Pipeline{
+	rar, _ := coll.AggregateCards(mongo.Pipeline{
 		bson.D{
 			{"$group", bson.D{
 				{"_id", "$rarity"},
@@ -156,7 +156,7 @@ func showCardsAddedPerMonth(coll CardsCollection) {
 		} `mapstructure:"_id"`
 		Count int32 `mapstructure:"count"`
 	}
-	caot, _ := coll.storageAggregate(mongo.Pipeline{
+	caot, _ := coll.AggregateCards(mongo.Pipeline{
 		bson.D{
 			{"$project", bson.D{
 				{"month", bson.D{
@@ -183,7 +183,7 @@ func showCardsAddedPerMonth(coll CardsCollection) {
 }
 
 func showManaCurveStats(coll CardsCollection) {
-	cmc, _ := coll.storageAggregate(mongo.Pipeline{
+	cmc, _ := coll.AggregateCards(mongo.Pipeline{
 		bson.D{
 			{"$group", bson.D{
 				{"_id", "$cmc"},
@@ -201,7 +201,7 @@ func showManaCurveStats(coll CardsCollection) {
 }
 
 func showArtistStats(coll CardsCollection) {
-	artists, _ := coll.storageAggregate(mongo.Pipeline{
+	artists, _ := coll.AggregateCards(mongo.Pipeline{
 		bson.D{
 			{"$group", bson.D{
 				{"_id", "$artist"},
@@ -221,7 +221,7 @@ func showArtistStats(coll CardsCollection) {
 }
 
 func showColorStats(coll CardsCollection) {
-	sets, _ := coll.storageAggregate(mongo.Pipeline{
+	sets, _ := coll.AggregateCards(mongo.Pipeline{
 		bson.D{
 			{"$match", bson.D{
 				{"coloridentity", bson.D{{"$size", 1}}}}}},

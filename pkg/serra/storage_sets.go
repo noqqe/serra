@@ -27,7 +27,7 @@ func (coll SetsCollection) storageAddSet(set *Set) (*mongo.InsertOneResult, erro
 
 }
 
-func (coll SetsCollection) storageFindSet(filter, sort bson.D) ([]Set, error) {
+func (coll SetsCollection) FindSet(filter, sort bson.D) ([]Set, error) {
 	l := Logger()
 	opts := options.Find().SetSort(sort)
 
@@ -45,7 +45,7 @@ func (coll SetsCollection) storageFindSet(filter, sort bson.D) ([]Set, error) {
 	return results, nil
 }
 
-func (coll SetsCollection) Update(filter, update bson.M) error {
+func (coll SetsCollection) UpdateSet(filter, update bson.M) error {
 	l := Logger()
 	// Call the driver's UpdateOne() method and pass filter and update to it
 	_, err := coll.UpdateOne(
@@ -60,7 +60,7 @@ func (coll SetsCollection) Update(filter, update bson.M) error {
 	return nil
 }
 
-func (coll SetsCollection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M, error) {
+func (coll SetsCollection) AggregateSet(pipeline mongo.Pipeline) ([]primitive.M, error) {
 	l := Logger()
 	opts := options.Aggregate()
 

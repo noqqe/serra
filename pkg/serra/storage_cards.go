@@ -30,7 +30,7 @@ func (coll CardsCollection) storageAdd(card *Card) error {
 
 }
 
-func (coll CardsCollection) storageFind(filter, sort bson.D, skip, limit int64) ([]Card, error) {
+func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([]Card, error) {
 	opts := options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	l := Logger()
@@ -48,7 +48,7 @@ func (coll CardsCollection) storageFind(filter, sort bson.D, skip, limit int64) 
 
 }
 
-func (coll CardsCollection) storageRemove(filter bson.M) error {
+func (coll CardsCollection) RemoveCards(filter bson.M) error {
 	l := Logger()
 
 	_, err := coll.DeleteOne(context.TODO(), filter)
@@ -59,7 +59,7 @@ func (coll CardsCollection) storageRemove(filter bson.M) error {
 	return nil
 }
 
-func (coll CardsCollection) storageAggregate(pipeline mongo.Pipeline) ([]primitive.M, error) {
+func (coll CardsCollection) AggregateCards(pipeline mongo.Pipeline) ([]primitive.M, error) {
 	l := Logger()
 	opts := options.Aggregate()
 
@@ -83,7 +83,7 @@ func (coll CardsCollection) storageAggregate(pipeline mongo.Pipeline) ([]primiti
 	return results, nil
 }
 
-func (coll CardsCollection) storageUpdate(filter, update bson.M) error {
+func (coll CardsCollection) UpdateCards(filter, update bson.M) error {
 	l := Logger()
 	// Call the driver's UpdateOne() method and pass filter and update to it
 	_, err := coll.UpdateOne(

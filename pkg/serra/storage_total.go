@@ -21,8 +21,8 @@ func (client StorageClient) getTotalCollection() TotalCollection {
 	return TotalCollection{client.Database("serra").Collection("total")}
 }
 
-func (coll TotalCollection) storageAddTotal(p PriceEntry) error {
-
+// AddTotal adds a price entry to the total collection
+func (coll TotalCollection) AddTotal(p PriceEntry) error {
 	// create total object if not exists...
 	coll.InsertOne(context.TODO(), Total{ID: "1", Value: []PriceEntry{}})
 
@@ -42,7 +42,8 @@ func (coll TotalCollection) storageAddTotal(p PriceEntry) error {
 	return nil
 }
 
-func (coll TotalCollection) storageFindTotal() (Total, error) {
+// FindTotal returns the total value of the collection
+func (coll TotalCollection) FindTotal() (Total, error) {
 	var total Total
 	l := Logger()
 

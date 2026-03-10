@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Collection Struct
+// StorageClient is a wrapper around the mongo.Client struct to add methods for
 // reason: https://siongui.github.io/2017/02/11/go-add-method-function-to-type-in-external-package/
 type StorageClient struct {
 	*mongo.Client
@@ -37,6 +37,8 @@ func getCurrencyField(foil bool) string {
 	}
 }
 
+// storageConnect connects to the MongoDB database using the URI from
+// environment variables and returns a StorageClient.
 func storageConnect() StorageClient {
 	l := Logger()
 	uri := getMongoDBURI()
@@ -49,6 +51,8 @@ func storageConnect() StorageClient {
 	return StorageClient{client}
 }
 
+// storageDisconnect disconnects from the MongoDB database and returns an error
+// if the disconnection fails.
 func storageDisconnect(client StorageClient) error {
 	if err := client.Disconnect(context.TODO()); err != nil {
 		return err

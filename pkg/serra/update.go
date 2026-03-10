@@ -81,7 +81,7 @@ var updateCmd = &cobra.Command{
 			set.SerraPrices = []PriceEntry{}
 			setscoll.storageAddSet(&set)
 
-			cards, _ := coll.storageFind(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}}, 0, 0)
+			cards, _ := coll.FindCards(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}}, 0, 0)
 
 			// if no cards in collection for this set, skip it
 			if len(cards) == 0 {
@@ -116,7 +116,7 @@ var updateCmd = &cobra.Command{
 					"$set":  bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updatedCard.Prices, "cmc": updatedCard.Cmc, "cardmarketid": updatedCard.CardmarketID, "tcgplayerid": updatedCard.TCGPlayerID},
 					"$push": bson.M{"serra_prices": updatedCard.Prices},
 				}
-				coll.storageUpdate(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
+				coll.UpdateCards(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
 			}
 			fmt.Println()
 
@@ -124,7 +124,7 @@ var updateCmd = &cobra.Command{
 
 			// calculate value summary
 			matchStage := bson.D{{"$match", bson.D{{"set", set.Code}}}}
-			setValue, _ := coll.storageAggregate(mongo.Pipeline{matchStage, projectStage, groupStage})
+			setValue, _ := coll.AggregateCards(mongo.Pipeline{matchStage, projectStage, groupStage})
 
 			p := PriceEntry{}
 			s := setValue[0]
@@ -139,10 +139,10 @@ var updateCmd = &cobra.Command{
 				"$set":  bson.M{"serra_updated": p.Date, "cardcount": set.CardCount},
 				"$push": bson.M{"serra_prices": p},
 			}
-			setscoll.Update(bson.M{"code": bson.M{"$eq": set.Code}}, setUpdate)
+			setscoll.UpdateSet(bson.M{"code": bson.M{"$eq": set.Code}}, setUpdate)
 		}
 
-		totalValue, _ := coll.storageAggregate(mongo.Pipeline{projectStage, groupStage})
+		totalValue, _ := coll.AggregateCards(mongo.Pipeline{projectStage, groupStage})
 
 		t := PriceEntry{}
 		t.Date = primitive.NewDateTimeFromTime(time.Now())
@@ -154,7 +154,7 @@ var updateCmd = &cobra.Command{
 		tmpCard.Prices = t
 
 		l.Infof("\nUpdating total value of collection to: %s%s\n", Yellow("%.02f", tmpCard.getValue()+tmpCard.getFoilValue()), Yellow(getCurrency()))
-		totalcoll.storageAddTotal(t)
+		totalcoll.AddTotal(t)
 
 		return nil
 	},

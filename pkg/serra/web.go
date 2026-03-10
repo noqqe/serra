@@ -86,7 +86,7 @@ func landingPage(c *gin.Context) {
 			filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + query.Name + ".*"}, {"$options", "i"}}})
 		}
 
-		counts, _ := coll.storageAggregate(mongo.Pipeline{
+		counts, _ := coll.AggregateCards(mongo.Pipeline{
 			bson.D{
 				{"$match", filter},
 			},
