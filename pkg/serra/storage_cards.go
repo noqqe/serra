@@ -31,6 +31,7 @@ func (coll CardsCollection) storageAdd(card *Card) error {
 
 }
 
+// FindCards returns a list of cards by a given filter, sort and pagination options.
 func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([]Card, error) {
 	opts := options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit)
 	cursor, err := coll.Find(context.TODO(), filter, opts)
@@ -54,16 +55,16 @@ func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([
 func (coll CardsCollection) FindCardByCollectorNumber(setCode string, collectorNumber string) (*Card, error) {
 	sort := bson.D{{"_id", 1}}
 	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
-	storedCards, err := coll.FindCards(searchFilter, sort, 0, 0)
+	cards, err := coll.FindCards(searchFilter, sort, 0, 0)
 	if err != nil {
 		return &Card{}, err
 	}
 
-	if len(storedCards) < 1 {
+	if len(cards) < 1 {
 		return &Card{}, errors.New("Card not found")
 	}
 
-	return &storedCards[0], nil
+	return &cards[0], nil
 }
 
 // RemoveCards removes cards from the collection by a given filter. If no card
@@ -104,6 +105,7 @@ func (coll CardsCollection) AggregateCards(pipeline mongo.Pipeline) ([]primitive
 	return results, nil
 }
 
+// UpdateCards updates cards in the collection by a given filter and update statement.
 func (coll CardsCollection) UpdateCards(filter, update bson.M) error {
 	l := Logger()
 	// Call the driver's UpdateOne() method and pass filter and update to it
