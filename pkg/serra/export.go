@@ -32,7 +32,7 @@ var exportCmd = &cobra.Command{
 		// aggregating fields (of count and countFoil).
 		temp := cardList[:0]
 		for _, card := range cardList {
-			if (card.SerraCount + card.SerraCountFoil) >= count {
+			if (card.Count + card.CountFoil) >= count {
 				temp = append(temp, card)
 			}
 		}
@@ -61,13 +61,13 @@ func exportTCGPowertools(cards []Card) {
 	for _, card := range cards {
 
 		// nonfoil
-		if card.SerraCount > 0 {
-			fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.SerraCount, card.CardmarketID, card.Name, card.SetName, card.getValue())
+		if card.Count > 0 {
+			fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.Count, card.CardmarketID, card.Name, card.SetName, card.getValue())
 		}
 
 		// foil
-		if card.SerraCountFoil > 0 {
-			fmt.Printf("%d,%.0f,%s,%s,EX,German,true,false,%.2f,\n", card.SerraCountFoil, card.CardmarketID, card.Name, card.SetName, card.getFoilValue())
+		if card.CountFoil > 0 {
+			fmt.Printf("%d,%.0f,%s,%s,EX,German,true,false,%.2f,\n", card.CountFoil, card.CardmarketID, card.Name, card.SetName, card.getFoilValue())
 		}
 	}
 }
@@ -84,15 +84,15 @@ func exportMoxfield(cards []Card) {
 	for _, card := range cards {
 
 		// nonfoil
-		if card.SerraCount > 0 {
+		if card.Count > 0 {
 			records = append(records,
-				[]string{fmt.Sprintf("%d", card.SerraCount), card.Name, card.Set, "NM", "English", "Non-foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getValue())})
+				[]string{fmt.Sprintf("%d", card.Count), card.Name, card.Set, "NM", "English", "Non-foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getValue())})
 		}
 
 		// foil
-		if card.SerraCountFoil > 0 {
+		if card.CountFoil > 0 {
 			records = append(records,
-				[]string{fmt.Sprintf("%d", card.SerraCountFoil), card.Name, card.Set, "NM", "English", "Foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getFoilValue())})
+				[]string{fmt.Sprintf("%d", card.CountFoil), card.Name, card.Set, "NM", "English", "Foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getFoilValue())})
 		}
 
 	}

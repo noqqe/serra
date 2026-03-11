@@ -78,7 +78,7 @@ var updateCmd = &cobra.Command{
 			// When downloading new sets, PriceList needs to be initialized
 			// This query silently fails if set was already downloaded. Not nice but ok for now.
 			// TODO: make this not fail silently
-			set.SerraPrices = []PriceEntry{}
+			set.PriceList = []PriceEntry{}
 			setscoll.storageAddSet(&set)
 
 			cards, _ := coll.FindCards(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}}, 0, 0)

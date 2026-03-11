@@ -135,11 +135,11 @@ func addCard(cardID string, unique bool, count int64) error {
 		// Write card to mongodb
 		var total int64 = 0
 		if foil {
-			card.SerraCountFoil = count
-			total = card.SerraCountFoil
+			card.CountFoil = count
+			total = card.CountFoil
 		} else {
-			card.SerraCount = count
-			total = card.SerraCount
+			card.Count = count
+			total = card.Count
 		}
 		err = coll.storageAdd(card)
 		if err != nil {

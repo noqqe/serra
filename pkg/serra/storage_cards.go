@@ -13,12 +13,12 @@ import (
 
 type Card struct {
 	// Added by Serra
-	SerraCount       int64              `bson:"serra_count"`
-	SerraCountFoil   int64              `bson:"serra_count_foil"`
-	SerraCountEtched int64              `bson:"serra_count_etched"`
-	SerraPriceList   []PriceEntry       `bson:"serra_prices"`
-	SerraCreated     primitive.DateTime `bson:"serra_created"`
-	SerraUpdated     primitive.DateTime `bson:"serra_updated"`
+	Count       int64              `bson:"serra_count"`
+	CountFoil   int64              `bson:"serra_count_foil"`
+	CountEtched int64              `bson:"serra_count_etched"`
+	PriceList   []PriceEntry       `bson:"serra_prices"`
+	Created     primitive.DateTime `bson:"serra_created"`
+	Updated     primitive.DateTime `bson:"serra_updated"`
 
 	Artist          string   `json:"artist"`
 	ArtistIds       []string `json:"artist_ids"`
@@ -128,7 +128,7 @@ func (client StorageClient) getCardsCollection() CardsCollection {
 
 func (coll CardsCollection) storageAdd(card *Card) error {
 
-	card.SerraUpdated = primitive.NewDateTimeFromTime(time.Now())
+	card.Updated = primitive.NewDateTimeFromTime(time.Now())
 
 	_, err := coll.InsertOne(context.TODO(), card)
 	if err != nil {
@@ -242,11 +242,11 @@ func (coll CardsCollection) ModifyCardCount(c *Card, amount int64, foil bool) er
 	var update bson.M
 	if foil {
 		update = bson.M{
-			"$set": bson.M{"serra_count_foil": storedCard.SerraCountFoil + amount},
+			"$set": bson.M{"serra_count_foil": storedCard.CountFoil + amount},
 		}
 	} else {
 		update = bson.M{
-			"$set": bson.M{"serra_count": storedCard.SerraCount + amount},
+			"$set": bson.M{"serra_count": storedCard.Count + amount},
 		}
 	}
 
@@ -254,18 +254,18 @@ func (coll CardsCollection) ModifyCardCount(c *Card, amount int64, foil bool) er
 
 	var total int64
 	if foil {
-		total = storedCard.SerraCountFoil + amount
+		total = storedCard.CountFoil + amount
 		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.SerraCountFoil, total)
+			l.Warnf("Reduced card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.CountFoil, total)
 		} else {
-			l.Warnf("Increased card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.SerraCountFoil, total)
+			l.Warnf("Increased card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.CountFoil, total)
 		}
 	} else {
-		total = storedCard.SerraCount + amount
+		total = storedCard.Count + amount
 		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.SerraCount, total)
+			l.Warnf("Reduced card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.Count, total)
 		} else {
-			l.Warnf("Increased card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.SerraCount, total)
+			l.Warnf("Increased card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.Count, total)
 		}
 	}
 

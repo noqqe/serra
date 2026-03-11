@@ -214,7 +214,7 @@ func ShowSet(setname string) error {
 	fmt.Printf("Commons: %.0f\n", ri.Commons)
 
 	fmt.Printf("\n%s\n", Pink("Price History"))
-	showPriceHistory(set.SerraPrices, "* ", true)
+	showPriceHistory(set.PriceList, "* ", true)
 
 	fmt.Printf("\n%s\n", Pink("Most valuable cards"))
 

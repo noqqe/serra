@@ -123,11 +123,11 @@ func fetchCard(setName, collectorNumber string) (*Card, error) {
 	}
 
 	// Set created Time
-	val.SerraCreated = primitive.NewDateTimeFromTime(time.Now())
+	val.Created = primitive.NewDateTimeFromTime(time.Now())
 
 	// Increase Price
 	val.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
-	val.SerraPrices = append(val.SerraPrices, val.Prices)
+	val.PriceList = append(val.PriceList, val.Prices)
 
 	return val, nil
 }
