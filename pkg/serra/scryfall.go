@@ -7,232 +7,10 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
-type Card struct {
-	// Added by Serra
-	SerraCount       int64              `bson:"serra_count"`
-	SerraCountFoil   int64              `bson:"serra_count_foil"`
-	SerraCountEtched int64              `bson:"serra_count_etched"`
-	SerraPrices      []PriceEntry       `bson:"serra_prices"`
-	SerraCreated     primitive.DateTime `bson:"serra_created"`
-	SerraUpdated     primitive.DateTime `bson:"serra_updated"`
-
-	Artist          string   `json:"artist"`
-	ArtistIds       []string `json:"artist_ids"`
-	Booster         bool     `json:"booster"`
-	BorderColor     string   `json:"border_color"`
-	CardBackID      string   `json:"card_back_id"`
-	CardmarketID    float64  `json:"cardmarket_id"`
-	Cmc             float64  `json:"cmc"`
-	CollectorNumber string   `json:"collector_number"`
-	ColorIdentity   []string `json:"color_identity"`
-	Colors          []string `json:"colors"`
-	Digital         bool     `json:"digital"`
-	EdhrecRank      int64    `json:"edhrec_rank"`
-	Finishes        []string `json:"finishes"`
-	Foil            bool     `json:"foil"`
-	Frame           string   `json:"frame"`
-	FullArt         bool     `json:"full_art"`
-	Games           []string `json:"games"`
-	HighresImage    bool     `json:"highres_image"`
-	ID              string   `json:"id" bson:"_id"`
-	IllustrationID  string   `json:"illustration_id"`
-	ImageStatus     string   `json:"image_status"`
-	ImageUris       struct {
-		ArtCrop    string `json:"art_crop"`
-		BorderCrop string `json:"border_crop"`
-		Large      string `json:"large"`
-		Normal     string `json:"normal"`
-		Png        string `json:"png"`
-		Small      string `json:"small"`
-	} `json:"image_uris"`
-	Keywords   []any  `json:"keywords"`
-	Lang       string `json:"lang"`
-	Layout     string `json:"layout"`
-	Legalities struct {
-		Alchemy         string `json:"alchemy"`
-		Brawl           string `json:"brawl"`
-		Commander       string `json:"commander"`
-		Duel            string `json:"duel"`
-		Future          string `json:"future"`
-		Gladiator       string `json:"gladiator"`
-		Historic        string `json:"historic"`
-		Historicbrawl   string `json:"historicbrawl"`
-		Legacy          string `json:"legacy"`
-		Modern          string `json:"modern"`
-		Oldschool       string `json:"oldschool"`
-		Pauper          string `json:"pauper"`
-		Paupercommander string `json:"paupercommander"`
-		Penny           string `json:"penny"`
-		Pioneer         string `json:"pioneer"`
-		Premodern       string `json:"premodern"`
-		Standard        string `json:"standard"`
-		Vintage         string `json:"vintage"`
-	} `json:"legalities"`
-	ManaCost        string     `json:"mana_cost"`
-	MultiverseIds   []any      `json:"multiverse_ids"`
-	Name            string     `json:"name"`
-	Nonfoil         bool       `json:"nonfoil"`
-	Object          string     `json:"object"`
-	OracleID        string     `json:"oracle_id"`
-	OracleText      string     `json:"oracle_text"`
-	Oversized       bool       `json:"oversized"`
-	Prices          PriceEntry `json:"prices"`
-	PrintedName     string     `json:"printed_name"`
-	PrintedText     string     `json:"printed_text"`
-	PrintedTypeLine string     `json:"printed_type_line"`
-	PrintsSearchURI string     `json:"prints_search_uri"`
-	Promo           bool       `json:"promo"`
-	PurchaseUris    struct {
-		Cardhoarder string `json:"cardhoarder"`
-		Cardmarket  string `json:"cardmarket"`
-		Tcgplayer   string `json:"tcgplayer"`
-	} `json:"purchase_uris"`
-	Rarity      string `json:"rarity"`
-	RelatedUris struct {
-		Edhrec                    string `json:"edhrec"`
-		Mtgtop8                   string `json:"mtgtop8"`
-		TcgplayerInfiniteArticles string `json:"tcgplayer_infinite_articles"`
-		TcgplayerInfiniteDecks    string `json:"tcgplayer_infinite_decks"`
-	} `json:"related_uris"`
-	ReleasedAt     string  `json:"released_at"`
-	Reprint        bool    `json:"reprint"`
-	Reserved       bool    `json:"reserved"`
-	RulingsURI     string  `json:"rulings_uri"`
-	ScryfallSetURI string  `json:"scryfall_set_uri"`
-	ScryfallURI    string  `json:"scryfall_uri"`
-	Set            string  `json:"set"`
-	SetID          string  `json:"set_id"`
-	SetName        string  `json:"set_name"`
-	SetSearchURI   string  `json:"set_search_uri"`
-	SetType        string  `json:"set_type"`
-	SetURI         string  `json:"set_uri"`
-	StorySpotlight bool    `json:"story_spotlight"`
-	Textless       bool    `json:"textless"`
-	TCGPlayerID    float64 `json:"tcgplayer_id"`
-	TypeLine       string  `json:"type_line"`
-	URI            string  `json:"uri"`
-	Variation      bool    `json:"variation"`
-}
-
-type BulkIndex struct {
-	Object  string `json:"object"`
-	HasMore bool   `json:"has_more"`
-	Data    []struct {
-		Object          string    `json:"object"`
-		ID              string    `json:"id"`
-		Type            string    `json:"type"`
-		UpdatedAt       time.Time `json:"updated_at"`
-		URI             string    `json:"uri"`
-		Name            string    `json:"name"`
-		Description     string    `json:"description"`
-		Size            int       `json:"size"`
-		DownloadURI     string    `json:"download_uri"`
-		ContentType     string    `json:"content_type"`
-		ContentEncoding string    `json:"content_encoding"`
-	} `json:"data"`
-}
-
-func fetchBulkDownloadURL() (string, error) {
-	downloadURL := ""
-
-	// Make an HTTP GET request
-	resp, err := queryScryfall("https://api.scryfall.com/bulk-data")
-	if err != nil {
-		log.Fatalf("Error fetching data: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("Error reading response body: %v", err)
-	}
-
-	// Unmarshal the JSON response
-	var bulkData BulkIndex
-	if err := json.Unmarshal(body, &bulkData); err != nil {
-		log.Fatalf("Error unmarshaling JSON: %v", err)
-	}
-
-	// Find and print the unique cards URL
-	for _, item := range bulkData.Data {
-		if item.Type == "default_cards" {
-			downloadURL = item.DownloadURI
-		}
-	}
-
-	return downloadURL, nil
-}
-
-func downloadBulkData(downloadURL string) (string, error) {
-
-	// Create a temporary directory
-	tempDir, err := os.MkdirTemp("", "download")
-	if err != nil {
-		log.Fatalf("Error creating temporary directory: %v", err)
-	}
-	// defer os.RemoveAll(tempDir) // Clean up the directory when done
-
-	// Create a temporary file in the temporary directory
-	tempFile, err := os.CreateTemp(tempDir, "downloaded-*.json") // Adjust the extension if necessary
-	if err != nil {
-		log.Fatalf("Error creating temporary file: %v", err)
-	}
-	// defer tempFile.Close() // Ensure we close the file when we're done
-
-	// Download the file
-	resp, err := http.Get(downloadURL)
-	if err != nil {
-		log.Fatalf("Error downloading file: %v", err)
-	}
-	defer resp.Body.Close() // Make sure to close the response body
-
-	// Check for a successful response
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Error: received status code %d", resp.StatusCode)
-	}
-
-	// Copy the response body to the temporary file
-	_, err = io.Copy(tempFile, resp.Body)
-	if err != nil {
-		log.Fatalf("Error saving file: %v", err)
-	}
-
-	return tempFile.Name(), nil
-}
-
-func loadBulkFile(bulkFilePath string) ([]Card, error) {
-
-	var cards []Card
-	fileBytes, _ := os.ReadFile(bulkFilePath)
-	defer os.Remove(bulkFilePath)
-
-	err := json.Unmarshal(fileBytes, &cards)
-	if err != nil {
-		fmt.Println("Error unmarshalling bulk file:", err)
-		return cards, nil
-	}
-
-	return cards, nil
-
-}
-
-func getCardFromBulk(cards []Card, setName, collectorNumber string) (*Card, error) {
-	var foundCard Card
-	for _, v := range cards {
-		if v.CollectorNumber == collectorNumber && v.Set == setName {
-			foundCard = v
-			return &foundCard, nil
-		}
-	}
-	return &Card{}, fmt.Errorf("Card %s/%s not found in bulk data", setName, collectorNumber)
-}
 
 type PriceEntry struct {
 	Date      primitive.DateTime `bson:"date"`
@@ -242,33 +20,6 @@ type PriceEntry struct {
 	Usd       float64            `json:"usd,string" bson:"usd,float64"`
 	UsdEtched float64            `json:"usd_etched,string" bson:"usd_etched,float64"`
 	UsdFoil   float64            `json:"usd_foil,string" bson:"usd_foil,float64"`
-}
-
-// Sets
-
-type SetList struct {
-	Data []Set `json:"data"`
-}
-
-type Set struct {
-	SerraPrices  []PriceEntry       `bson:"serra_prices"`
-	SerraCreated primitive.DateTime `bson:"serra_created"`
-	SerraUpdated primitive.DateTime `bson:"serra_updated"`
-	CardCount    int64              `json:"card_count" bson:"cardcount"`
-	Code         string             `json:"code"`
-	Digital      bool               `json:"digital"`
-	FoilOnly     bool               `json:"foil_only"`
-	IconSvgURI   string             `json:"icon_svg_uri"`
-	ID           string             `json:"id" bson:"_id"`
-	Name         string             `json:"name"`
-	NonfoilOnly  bool               `json:"nonfoil_only"`
-	Object       string             `json:"object"`
-	ReleasedAt   string             `json:"released_at"`
-	ScryfallURI  string             `json:"scryfall_uri"`
-	SearchURI    string             `json:"search_uri"`
-	SetType      string             `json:"set_type"`
-	TcgplayerID  int64              `json:"tcgplayer_id"`
-	URI          string             `json:"uri"`
 }
 
 // Getter for currency specific value
@@ -289,7 +40,6 @@ func (c Card) getFoilValue() float64 {
 
 // Getter for currency specific value
 func (c Card) getColoredValue() string {
-
 	var value float64
 	if getCurrency() == EUR {
 		value = c.Prices.Eur
@@ -313,7 +63,6 @@ func (c Card) getColoredValue() string {
 
 // Getter for currency specific value
 func (c Card) getColoredFoilValue() string {
-
 	var value float64
 	if getCurrency() == EUR {
 		value = c.Prices.EurFoil
@@ -335,8 +84,8 @@ func (c Card) getColoredFoilValue() string {
 
 }
 
+// http getter for scryfall api with custom headers
 func queryScryfall(url string) (*http.Response, error) {
-
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -345,6 +94,7 @@ func queryScryfall(url string) (*http.Response, error) {
 	return client.Do(req)
 }
 
+// fetchCard fetches a card from scryfall api and return a Card struct
 func fetchCard(setName, collectorNumber string) (*Card, error) {
 	resp, err := queryScryfall(fmt.Sprintf("https://api.scryfall.com/cards/%s/%s", setName, collectorNumber))
 	if err != nil {
