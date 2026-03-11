@@ -14,6 +14,17 @@ type SetList struct {
 	Data []Set `json:"data"`
 }
 
+// GetSetByCode returns a set from the set list by its code. If the set is not found, an error is returned.
+func (s SetList) GetSetByCode(code string) *Set {
+	setList := s.Data
+	for i := range setList {
+		if setList[i].Code == code {
+			return &setList[i]
+		}
+	}
+	return nil
+}
+
 type Set struct {
 	PriceList []PriceEntry       `bson:"serra_prices"`
 	Created   primitive.DateTime `bson:"serra_created"`

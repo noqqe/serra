@@ -11,6 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type CardList struct {
+	Data []Set `json:"data"`
+}
+
 type Card struct {
 	// Added by Serra
 	Count       int64              `bson:"serra_count"`
