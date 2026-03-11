@@ -49,6 +49,7 @@ var updateCmd = &cobra.Command{
 				{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
 			}}}
 
+		// Fetch bulk file
 		l.Info("Fetching bulk data from scryfall...")
 		downloadURL, err := fetchBulkDownloadURL()
 		if err != nil {
@@ -72,16 +73,27 @@ var updateCmd = &cobra.Command{
 		}
 		l.Infof("Successfully loaded %d cards. Starting Update.", len(updatedCards))
 
-		sets, _ := fetchSets()
-		for _, set := range sets.Data {
+		// Fetch sets from scryfall to be able to update set values after updating cards
+		sets, err := fetchSets()
+		if err != nil {
+			l.Fatal("Could not fetch sets from scryfall:", err)
+			return err
+		}
 
-			// When downloading new sets, PriceList needs to be initialized
-			// This query silently fails if set was already downloaded. Not nice but ok for now.
-			// TODO: make this not fail silently
-			set.PriceList = []PriceEntry{}
-			setscoll.AddSet(&set)
+		var storedSet *Set
 
-			cards, _ := coll.FindCards(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}}, 0, 0)
+		for _, updatedSet := range sets.Data {
+
+			updatedSet.PriceList = []PriceEntry{}
+
+			// fetch storedSet
+			storedSet, err = setscoll.FindSetByCode(updatedSet.Code)
+			if err != nil {
+				setscoll.AddSet(&updatedSet)
+			}
+
+			// fetch all cards in collection for this set
+			cards, _ := coll.FindCards(bson.D{{"set", updatedSet.Code}}, bson.D{{"_id", 1}}, 0, 0)
 
 			// if no cards in collection for this set, skip it
 			if len(cards) == 0 {
@@ -90,7 +102,7 @@ var updateCmd = &cobra.Command{
 
 			bar := progressbar.NewOptions(len(cards),
 				progressbar.OptionSetWidth(50),
-				progressbar.OptionSetDescription(fmt.Sprintf("%s, %s\t", set.ReleasedAt[0:4], Yellow(set.Code))),
+				progressbar.OptionSetDescription(fmt.Sprintf("%s, %s\t", updatedSet.ReleasedAt[0:4], Yellow(updatedSet.Code))),
 				progressbar.OptionEnableColorCodes(true),
 				progressbar.OptionShowCount(),
 				progressbar.OptionSetTheme(progressbar.Theme{
@@ -98,7 +110,7 @@ var updateCmd = &cobra.Command{
 					SaucerHead:    "[green]>[reset]",
 					SaucerPadding: " ",
 					BarStart:      "|",
-					BarEnd:        "| " + set.Name,
+					BarEnd:        "| " + updatedSet.Name,
 				}),
 			)
 
@@ -136,40 +148,42 @@ var updateCmd = &cobra.Command{
 			}
 			fmt.Println()
 
-			// update set value sum
-
 			// calculate value summary
-			matchStage := bson.D{{"$match", bson.D{{"set", set.Code}}}}
+			matchStage := bson.D{{"$match", bson.D{{"set", updatedSet.Code}}}}
 			setValue, _ := coll.AggregateCards(mongo.Pipeline{matchStage, projectStage, groupStage})
 
-			p := PriceEntry{}
+			// extend set price list with new value entry
+			updatedSet.PriceList = storedSet.PriceList
+
+			// create empty priceEntry and use mapdecode to put aggregate result into PriceEntry struct
+			priceEntry := PriceEntry{}
 			s := setValue[0]
+			priceEntry.Date = primitive.NewDateTimeFromTime(time.Now())
+			mapstructure.Decode(s, &priceEntry)
+			updatedSet.PriceList = append(updatedSet.PriceList, priceEntry)
 
-			p.Date = primitive.NewDateTimeFromTime(time.Now())
+			// set timestamp
+			updatedSet.Created = storedSet.Created
+			updatedSet.Updated = primitive.NewDateTimeFromTime(time.Now())
 
-			// fill struct PriceEntry with map from mongoresult
-			mapstructure.Decode(s, &p)
+			setscoll.RemoveSet(storedSet)
+			setscoll.AddSet(&updatedSet)
 
-			// do the update
-			setUpdate := bson.M{
-				"$set":  bson.M{"serra_updated": p.Date, "cardcount": set.CardCount},
-				"$push": bson.M{"serra_prices": p},
-			}
-			setscoll.UpdateSet(bson.M{"code": bson.M{"$eq": set.Code}}, setUpdate)
 		}
 
 		totalValue, _ := coll.AggregateCards(mongo.Pipeline{projectStage, groupStage})
 
+		// create empty priceEntry and use mapdecode to put aggregate result into PriceEntry struct
 		t := PriceEntry{}
 		t.Date = primitive.NewDateTimeFromTime(time.Now())
 		mapstructure.Decode(totalValue[0], &t)
 
-		// This is here to be able to fetch currency from
+		// HACK: This is here to be able to fetch currency from
 		// constructed new priceentry
 		tmpCard := Card{}
 		tmpCard.Prices = t
 
-		l.Infof("\nUpdating total value of collection to: %s%s\n", Yellow("%.02f", tmpCard.getValue()+tmpCard.getFoilValue()), Yellow(getCurrency()))
+		l.Infof("Updating total value of collection to: %s%s\n", Yellow("%.02f", tmpCard.getValue()+tmpCard.getFoilValue()), Yellow(getCurrency()))
 		totalcoll.AddTotal(t)
 
 		return nil

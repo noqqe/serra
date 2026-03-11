@@ -53,6 +53,20 @@ func (coll SetsCollection) AddSet(set *Set) (*mongo.InsertOneResult, error) {
 	return id, err
 }
 
+// RemoveSet removes a set from the collection. If the set does not exist, an error is returned.
+func (coll SetsCollection) RemoveSet(set *Set) error {
+	l := Logger()
+
+	filter := bson.M{"_id": set.ID}
+	_, err := coll.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		l.Fatalf("Could remove set due to connection errors to database: %s", err.Error())
+		return err
+	}
+
+	return nil
+}
+
 // FindSet returns a list of sets by a given filter and sort options.
 func (coll SetsCollection) FindSet(filter, sort bson.D) ([]Set, error) {
 	l := Logger()
