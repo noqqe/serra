@@ -41,15 +41,15 @@ on Linux/BSD/Windows you can download binaries from
 
 To run serra, a MongoDB Database is required. The best way is to setup one by yourself. Any way it connects is fine. 
     
-You can also use the docker-compose setup included in this Repo:
+    docker run -d -p 27017:27017 --name mongo mongo:8
 
-    docker-compose up -d
+For "production" use this docker command is not recommended since it does not have persistent storage.
 
 ## Configure the Database
 
 Configure `serra` via Environment variables
 
-    export MONGODB_URI='mongodb://root:root@localhost:27017'
+    export MONGODB_URI='mongodb://localhost:27017'
     export SERRA_CURRENCY=USD # or EUR
 
 After that, you can add a card
@@ -176,7 +176,9 @@ with this approach then Smartphone scanners.
 
 # Upgrade
 
-If you want to upgrade, go to [releases](https://github.com/noqqe/serra/releases) Page and download the corresponding release for your platform.
+If you want to upgrade, go to
+[releases](https://github.com/noqqe/serra/releases) Page and download the
+corresponding release for your platform.
 
 For example:
 ```
@@ -187,18 +189,24 @@ tar zxfv serra_Darwin_x86_64.tar.gz
 
 ## Upgrade Notes
 
+### 3.x.x -> 4.x.x
+
+No extra steps needed
+
 ### 2.x.x -> 3.x.x
 
 No extra steps needed. Only new Webinterface and Foil support
 
 ### 1.5.3 -> 2.0.0 
 
-In this stage of the development of serra, I was breaking the original
-database "schema" without migration. 
+In this stage of the development of serra, I was breaking the original database
+"schema" without migration. 
 
-Sadly you need to export the cards from the mongodb and import it again using `serra add ` commands
+Sadly you need to export the cards from the mongodb and import it again using
+`serra add ` commands
 
-I wrote a little helper script in python to export all the cards in format set/number and generate some queries
+I wrote a little helper script in python to export all the cards in format
+set/number and generate some queries
 
 ```
 python3 export.py > add_commands.sh
@@ -229,17 +237,3 @@ bash add_commands.sh
     go build .
     ./serra
 
-## MongoDB Operations
-
-A few commands that do backups and exports of your data inside of the docker
-container.
-
-Do a database dump
-
-    mongodump  -u root -p root --authenticationDatabase admin -d serra -o /backup/
-
-Do a collection export to json
-
-    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c cards > /backup/cards.json
-    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c sets > /backup/sets.json
-    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c total > /backup/total.json

@@ -1,3 +1,17 @@
+## MongoDB Operations
+
+A few commands that do backups and exports of your data inside of the docker
+container.
+
+Do a database dump
+
+    mongodump  -u root -p root --authenticationDatabase admin -d serra -o /backup/
+
+Do a collection export to json
+
+    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c cards > /backup/cards.json
+    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c sets > /backup/sets.json
+    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c total > /backup/total.json
 
 ## Cheatsheet Queries
 

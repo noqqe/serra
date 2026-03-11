@@ -126,7 +126,8 @@ func (client StorageClient) getCardsCollection() CardsCollection {
 	return CardsCollection{client.Database("serra").Collection("cards")}
 }
 
-func (coll CardsCollection) storageAdd(card *Card) error {
+// AddCard adds a card to the collection. If the card already exists, an error is returned.
+func (coll CardsCollection) AddCard(card *Card) error {
 
 	card.Updated = primitive.NewDateTimeFromTime(time.Now())
 
@@ -140,10 +141,10 @@ func (coll CardsCollection) storageAdd(card *Card) error {
 
 // FindCards returns a list of cards by a given filter, sort and pagination options.
 func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([]Card, error) {
-	opts := options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit)
-	cursor, err := coll.Find(context.TODO(), filter, opts)
 	l := Logger()
+	opts := options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit)
 
+	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
 		l.Fatalf("Could not query data due to connection errors to database: %s", err.Error())
 	}
@@ -162,6 +163,7 @@ func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([
 func (coll CardsCollection) FindCardByCollectorNumber(setCode string, collectorNumber string) (*Card, error) {
 	sort := bson.D{{"_id", 1}}
 	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
+
 	cards, err := coll.FindCards(searchFilter, sort, 0, 0)
 	if err != nil {
 		return &Card{}, err
@@ -174,11 +176,12 @@ func (coll CardsCollection) FindCardByCollectorNumber(setCode string, collectorN
 	return &cards[0], nil
 }
 
-// RemoveCards removes cards from the collection by a given filter. If no card
+// RemoveCard removes cards from the collection by a given filter. If no card
 // is found, an error is returned.
-func (coll CardsCollection) RemoveCards(filter bson.M) error {
+func (coll CardsCollection) RemoveCard(card *Card) error {
 	l := Logger()
 
+	filter := bson.M{"_id": card.ID}
 	_, err := coll.DeleteOne(context.TODO(), filter)
 	if err != nil {
 		l.Fatalf("Could remove card data due to connection errors to database: %s", err.Error())

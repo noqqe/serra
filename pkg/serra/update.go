@@ -79,7 +79,7 @@ var updateCmd = &cobra.Command{
 			// This query silently fails if set was already downloaded. Not nice but ok for now.
 			// TODO: make this not fail silently
 			set.PriceList = []PriceEntry{}
-			setscoll.storageAddSet(&set)
+			setscoll.AddSet(&set)
 
 			cards, _ := coll.FindCards(bson.D{{"set", set.Code}}, bson.D{{"_id", 1}}, 0, 0)
 
@@ -102,21 +102,37 @@ var updateCmd = &cobra.Command{
 				}),
 			)
 
-			for _, card := range cards {
+			for _, storedCard := range cards {
 				bar.Add(1)
-				updatedCard, err := getCardFromBulk(updatedCards, card.Set, card.CollectorNumber)
+
+				// fetch updatedCard from bulk file
+				updatedCard, err := getCardFromBulk(updatedCards, storedCard.Set, storedCard.CollectorNumber)
 				if err != nil {
 					l.Error(err)
 					continue
 				}
 
+				// extend price entry from updatedCard with current timestamp
 				updatedCard.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
 
-				update := bson.M{
-					"$set":  bson.M{"serra_updated": primitive.NewDateTimeFromTime(time.Now()), "prices": updatedCard.Prices, "cmc": updatedCard.Cmc, "cardmarketid": updatedCard.CardmarketID, "tcgplayerid": updatedCard.TCGPlayerID},
-					"$push": bson.M{"serra_prices": updatedCard.Prices},
-				}
-				coll.UpdateCards(bson.M{"_id": bson.M{"$eq": card.ID}}, update)
+				// merge PriceList of storedCard with updatedCard.
+				updatedCard.PriceList = storedCard.PriceList
+				updatedCard.PriceList = append(updatedCard.PriceList, updatedCard.Prices)
+
+				// set timestamp
+				updatedCard.Created = storedCard.Created
+				updatedCard.Updated = primitive.NewDateTimeFromTime(time.Now())
+
+				// set count and foil count from storedCard to updatedCard
+				updatedCard.Count = storedCard.Count
+				updatedCard.CountFoil = storedCard.CountFoil
+
+				// delete storedCard
+				coll.RemoveCard(&storedCard)
+
+				// add updatedCard to database
+				coll.AddCard(updatedCard)
+
 			}
 			fmt.Println()
 

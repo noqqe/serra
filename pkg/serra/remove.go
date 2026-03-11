@@ -7,7 +7,6 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func init() {
@@ -77,28 +76,28 @@ func removeCard(cardID string, count int64) error {
 	}
 
 	// Fetch card from scryfall
-	c, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
+	card, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
 	if err != nil {
 		l.Error(err)
 		return err
 	}
 
-	if foil && c.CountFoil < 1 {
-		l.Errorf("No foil \"%s\" in the collection", c.Name)
+	if foil && card.CountFoil < 1 {
+		l.Errorf("No foil \"%s\" in the collection", card.Name)
 		return errors.New("no foil card in collection")
 	}
 
-	if !foil && c.Count < 1 {
-		l.Errorf("No normal \"%s\" in the collection", c.Name)
+	if !foil && card.Count < 1 {
+		l.Errorf("No normal \"%s\" in the collection", card.Name)
 		return errors.New("no normal card in collection")
 	}
 
-	if foil && c.CountFoil == 1 && c.Count == 0 || !foil && c.Count == 1 && c.CountFoil == 0 {
-		coll.RemoveCards(bson.M{"_id": c.ID})
+	if foil && card.CountFoil == 1 && card.Count == 0 || !foil && card.Count == 1 && card.CountFoil == 0 {
+		coll.RemoveCard(card)
 		// TODO: Show foil price
-		l.Infof("\"%s\" (%.2f%s) removed", c.Name, c.getValue(), getCurrency())
+		l.Infof("\"%s\" (%.2f%s) removed", card.Name, card.getValue(), getCurrency())
 	} else {
-		coll.ModifyCardCount(c, -count, foil)
+		coll.ModifyCardCount(card, -count, foil)
 	}
 
 	return nil

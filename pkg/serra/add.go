@@ -141,7 +141,7 @@ func addCard(cardID string, unique bool, count int64) error {
 			card.Count = count
 			total = card.Count
 		}
-		err = coll.storageAdd(card)
+		err = coll.AddCard(card)
 		if err != nil {
 			l.Warn(err)
 			return err

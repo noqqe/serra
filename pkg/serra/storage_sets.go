@@ -44,16 +44,16 @@ func (client StorageClient) getSetsCollection() SetsCollection {
 	return SetsCollection{client.Database("serra").Collection("sets")}
 }
 
-func (coll SetsCollection) storageAddSet(set *Set) (*mongo.InsertOneResult, error) {
-
+// AddSet adds a set to the collection. If the set already exists, an error is returned.
+func (coll SetsCollection) AddSet(set *Set) (*mongo.InsertOneResult, error) {
 	id, err := coll.InsertOne(context.TODO(), set)
 	if err != nil {
 		return id, err
 	}
 	return id, err
-
 }
 
+// FindSet returns a list of sets by a given filter and sort options.
 func (coll SetsCollection) FindSet(filter, sort bson.D) ([]Set, error) {
 	l := Logger()
 	opts := options.Find().SetSort(sort)
