@@ -1,8 +1,6 @@
 module github.com/noqqe/serra
 
-go 1.25.0
-
-toolchain go1.25.4
+go 1.26.1
 
 require (
 	github.com/charmbracelet/log v0.4.2
