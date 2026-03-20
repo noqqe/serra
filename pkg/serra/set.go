@@ -10,6 +10,7 @@ import (
 
 func init() {
 	setCmd.Flags().StringVarP(&sortBy, "sort", "s", "release", "How to sort cards (release/value)")
+	setCmd.Flags().StringVarP(&setType, "type", "t", "all", "Filter on set type (core/expansion/masters/commander/all)")
 	rootCmd.AddCommand(setCmd)
 }
 
@@ -33,7 +34,7 @@ otherwise you'll get a list of sets as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, sets []string) error {
 		if len(sets) == 0 {
-			setList := Sets(sortBy)
+			setList := Sets(sortBy, setType)
 			showSetList(setList)
 		} else {
 			for _, set := range sets {
@@ -44,12 +45,21 @@ otherwise you'll get a list of sets as a search result.`,
 	},
 }
 
-func Sets(sort string) []SetsResult {
+func Sets(sort string, filter string) []SetsResult {
 
 	client := storageConnect()
 	coll := client.getCardsCollection()
 	defer storageDisconnect(client)
 	l := Logger()
+
+	matchStage := bson.D{{"$match", bson.D{}}}
+	if filter != "all" {
+		matchStage = bson.D{
+			{"$match", bson.D{
+				{"settype", filter},
+			}},
+		}
+	}
 
 	groupStage := bson.D{
 		{"$group", bson.D{
@@ -77,7 +87,7 @@ func Sets(sort string) []SetsResult {
 			}}}
 	}
 
-	bsonList, err := coll.AggregateCards(mongo.Pipeline{groupStage, sortStage})
+	bsonList, err := coll.AggregateCards(mongo.Pipeline{matchStage, groupStage, sortStage})
 
 	if err != nil {
 		l.Error("Error fetching sets:", err)
@@ -182,6 +192,7 @@ func ShowSet(setname string) error {
 	ri := convertRarities(rar)
 
 	fmt.Printf("%s\n", Green(set.Name))
+	fmt.Printf("Type: %s\n", set.SetType)
 	fmt.Printf("Released: %s\n", set.ReleasedAt)
 	fmt.Printf("Set Cards: %d/%d\n", len(cards), set.CardCount)
 	fmt.Printf("Total Cards: %.0f\n", stats[0]["count"])

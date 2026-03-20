@@ -117,7 +117,7 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch all sets for Dropdown
-	sets := Sets("release")
+	sets := Sets("release", "all")
 
 	// Fetch all results based on filter criteria
 	cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page*int64(limit), limit, "", "")

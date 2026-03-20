@@ -13,6 +13,7 @@ var (
 	address         string
 	artist          string
 	cardType        string
+	setType         string
 	color           string
 	cmc             int64
 	count           int64
