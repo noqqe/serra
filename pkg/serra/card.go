@@ -203,10 +203,8 @@ func showCardDetails(card *Card) error {
 	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
 
 	fmt.Printf("\n%s\n", Green("Current Values"))
-	fmt.Printf("* Normal: %dx %s%s\n", card.Count, Yellow("%.2f", card.getValue()), Yellow(getCurrency()))
-	if card.CountFoil > 0 {
-		fmt.Printf("* Foil: %dx %s%s\n", card.CountFoil, Yellow("%.2f", card.getFoilValue()), Yellow(getCurrency()))
-	}
+	fmt.Printf("* Normal: %dx %s%s %s\n", card.Count, Yellow("%.2f", card.getValue()), Yellow(getCurrency()), DarkGray("(%.2f)", float64(card.Count)*card.getValue()))
+	fmt.Printf("* Foil: %dx %s%s %s\n", card.CountFoil, Yellow("%.2f", card.getFoilValue()), Yellow(getCurrency()), DarkGray("(%.2f)", float64(card.CountFoil)*card.getFoilValue()))
 
 	fmt.Printf("\n%s\n", Green("Value History"))
 	showPriceHistory(card.PriceList, "* ", false)
