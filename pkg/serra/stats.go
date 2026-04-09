@@ -43,6 +43,9 @@ func Stats() {
 	// Colors
 	showColorStats(coll)
 
+	// Colors
+	showTypeStats(coll)
+
 	// Artists
 	showArtistStats(coll)
 
@@ -147,6 +150,27 @@ func showRarityStats(coll CardsCollection) {
 	fmt.Printf("Commons: %s\n", Purple("%.0f", ri.Commons))
 }
 
+func showTypeStats(coll CardsCollection) {
+	cardTypes, _ := coll.AggregateCards(mongo.Pipeline{
+		bson.D{
+			{"$group", bson.D{
+				{"_id", "$typeline"},
+				{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
+			}}},
+		bson.D{
+			{"$sort", bson.D{
+				{"count", -1},
+			}}},
+		bson.D{
+			{"$limit", 10},
+		},
+	})
+	fmt.Printf("\n%s\n", Green("Types (Top 10)"))
+	for _, mc := range cardTypes {
+		fmt.Printf("%s: %s\n", mc["_id"], Purple("%.0f", mc["count"]))
+	}
+}
+
 func showCardsAddedPerMonth(coll CardsCollection) {
 	fmt.Printf("\n%s\n", Green("Cards added over time"))
 	type cardsAddedOverTime struct {
@@ -214,7 +238,7 @@ func showArtistStats(coll CardsCollection) {
 		bson.D{
 			{"$limit", 10}},
 	})
-	fmt.Printf("\n%s\n", Green("Top Artists"))
+	fmt.Printf("\n%s\n", Green("Artists (Top 10)"))
 	for _, artist := range artists {
 		fmt.Printf("%s: %s\n", artist["_id"], Purple("%d", artist["count"]))
 	}
