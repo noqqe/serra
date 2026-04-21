@@ -13,7 +13,7 @@ func init() {
 	cardCmd.Flags().StringVarP(&artist, "artist", "a", "", "Filter by name of artist")
 	cardCmd.Flags().StringVarP(&rarity, "rarity", "r", "", "Filter by rarity of cards (mythic, rare, uncommon, common)")
 	cardCmd.Flags().StringVarP(&set, "set", "e", "", "Filter by set code (usg/mmq/vow)")
-	cardCmd.Flags().StringVarP(&sortBy, "sort", "s", "name", "How to sort cards (value/number/name/added)")
+	cardCmd.Flags().StringVarP(&sortBy, "sort", "s", "name", "How to sort cards (value/number/name/added/count)")
 	cardCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the card (regex compatible)")
 	cardCmd.Flags().Int64VarP(&cmc, "cmc", "m", -1, "Cumulative mana cost of card")
 	cardCmd.Flags().StringVarP(&color, "color", "i", "", "Color identity of card (w,u,b,r,g)")
@@ -51,7 +51,7 @@ otherwise you'll get a list of cards as a search result.`,
 
 // Cards fetches card based on search parameters
 // TODO:Create search object instead of a bazillion parameters
-func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot string) []Card {
+func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot string) []Card {
 	client := storageConnect()
 	coll := client.getCardsCollection()
 	defer storageDisconnect(client)
@@ -70,7 +70,7 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 	}
 
 	var sortStage bson.D
-	switch sortby {
+	switch sortBy {
 	case "value":
 		if getCurrency() == EUR {
 			sortStage = bson.D{{"prices.eur", 1}}
@@ -83,6 +83,8 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 		sortStage = bson.D{{"name", 1}}
 	case "added":
 		sortStage = bson.D{{"serra_created", 1}}
+	case "count":
+		sortStage = bson.D{{"serra_count", 1}, {"serra_count_foil", 1}}
 	default:
 		sortStage = bson.D{{"name", 1}}
 	}
@@ -136,7 +138,7 @@ func Cards(rarity, set, sortby, name, oracle, cardType string, reserved, foil bo
 
 	// This is needed because collectornumbers are strings (ie. "23a") but still we
 	// want it to be sorted numerically ... 1,2,3,10,11,100.
-	if sortby == "number" {
+	if sortBy == "number" {
 		sort.Slice(cards, func(i, j int) bool {
 			return filterForDigits(cards[i].CollectorNumber) < filterForDigits(cards[j].CollectorNumber)
 		})
