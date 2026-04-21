@@ -204,6 +204,9 @@ func updateSet(setCode string, updatedSet *Set) error {
 
 	// calculate value summary
 	setValue, _ := coll.AggregateCards(mongo.Pipeline{matchStage, projectStage, groupStage})
+	if len(setValue) <= 0 {
+		return fmt.Errorf("fetching set stats was not possible for set %s", setCode)
+	}
 
 	// extend set price list with new value entry
 	updatedSet.PriceList = storedSet.PriceList
