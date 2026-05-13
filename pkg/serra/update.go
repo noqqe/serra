@@ -178,6 +178,7 @@ func updateSet(setCode string, updatedSet *Set) error {
 	client := storageConnect()
 	coll := client.getCardsCollection()
 	setscoll := client.getSetsCollection()
+	defer storageDisconnect(client)
 
 	// fetch setfrom database, otherwise create it
 	storedSet, err := setscoll.FindSetByCode(setCode)
