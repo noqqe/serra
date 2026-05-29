@@ -48,12 +48,15 @@ func (c Card) getColoredValue() string {
 	}
 
 	if value > 10 {
+		go playSoundCash()
 		return Red("%.2f", value)
 	}
 	if value > 5 {
+		go playSoundCash()
 		return Yellow("%.2f", value)
 	}
 	if value > 1 {
+		go playSoundCash()
 		return Green("%.2f", value)
 	}
 
@@ -71,12 +74,15 @@ func (c Card) getColoredFoilValue() string {
 	}
 
 	if value > 10 {
+		go playSoundCash()
 		return Red("%.2f", value)
 	}
 	if value > 5 {
+		go playSoundCash()
 		return Yellow("%.2f", value)
 	}
 	if value > 1 {
+		go playSoundCash()
 		return Green("%.2f", value)
 	}
 

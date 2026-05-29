@@ -34,6 +34,7 @@ var (
 	sinceLastUpdate bool
 	sortBy          string
 	unique          bool
+	otoCtx          string
 )
 
 var rootCmd = &cobra.Command{

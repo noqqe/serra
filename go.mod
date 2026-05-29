@@ -5,8 +5,10 @@ go 1.26.1
 require (
 	github.com/charmbracelet/log v0.4.2
 	github.com/chzyer/readline v1.5.1
+	github.com/ebitengine/oto/v3 v3.4.0
 	github.com/fatih/color v1.18.0
 	github.com/go-chi/chi/v5 v5.2.5
+	github.com/hajimehoshi/go-mp3 v0.3.4
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/spf13/cobra v1.10.2
@@ -20,6 +22,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
+	github.com/ebitengine/purego v0.9.0 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -41,7 +44,7 @@ require (
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 )

@@ -117,6 +117,7 @@ func addCard(cardID string, unique bool, count int64) error {
 	if err == nil {
 
 		if unique {
+			go playSoundNegative()
 			l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
 			return nil
 		}
@@ -149,8 +150,10 @@ func addCard(cardID string, unique bool, count int64) error {
 
 		// Give feedback of successfully added card
 		if foil {
+			go playSoundPositive()
 			l.Infof("%dx \"%s\" (%s, %s%s, foil) added", total, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
 		} else {
+			go playSoundPositive()
 			l.Infof("%dx \"%s\" (%s, %s%s) added", total, card.Name, card.Rarity, card.getColoredValue(), getCurrency())
 		}
 	}
