@@ -117,7 +117,11 @@ func addCard(cardID string, unique bool, count int64) error {
 	if err == nil {
 
 		if unique {
-			l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
+			if foil {
+				l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
+			} else {
+				l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredValue(), getCurrency())
+			}
 			return nil
 		}
 
