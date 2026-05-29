@@ -115,6 +115,7 @@ func addCard(cardID string, unique bool, count int64) error {
 	// Check if card is already in collection
 	card, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
 	if err == nil {
+		go playSoundNegative()
 
 		if unique {
 			if foil {
@@ -153,8 +154,10 @@ func addCard(cardID string, unique bool, count int64) error {
 
 		// Give feedback of successfully added card
 		if foil {
+			go playSoundPositive()
 			l.Infof("%dx \"%s\" (%s, %s%s, foil) added", total, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
 		} else {
+			go playSoundPositive()
 			l.Infof("%dx \"%s\" (%s, %s%s) added", total, card.Name, card.Rarity, card.getColoredValue(), getCurrency())
 		}
 	}
