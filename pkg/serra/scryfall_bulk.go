@@ -1,6 +1,9 @@
 package serra
 
 import (
+	"bufio"
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,17 +17,15 @@ type BulkIndex struct {
 	Object  string `json:"object"`
 	HasMore bool   `json:"has_more"`
 	Data    []struct {
-		Object          string    `json:"object"`
-		ID              string    `json:"id"`
-		Type            string    `json:"type"`
-		UpdatedAt       time.Time `json:"updated_at"`
-		URI             string    `json:"uri"`
-		Name            string    `json:"name"`
-		Description     string    `json:"description"`
-		Size            int       `json:"size"`
-		DownloadURI     string    `json:"download_uri"`
-		ContentType     string    `json:"content_type"`
-		ContentEncoding string    `json:"content_encoding"`
+		Object           string    `json:"object"`
+		ID               string    `json:"id"`
+		Type             string    `json:"type"`
+		UpdatedAt        time.Time `json:"updated_at"`
+		URI              string    `json:"uri"`
+		Name             string    `json:"name"`
+		Description      string    `json:"description"`
+		JsonlDownloadURI string    `json:"jsonl_download_uri"`
+		CompressedSize   int       `json:"compressed_size"`
 	} `json:"data"`
 }
 
@@ -53,7 +54,7 @@ func fetchBulkDownloadURL() (string, error) {
 	// Find and print the unique cards URL
 	for _, item := range bulkData.Data {
 		if item.Type == "default_cards" {
-			downloadURL = item.DownloadURI
+			downloadURL = item.JsonlDownloadURI
 		}
 	}
 
@@ -97,20 +98,47 @@ func downloadBulkData(downloadURL string) (string, error) {
 	return tempFile.Name(), nil
 }
 
-func loadBulkFile(bulkFilePath string) ([]Card, error) {
+func loadBulkFile(gzipFilePath string) ([]Card, error) {
+	// Open gzip file
+	f, err := os.Open(gzipFilePath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		f.Close()
+		_ = os.Remove(gzipFilePath)
+	}()
+
+	// Wrap with gzip reader
+	gr, err := gzip.NewReader(f)
+	if err != nil {
+		return nil, err
+	}
+	defer gr.Close()
+
+	// Stream JSONL: one JSON object per line
+	scanner := bufio.NewScanner(gr)
+	// If your lines can be large, increase the max token size:
+	scanner.Buffer(make([]byte, 0, 64*1024), 10*1024*1024)
 
 	var cards []Card
-	fileBytes, _ := os.ReadFile(bulkFilePath)
-	defer os.Remove(bulkFilePath)
+	for scanner.Scan() {
+		line := bytes.TrimSpace(scanner.Bytes())
+		if len(line) == 0 {
+			continue
+		}
 
-	err := json.Unmarshal(fileBytes, &cards)
-	if err != nil {
-		fmt.Println("Error unmarshalling bulk file:", err)
-		return cards, nil
+		var c Card
+		if err := json.Unmarshal(line, &c); err != nil {
+			return nil, err
+		}
+		cards = append(cards, c)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 
 	return cards, nil
-
 }
 
 func getCardFromBulk(cards []Card, setName, collectorNumber string) (*Card, error) {
