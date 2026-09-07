@@ -3,10 +3,8 @@ package serra
 import (
 	"context"
 	"errors"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -15,15 +13,10 @@ type CardList struct {
 	Data []Set `json:"data"`
 }
 
+// Card holds pure Scryfall data for a single printing. It contains no
+// ownership information (count, condition, language, ...) - that data
+// lives in the "inventory" collection instead, keyed by CardID.
 type Card struct {
-	// Added by Serra
-	Count       int64              `bson:"serra_count"`
-	CountFoil   int64              `bson:"serra_count_foil"`
-	CountEtched int64              `bson:"serra_count_etched"`
-	PriceList   []PriceEntry       `bson:"serra_prices"`
-	Created     primitive.DateTime `bson:"serra_created"`
-	Updated     primitive.DateTime `bson:"serra_updated"`
-
 	Artist          string   `json:"artist"`
 	ArtistIds       []string `json:"artist_ids"`
 	Booster         bool     `json:"booster"`
@@ -130,17 +123,16 @@ func (client StorageClient) getCardsCollection() CardsCollection {
 	return CardsCollection{client.Database("serra").Collection("cards")}
 }
 
-// AddCard adds a card to the collection. If the card already exists, an error is returned.
-func (coll CardsCollection) AddCard(card *Card) error {
-
-	card.Updated = primitive.NewDateTimeFromTime(time.Now())
-
-	_, err := coll.InsertOne(context.TODO(), card)
+// UpsertCard inserts a card or replaces it in place if it already exists
+// (keyed by its Scryfall ID). Used to (re-)cache Scryfall data.
+func (coll CardsCollection) UpsertCard(card *Card) error {
+	l := Logger()
+	opts := options.Replace().SetUpsert(true)
+	_, err := coll.ReplaceOne(context.TODO(), bson.M{"_id": card.ID}, card, opts)
 	if err != nil {
-		return err
+		l.Fatalf("Could not store card data due to connection errors to database: %s", err.Error())
 	}
-	return nil
-
+	return err
 }
 
 // FindCards returns a list of cards by a given filter, sort and pagination options.
@@ -162,8 +154,9 @@ func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([
 
 }
 
-// FindCardByCollectorNumber returns a card by set code and collector number.
-// If no card is found, an error is returned.
+// FindCardByCollectorNumber returns cached Scryfall data for a card by set
+// code and collector number. This is a pure Scryfall cache lookup and makes
+// no statement about whether the card is owned.
 func (coll CardsCollection) FindCardByCollectorNumber(setCode string, collectorNumber string) (*Card, error) {
 	sort := bson.D{{"_id", 1}}
 	searchFilter := bson.D{{"set", setCode}, {"collectornumber", collectorNumber}}
@@ -180,101 +173,27 @@ func (coll CardsCollection) FindCardByCollectorNumber(setCode string, collectorN
 	return &cards[0], nil
 }
 
-// RemoveCard removes cards from the collection by a given filter. If no card
-// is found, an error is returned.
-func (coll CardsCollection) RemoveCard(card *Card) error {
-	l := Logger()
-
-	filter := bson.M{"_id": card.ID}
-	_, err := coll.DeleteOne(context.TODO(), filter)
+// FindCardByID returns cached Scryfall data for a card by its Scryfall ID.
+func (coll CardsCollection) FindCardByID(id string) (*Card, error) {
+	var card Card
+	err := coll.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&card)
 	if err != nil {
-		l.Fatalf("Could remove card data due to connection errors to database: %s", err.Error())
+		return &Card{}, err
 	}
-
-	return nil
+	return &card, nil
 }
 
-// AggregateCards aggregates cards in the collection by a given pipeline.
-func (coll CardsCollection) AggregateCards(pipeline mongo.Pipeline) ([]primitive.M, error) {
-	l := Logger()
-	opts := options.Aggregate()
-
-	cursor, err := coll.Aggregate(
-		context.TODO(),
-		pipeline,
-		opts)
+// FindCardsByIDs returns cached Scryfall data for a list of Scryfall IDs, as
+// a map keyed by ID for convenient joining with inventory data.
+func (coll CardsCollection) FindCardsByIDs(ids []string) (map[string]Card, error) {
+	cards, err := coll.FindCards(bson.D{{"_id", bson.D{{"$in", ids}}}}, bson.D{}, 0, 0)
 	if err != nil {
-		l.Fatalf("Could not aggregate data due to connection errors to database: %s", err.Error())
-		return []primitive.M{}, err
+		return nil, err
 	}
 
-	// Get a list of all returned documents and print them out.
-	// See the mongo.Cursor documentation for more examples of using cursors.
-	var results []bson.M
-	if err = cursor.All(context.TODO(), &results); err != nil {
-		l.Fatal(err)
-		return []primitive.M{}, err
+	result := make(map[string]Card, len(cards))
+	for _, c := range cards {
+		result[c.ID] = c
 	}
-
-	return results, nil
-}
-
-// UpdateCards updates cards in the collection by a given filter and update statement.
-func (coll CardsCollection) UpdateCards(filter, update bson.M) error {
-	l := Logger()
-	// Call the driver's UpdateOne() method and pass filter and update to it
-	_, err := coll.UpdateOne(
-		context.Background(),
-		filter,
-		update,
-	)
-	if err != nil {
-		l.Fatalf("Could not update data due to connection errors to database: %s", err.Error())
-	}
-
-	return nil
-}
-
-// ModifyCardCount modifies the amount of a card in the collection by a given
-// amount in foil or nonfoil
-func (coll CardsCollection) ModifyCardCount(c *Card, amount int64, foil bool) error {
-
-	l := Logger()
-	storedCard, err := coll.FindCardByCollectorNumber(c.Set, c.CollectorNumber)
-	if err != nil {
-		return err
-	}
-
-	// update card amount
-	var update bson.M
-	if foil {
-		update = bson.M{
-			"$set": bson.M{"serra_count_foil": storedCard.CountFoil + amount},
-		}
-	} else {
-		update = bson.M{
-			"$set": bson.M{"serra_count": storedCard.Count + amount},
-		}
-	}
-
-	coll.UpdateCards(bson.M{"_id": bson.M{"$eq": c.ID}}, update)
-
-	var total int64
-	if foil {
-		total = storedCard.CountFoil + amount
-		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.CountFoil, total)
-		} else {
-			l.Warnf("Increased card amount of \"%s\" (%.2f%s, foil) from %d to %d", storedCard.Name, storedCard.getFoilValue(), getCurrency(), storedCard.CountFoil, total)
-		}
-	} else {
-		total = storedCard.Count + amount
-		if amount < 0 {
-			l.Warnf("Reduced card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.Count, total)
-		} else {
-			l.Warnf("Increased card amount of \"%s\" (%.2f%s) from %d to %d", storedCard.Name, storedCard.getValue(), getCurrency(), storedCard.Count, total)
-		}
-	}
-
-	return nil
+	return result, nil
 }

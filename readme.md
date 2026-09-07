@@ -22,8 +22,7 @@ an overview in what cards you own and what value they have.
 
 **What Serra does not**
 
-* Does not care about conditions (NM, M, GD...)
-* Does not track etched cards. Only normal and foil.
+* Does not verify condition/language input against a fixed enum - anything you type is stored as-is
 
 # Quickstart
 
@@ -73,6 +72,7 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   flops       What cards lost most value
   help        Help about any command
+  migrate     One-time migration of the legacy cards collection into cards + inventory
   missing     Display missing cards from a set
   remove      Remove a card from your collection
   set         Search & show sets from your collection
@@ -188,6 +188,27 @@ tar zxfv serra_Darwin_x86_64.tar.gz
 ```
 
 ## Upgrade Notes
+
+### 4.x.x -> 5.x.x
+
+The database schema changed: the `cards` collection used to hold both cached
+Scryfall data and your ownership data (count, value history, added/updated
+timestamps) in the same document. These are now split:
+
+* `cards` only holds cached Scryfall data.
+* `inventory` holds ownership data, with one entry per card/finish
+  (normal/foil/etched)/language/condition combination.
+
+`add`/`remove` now support `--language` and `--condition` flags (defaulting
+to `en`/`nm`) to track those per copy, and `--etched` to add/remove the
+etched finish.
+
+After upgrading the binary, run the migration once to split your existing
+data:
+
+    ./serra migrate
+
+It is safe to run more than once.
 
 ### 3.x.x -> 4.x.x
 

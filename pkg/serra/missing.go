@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func init() {
@@ -22,14 +21,14 @@ cards you dont own (yet) :)`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, setNames []string) error {
 		client := storageConnect()
-		coll := client.getCardsCollection()
+		invColl := client.getInventoryCollection()
 		l := Logger()
 		defer storageDisconnect(client)
 
 		for _, setName := range setNames {
-			// fetch all cards in set
-			cards, err := coll.FindCards(bson.D{{"set", setName}}, bson.D{{"collectornumber", 1}}, 0, 0)
-			if (err != nil) || len(cards) == 0 {
+			// fetch all collector numbers owned in this set
+			inCollection, err := invColl.DistinctCollectorNumbers(setName)
+			if (err != nil) || len(inCollection) == 0 {
 				l.Errorf("Set %s not found or no card in your collection.", setName)
 				return err
 			}
@@ -51,12 +50,6 @@ cards you dont own (yet) :)`,
 			)
 			for i = 1; i <= set.CardCount; i++ {
 				completeSet = append(completeSet, strconv.FormatInt(i, 10))
-			}
-
-			// iterate over all cards in collection
-			var inCollection []string
-			for _, c := range cards {
-				inCollection = append(inCollection, c.CollectorNumber)
 			}
 
 			misses := missing(inCollection, completeSet)

@@ -2,7 +2,6 @@ package serra
 
 import (
 	"context"
-	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -12,29 +11,6 @@ import (
 // reason: https://siongui.github.io/2017/02/11/go-add-method-function-to-type-in-external-package/
 type StorageClient struct {
 	*mongo.Client
-}
-
-// Returns configured human readable name for
-// the configured currency of the user
-// HACK: ugly, rework
-func getCurrencyField(foil bool) string {
-	switch os.Getenv("SERRA_CURRENCY") {
-	case "EUR":
-		if foil {
-			return "$prices.eur_foil"
-		}
-		return "$prices.eur"
-	case "USD":
-		if foil {
-			return "$prices.usd_foil"
-		}
-		return "$prices.usd"
-	default:
-		if foil {
-			return "$prices.usd_foil"
-		}
-		return "$prices.usd"
-	}
 }
 
 // storageConnect connects to the MongoDB database using the URI from

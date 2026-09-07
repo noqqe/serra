@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -22,72 +21,93 @@ type PriceEntry struct {
 	UsdFoil   float64            `json:"usd_foil,string" bson:"usd_foil,float64"`
 }
 
+// valueForFinish returns the currency specific value for a given finish
+// (nonfoil/foil/etched) of the card. Scryfall does not provide a EUR price
+// for etched cards, so that combination always returns 0.
+func (c Card) valueForFinish(finish string) float64 {
+	eur := getCurrency() == EUR
+	switch finish {
+	case FinishFoil:
+		if eur {
+			return c.Prices.EurFoil
+		}
+		return c.Prices.UsdFoil
+	case FinishEtched:
+		if eur {
+			return 0
+		}
+		return c.Prices.UsdEtched
+	default:
+		if eur {
+			return c.Prices.Eur
+		}
+		return c.Prices.Usd
+	}
+}
+
+// priceEntryForFinish extracts the value relevant to a given finish from a
+// full Scryfall price snapshot and normalizes it into the Eur/Usd fields, so
+// that a single finish-specific value history can be read back without
+// having to know which finish it belongs to.
+func priceEntryForFinish(p PriceEntry, finish string) PriceEntry {
+	entry := PriceEntry{Date: p.Date}
+	switch finish {
+	case FinishFoil:
+		entry.Eur, entry.Usd = p.EurFoil, p.UsdFoil
+	case FinishEtched:
+		entry.Usd = p.UsdEtched
+	default:
+		entry.Eur, entry.Usd = p.Eur, p.Usd
+	}
+	return entry
+}
+
 // Getter for currency specific value
 func (c Card) getValue() float64 {
-	if getCurrency() == EUR {
-		return c.Prices.Eur
-	}
-	return c.Prices.Usd
+	return c.valueForFinish(FinishNonfoil)
 }
 
 // Getter for currency specific value
 func (c Card) getFoilValue() float64 {
-	if getCurrency() == EUR {
-		return c.Prices.EurFoil
-	}
-	return c.Prices.UsdFoil
+	return c.valueForFinish(FinishFoil)
 }
 
 // Getter for currency specific value
+func (c Card) getEtchedValue() float64 {
+	return c.valueForFinish(FinishEtched)
+}
+
+// colorizeValue formats a value, color coded by how expensive it is.
+func colorizeValue(value float64) string {
+	if value > 10 {
+		go playSoundCash()
+		return Red("%.2f", value)
+	}
+	if value > 5 {
+		go playSoundCash()
+		return Yellow("%.2f", value)
+	}
+	if value > 1 {
+		go playSoundCash()
+		return Green("%.2f", value)
+	}
+
+	return fmt.Sprintf("%.2f", value)
+}
+
+// Getter for currency specific, colored value
+func (c Card) getColoredValueForFinish(finish string) string {
+	return colorizeValue(c.valueForFinish(finish))
+}
+
+// Getter for currency specific, colored value
 func (c Card) getColoredValue() string {
-	var value float64
-	if getCurrency() == EUR {
-		value = c.Prices.Eur
-	} else {
-		value = c.Prices.Usd
-	}
-
-	if value > 10 {
-		go playSoundCash()
-		return Red("%.2f", value)
-	}
-	if value > 5 {
-		go playSoundCash()
-		return Yellow("%.2f", value)
-	}
-	if value > 1 {
-		go playSoundCash()
-		return Green("%.2f", value)
-	}
-
-	return fmt.Sprintf("%.2f", value)
-
+	return c.getColoredValueForFinish(FinishNonfoil)
 }
 
-// Getter for currency specific value
+// Getter for currency specific, colored value
 func (c Card) getColoredFoilValue() string {
-	var value float64
-	if getCurrency() == EUR {
-		value = c.Prices.EurFoil
-	} else {
-		value = c.Prices.UsdFoil
-	}
-
-	if value > 10 {
-		go playSoundCash()
-		return Red("%.2f", value)
-	}
-	if value > 5 {
-		go playSoundCash()
-		return Yellow("%.2f", value)
-	}
-	if value > 1 {
-		go playSoundCash()
-		return Green("%.2f", value)
-	}
-
-	return fmt.Sprintf("%.2f", value)
-
+	return c.getColoredValueForFinish(FinishFoil)
 }
 
 // http getter for scryfall api with custom headers
@@ -127,13 +147,6 @@ func fetchCard(setName, collectorNumber string) (*Card, error) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-
-	// Set created Time
-	val.Created = primitive.NewDateTimeFromTime(time.Now())
-
-	// Increase Price
-	val.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
-	val.PriceList = append(val.PriceList, val.Prices)
 
 	return val, nil
 }

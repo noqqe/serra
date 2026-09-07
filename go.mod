@@ -9,7 +9,6 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/hajimehoshi/go-mp3 v0.3.4
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/spf13/cobra v1.10.2
 	go.mongodb.org/mongo-driver v1.17.9

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -27,17 +28,6 @@ var exportCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, "", "")
 
-		// filter out cards that do not reach the minimum amount (--min-count)
-		// this is done after query result because find query constructed does not support
-		// aggregating fields (of count and countFoil).
-		temp := cardList[:0]
-		for _, card := range cardList {
-			if (card.Count + card.CountFoil) >= count {
-				temp = append(temp, card)
-			}
-		}
-		cardList = temp
-
 		switch format {
 		case "tcgpowertools":
 			exportTCGPowertools(cardList)
@@ -50,7 +40,20 @@ var exportCmd = &cobra.Command{
 	},
 }
 
-func exportTCGPowertools(cards []Card) {
+// finishName returns a human readable name for a finish, matching the
+// vocabulary used by common import formats.
+func finishName(finish string) string {
+	switch finish {
+	case FinishFoil:
+		return "Foil"
+	case FinishEtched:
+		return "Etched"
+	default:
+		return "Non-foil"
+	}
+}
+
+func exportTCGPowertools(cards []OwnedCard) {
 
 	// TCGPowertools.com Example
 	// idProduct,quantity,name,set,condition,language,isFoil,isPlayset,isSigned,isFirstEd,price,comment
@@ -59,20 +62,17 @@ func exportTCGPowertools(cards []Card) {
 
 	fmt.Println("quantity,cardmarketId,name,set,condition,language,isFoil,isPlayset,price,comment")
 	for _, card := range cards {
-
-		// nonfoil
-		if card.Count > 0 {
-			fmt.Printf("%d,%.0f,%s,%s,EX,German,false,false,%.2f,\n", card.Count, card.CardmarketID, card.Name, card.SetName, card.getValue())
-		}
-
-		// foil
-		if card.CountFoil > 0 {
-			fmt.Printf("%d,%.0f,%s,%s,EX,German,true,false,%.2f,\n", card.CountFoil, card.CardmarketID, card.Name, card.SetName, card.getFoilValue())
+		for _, e := range card.Entries {
+			if e.Count <= 0 {
+				continue
+			}
+			isFoil := e.Finish == FinishFoil || e.Finish == FinishEtched
+			fmt.Printf("%d,%.0f,%s,%s,%s,%s,%t,false,%.2f,\n", e.Count, card.CardmarketID, card.Name, card.SetName, strings.ToUpper(e.Condition), languageName(e.Language), isFoil, card.valueForFinish(e.Finish))
 		}
 	}
 }
 
-func exportMoxfield(cards []Card) {
+func exportMoxfield(cards []OwnedCard) {
 
 	// Structure
 	// https://www.moxfield.com/help/importing-collection
@@ -82,19 +82,13 @@ func exportMoxfield(cards []Card) {
 	w := csv.NewWriter(os.Stdout)
 
 	for _, card := range cards {
-
-		// nonfoil
-		if card.Count > 0 {
+		for _, e := range card.Entries {
+			if e.Count <= 0 {
+				continue
+			}
 			records = append(records,
-				[]string{fmt.Sprintf("%d", card.Count), card.Name, card.Set, "NM", "English", "Non-foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getValue())})
+				[]string{fmt.Sprintf("%d", e.Count), card.Name, card.Set, strings.ToUpper(e.Condition), languageName(e.Language), finishName(e.Finish), card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.valueForFinish(e.Finish))})
 		}
-
-		// foil
-		if card.CountFoil > 0 {
-			records = append(records,
-				[]string{fmt.Sprintf("%d", card.CountFoil), card.Name, card.Set, "NM", "English", "Foil", card.CollectorNumber, "FALSE", "FALSE", fmt.Sprintf("%.2f", card.getFoilValue())})
-		}
-
 	}
 
 	for _, record := range records {
@@ -110,7 +104,7 @@ func exportMoxfield(cards []Card) {
 	}
 }
 
-func exportJSON(cards []Card) {
+func exportJSON(cards []OwnedCard) {
 	ehj, _ := json.MarshalIndent(cards, "", "  ")
 	fmt.Println(string(ehj))
 }

@@ -1,12 +1,14 @@
 package serra
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func init() {
@@ -49,13 +51,112 @@ otherwise you'll get a list of cards as a search result.`,
 	},
 }
 
-// Cards fetches card based on search parameters
-// TODO:Create search object instead of a bazillion parameters
-func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot string) []Card {
+// OwnedCard combines Scryfall card data with the aggregated inventory data
+// (across all finishes/languages/conditions) owned for that card.
+type OwnedCard struct {
+	Card
+
+	Count       int64
+	CountFoil   int64
+	CountEtched int64
+	Created     primitive.DateTime
+	Updated     primitive.DateTime
+	Entries     []InventoryEntry
+}
+
+// OwnedCards joins the inventory collection with the cards collection,
+// returning only cards that are actually owned (i.e. have at least one
+// inventory entry), matching the given Scryfall attribute filter.
+func OwnedCards(cardFilter bson.D) ([]OwnedCard, error) {
 	client := storageConnect()
-	coll := client.getCardsCollection()
 	defer storageDisconnect(client)
 
+	invColl := client.getInventoryCollection()
+	cardsColl := client.getCardsCollection()
+
+	entries, err := invColl.FindInventoryEntries(bson.D{}, bson.D{}, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	type aggregate struct {
+		Count, CountFoil, CountEtched int64
+		Created, Updated              primitive.DateTime
+		Entries                       []InventoryEntry
+	}
+
+	byCard := map[string]*aggregate{}
+	order := []string{}
+	for _, e := range entries {
+		a, ok := byCard[e.CardID]
+		if !ok {
+			a = &aggregate{Created: e.Created, Updated: e.Updated}
+			byCard[e.CardID] = a
+			order = append(order, e.CardID)
+		}
+
+		switch e.Finish {
+		case FinishFoil:
+			a.CountFoil += e.Count
+		case FinishEtched:
+			a.CountEtched += e.Count
+		default:
+			a.Count += e.Count
+		}
+
+		if e.Created < a.Created {
+			a.Created = e.Created
+		}
+		if e.Updated > a.Updated {
+			a.Updated = e.Updated
+		}
+		a.Entries = append(a.Entries, e)
+	}
+
+	ids := make([]string, 0, len(order))
+	for _, id := range order {
+		ids = append(ids, id)
+	}
+
+	filter := append(bson.D{{"_id", bson.D{{"$in", ids}}}}, cardFilter...)
+	cards, err := cardsColl.FindCards(filter, bson.D{}, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	owned := make([]OwnedCard, 0, len(cards))
+	for _, c := range cards {
+		a := byCard[c.ID]
+		owned = append(owned, OwnedCard{
+			Card:        c,
+			Count:       a.Count,
+			CountFoil:   a.CountFoil,
+			CountEtched: a.CountEtched,
+			Created:     a.Created,
+			Updated:     a.Updated,
+			Entries:     a.Entries,
+		})
+	}
+
+	return owned, nil
+}
+
+// FindOwnedCard returns the single owned card for a given set + collector
+// number, including its inventory breakdown.
+func FindOwnedCard(setCode, collectorNumber string) (*OwnedCard, error) {
+	owned, err := OwnedCards(bson.D{{"set", setCode}, {"collectornumber", collectorNumber}})
+	if err != nil {
+		return nil, err
+	}
+	if len(owned) < 1 {
+		return nil, errors.New("Card not found")
+	}
+	return &owned[0], nil
+}
+
+// Cards fetches card based on search parameters
+// TODO:Create search object instead of a bazillion parameters
+func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot string) []OwnedCard {
 	filter := bson.D{}
 
 	switch rarity {
@@ -67,26 +168,6 @@ func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bo
 		filter = append(filter, bson.E{"rarity", "rare"})
 	case "mythic":
 		filter = append(filter, bson.E{"rarity", "mythic"})
-	}
-
-	var sortStage bson.D
-	switch sortBy {
-	case "value":
-		if getCurrency() == EUR {
-			sortStage = bson.D{{"prices.eur", 1}}
-		} else {
-			sortStage = bson.D{{"prices.usd", 1}}
-		}
-	case "number":
-		sortStage = bson.D{{"collectornumber", 1}}
-	case "name":
-		sortStage = bson.D{{"name", 1}}
-	case "added":
-		sortStage = bson.D{{"serra_created", 1}}
-	case "count":
-		sortStage = bson.D{{"serra_count", 1}, {"serra_count_foil", 1}}
-	default:
-		sortStage = bson.D{{"name", 1}}
 	}
 
 	if len(set) > 0 {
@@ -130,23 +211,19 @@ func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bo
 		filter = append(filter, bson.E{"reserved", true})
 	}
 
+	cards, _ := OwnedCards(filter)
+
 	if foil {
-		filter = append(filter, bson.E{"serra_count_foil", bson.D{{"$gt", 0}}})
-	}
-
-	cards, _ := coll.FindCards(filter, sortStage, skip, limit)
-
-	// This is needed because collectornumbers are strings (ie. "23a") but still we
-	// want it to be sorted numerically ... 1,2,3,10,11,100.
-	if sortBy == "number" {
-		sort.Slice(cards, func(i, j int) bool {
-			return filterForDigits(cards[i].CollectorNumber) < filterForDigits(cards[j].CollectorNumber)
-		})
+		temp := cards[:0]
+		for _, card := range cards {
+			if card.CountFoil > 0 {
+				temp = append(temp, card)
+			}
+		}
+		cards = temp
 	}
 
 	// filter out cards that do not reach the minimum amount (--min-count)
-	// this is done after query result because find query constructed does not support
-	// aggregating fields (of count and countFoil).
 	temp := cards[:0]
 	for _, card := range cards {
 		if (card.Count + card.CountFoil) >= count {
@@ -155,21 +232,47 @@ func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bo
 	}
 	cards = temp
 
+	switch sortBy {
+	case "value":
+		sort.Slice(cards, func(i, j int) bool { return cards[i].getValue() < cards[j].getValue() })
+	case "number":
+		// This is needed because collectornumbers are strings (ie. "23a") but still we
+		// want it to be sorted numerically ... 1,2,3,10,11,100.
+		sort.Slice(cards, func(i, j int) bool {
+			return filterForDigits(cards[i].CollectorNumber) < filterForDigits(cards[j].CollectorNumber)
+		})
+	case "added":
+		sort.Slice(cards, func(i, j int) bool { return cards[i].Created < cards[j].Created })
+	case "count":
+		sort.Slice(cards, func(i, j int) bool {
+			return (cards[i].Count + cards[i].CountFoil) < (cards[j].Count + cards[j].CountFoil)
+		})
+	default:
+		sort.Slice(cards, func(i, j int) bool { return cards[i].Name < cards[j].Name })
+	}
+
+	if skip > 0 || limit > 0 {
+		if skip > int64(len(cards)) {
+			return []OwnedCard{}
+		}
+		end := int64(len(cards))
+		if limit > 0 && skip+limit < end {
+			end = skip + limit
+		}
+		cards = cards[skip:end]
+	}
+
 	return cards
 }
 
 func showCard(cardID string) error {
-	client := storageConnect()
-	coll := client.getCardsCollection()
-	l := Logger()
-	defer storageDisconnect(client)
-
 	setCode, collectorNumber, err := parseCardID(cardID)
 	if err != nil {
 		return err
 	}
 
-	card, err := coll.FindCardByCollectorNumber(setCode, collectorNumber)
+	l := Logger()
+	card, err := FindOwnedCard(setCode, collectorNumber)
 	if err != nil {
 		l.Errorf("Card %s not found in collection", cardID)
 		return err
@@ -179,18 +282,18 @@ func showCard(cardID string) error {
 	return nil
 }
 
-func showCardList(cards []Card, detail bool) {
+func showCardList(cards []OwnedCard, detail bool) {
 
 	var total float64
 	if detail {
 		for _, card := range cards {
 			fmt.Printf("* %dx %s (%s/%s) %s%s %s\n", card.Count+card.CountFoil+card.CountEtched, Purple(card.Name), card.Set, card.CollectorNumber, Yellow("%.2f", card.getValue()), Yellow(getCurrency()), DarkGray(strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1)))
-			total = total + card.getValue()*float64(card.Count) + card.getFoilValue()*float64(card.CountFoil)
+			total = total + card.getValue()*float64(card.Count) + card.getFoilValue()*float64(card.CountFoil) + card.getEtchedValue()*float64(card.CountEtched)
 		}
 	} else {
 		for _, card := range cards {
 			fmt.Printf("* %dx %s (%s/%s) %s%s\n", card.Count+card.CountFoil+card.CountEtched, Purple(card.Name), card.Set, card.CollectorNumber, Yellow("%.2f", card.getValue()), Yellow(getCurrency()))
-			total = total + card.getValue()*float64(card.Count) + card.getFoilValue()*float64(card.CountFoil)
+			total = total + card.getValue()*float64(card.Count) + card.getFoilValue()*float64(card.CountFoil) + card.getEtchedValue()*float64(card.CountEtched)
 		}
 	}
 
@@ -198,7 +301,7 @@ func showCardList(cards []Card, detail bool) {
 
 }
 
-func showCardDetails(card *Card) error {
+func showCardDetails(card *OwnedCard) error {
 	fmt.Printf("%s (%s/%s)\n", Purple(card.Name), card.Set, card.CollectorNumber)
 	fmt.Printf("Added: %s\n", stringToTime(card.Created))
 	fmt.Printf("Rarity: %s\n", card.Rarity)
@@ -207,8 +310,13 @@ func showCardDetails(card *Card) error {
 	fmt.Printf("\n%s\n", Green("Current Values"))
 	fmt.Printf("* Normal: %dx %s%s %s\n", card.Count, Yellow("%.2f", card.getValue()), Yellow(getCurrency()), DarkGray("(%.2f)", float64(card.Count)*card.getValue()))
 	fmt.Printf("* Foil: %dx %s%s %s\n", card.CountFoil, Yellow("%.2f", card.getFoilValue()), Yellow(getCurrency()), DarkGray("(%.2f)", float64(card.CountFoil)*card.getFoilValue()))
+	if card.CountEtched > 0 {
+		fmt.Printf("* Etched: %dx %s%s %s\n", card.CountEtched, Yellow("%.2f", card.getEtchedValue()), Yellow(getCurrency()), DarkGray("(%.2f)", float64(card.CountEtched)*card.getEtchedValue()))
+	}
 
-	fmt.Printf("\n%s\n", Green("Value History"))
-	showPriceHistory(card.PriceList, "* ", false)
+	for _, e := range card.Entries {
+		fmt.Printf("\n%s\n", Green(fmt.Sprintf("Value History (%s, %s, %s)", e.Finish, e.Language, e.Condition)))
+		showPriceHistory(e.ValueHistory, "* ", false)
+	}
 	return nil
 }

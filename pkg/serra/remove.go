@@ -14,6 +14,9 @@ func init() {
 	removeCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Spin up interactive terminal")
 	removeCmd.Flags().StringVarP(&set, "set", "s", "", "Filter by set code (usg/mmq/vow)")
 	removeCmd.Flags().BoolVarP(&foil, "foil", "f", false, "Remove foil variant of card")
+	removeCmd.Flags().BoolVarP(&etched, "etched", "", false, "Remove etched foil variant of card")
+	removeCmd.Flags().StringVarP(&language, "language", "l", DefaultLanguage, "Language of the card (en, de, fr, ...)")
+	removeCmd.Flags().StringVarP(&condition, "condition", "", DefaultCondition, "Condition of the card (nm, lp, mp, hp, dmg)")
 	rootCmd.AddCommand(removeCmd)
 }
 
@@ -64,40 +67,49 @@ func removeCardsInteractive(set string) {
 func removeCard(cardID string, count int64) error {
 	// Connect to the DB & load the collection
 	client := storageConnect()
-	coll := client.getCardsCollection()
+	cardsColl := client.getCardsCollection()
+	invColl := client.getInventoryCollection()
 	l := Logger()
 	defer storageDisconnect(client)
-
-	// Loop over different cards
 
 	setName, collectorNumber, err := parseCardID(cardID)
 	if err != nil {
 		return err
 	}
 
-	// Fetch card from scryfall
-	card, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
+	finish := FinishNonfoil
+	if foil {
+		finish = FinishFoil
+	}
+	if etched {
+		finish = FinishEtched
+	}
+
+	card, err := cardsColl.FindCardByCollectorNumber(setName, collectorNumber)
 	if err != nil {
 		l.Error(err)
 		return err
 	}
 
-	if foil && card.CountFoil < 1 {
-		l.Errorf("No foil \"%s\" in the collection", card.Name)
-		return errors.New("no foil card in collection")
+	id := inventoryID(card.ID, finish, language, condition)
+	entry, err := invColl.FindInventoryEntry(id)
+	if err != nil {
+		l.Errorf("No \"%s\" (%s, %s, %s) in the collection", card.Name, language, condition, finish)
+		return errors.New("card variant not in collection")
 	}
 
-	if !foil && card.Count < 1 {
-		l.Errorf("No normal \"%s\" in the collection", card.Name)
-		return errors.New("no normal card in collection")
+	if entry.Count < count {
+		l.Errorf("Only %d \"%s\" (%s, %s, %s) in the collection, cannot remove %d", entry.Count, card.Name, language, condition, finish, count)
+		return errors.New("not enough copies in collection")
 	}
 
-	if foil && card.CountFoil == 1 && card.Count == 0 || !foil && card.Count == 1 && card.CountFoil == 0 {
-		coll.RemoveCard(card)
-		// TODO: Show foil price
-		l.Infof("\"%s\" (%.2f%s) removed", card.Name, card.getValue(), getCurrency())
+	remaining := entry.Count - count
+	if remaining <= 0 {
+		invColl.RemoveInventoryEntry(id)
+		l.Infof("\"%s\" (%.2f%s%s) removed", card.Name, card.valueForFinish(finish), getCurrency(), finishSuffix(finish))
 	} else {
-		coll.ModifyCardCount(card, -count, foil)
+		invColl.SetInventoryCount(id, remaining)
+		l.Warnf("Reduced card amount of \"%s\" (%.2f%s%s) from %d to %d", card.Name, card.valueForFinish(finish), getCurrency(), finishSuffix(finish), entry.Count, remaining)
 	}
 
 	return nil

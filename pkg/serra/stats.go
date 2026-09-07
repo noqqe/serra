@@ -2,12 +2,10 @@ package serra
 
 import (
 	"fmt"
+	"sort"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -27,122 +25,90 @@ var statsCmd = &cobra.Command{
 
 func Stats() {
 	client := storageConnect()
-	coll := client.getCardsCollection()
 	totalcoll := client.getTotalCollection()
-	defer storageDisconnect(client)
+	storageDisconnect(client)
+
+	owned, err := OwnedCards(bson.D{})
+	if err != nil {
+		Logger().Error("Error fetching stats:", err)
+		return
+	}
 
 	// Show Value Stats
-	showValueStats(coll, totalcoll)
+	showValueStats(owned, totalcoll)
 
 	// Rarities
-	showRarityStats(coll)
+	showRarityStats(owned)
 
 	// Reserved List
-	showReservedListStats(coll)
+	showReservedListStats(owned)
 
 	// Colors
-	showColorStats(coll)
+	showColorStats(owned)
 
 	// Colors
-	showTypeStats(coll)
+	showTypeStats(owned)
 
 	// Artists
-	showArtistStats(coll)
+	showArtistStats(owned)
 
 	// Mana Curve of Collection
-	showManaCurveStats(coll)
+	showManaCurveStats(owned)
 
 	// Show cards added per month
-	showCardsAddedPerMonth(coll)
+	showCardsAddedPerMonth(owned)
 }
 
-func showValueStats(coll CardsCollection, totalcoll TotalCollection) {
-	l := Logger()
-	// Value and Card Numbers
-	stats, _ := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$group", bson.D{
-				{"_id", nil},
-				{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(false), "$serra_count"}}}}}},
-				{"value_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(true), "$serra_count_foil"}}}}}},
-				{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-				{"count_foil", bson.D{{"$sum", "$serra_count_foil"}}},
-				{"rarity", bson.D{{"$sum", "$rarity"}}},
-				{"unique", bson.D{{"$sum", 1}}},
-			}},
-		},
-		bson.D{
-			{"$addFields", bson.D{
-				{"count_all", bson.D{{"$sum", bson.A{"$count", "$count_foil"}}}},
-			}},
-		},
-	})
+func showValueStats(owned []OwnedCard, totalcoll TotalCollection) {
+	var value, valueFoil, valueEtched float64
+	var countNormal, countFoil, countEtched int64
+
+	for _, c := range owned {
+		value += c.getValue() * float64(c.Count)
+		valueFoil += c.getFoilValue() * float64(c.CountFoil)
+		valueEtched += c.getEtchedValue() * float64(c.CountEtched)
+		countNormal += c.Count
+		countFoil += c.CountFoil
+		countEtched += c.CountEtched
+	}
+	countAll := countNormal + countFoil + countEtched
+	totalValue := value + valueFoil + valueEtched
+
 	fmt.Printf("%s\n", Green("Cards"))
-	fmt.Printf("Total: %s\n", Yellow("%.0f", stats[0]["count_all"]))
-	fmt.Printf("Unique: %s\n", Purple("%d", stats[0]["unique"]))
-	fmt.Printf("Normal: %s\n", Purple("%.0f", stats[0]["count"]))
-	fmt.Printf("Foil: %s\n", Purple("%d", stats[0]["count_foil"]))
+	fmt.Printf("Total: %s\n", Yellow("%d", countAll))
+	fmt.Printf("Unique: %s\n", Purple("%d", len(owned)))
+	fmt.Printf("Normal: %s\n", Purple("%d", countNormal))
+	fmt.Printf("Foil: %s\n", Purple("%d", countFoil))
+	if countEtched > 0 {
+		fmt.Printf("Etched: %s\n", Purple("%d", countEtched))
+	}
 
 	// Total Value
 	fmt.Printf("\n%s\n", Green("Total Value"))
-	normalValue, err := getFloat64(stats[0]["value"])
-	if err != nil {
-		l.Error(err)
-		normalValue = 0
-	}
-	foilValue, err := getFloat64(stats[0]["value_foil"])
-	if err != nil {
-		l.Error(err)
-		foilValue = 0
-	}
-	countAll, err := getFloat64(stats[0]["count_all"])
-	if err != nil {
-		l.Error(err)
-		foilValue = 0
-	}
-	totalValue := normalValue + foilValue
 	fmt.Printf("Total: %s%s\n", Pink("%.2f", totalValue), Pink(getCurrency()))
-	fmt.Printf("Normal: %s%s\n", Pink("%.2f", normalValue), Pink(getCurrency()))
-	fmt.Printf("Foils: %s%s\n", Pink("%.2f", foilValue), Pink(getCurrency()))
-	fmt.Printf("Average Card: %s%s\n", Pink("%.2f", totalValue/countAll), Pink(getCurrency()))
-	total, _ := totalcoll.FindTotal()
+	fmt.Printf("Normal: %s%s\n", Pink("%.2f", value), Pink(getCurrency()))
+	fmt.Printf("Foils: %s%s\n", Pink("%.2f", valueFoil), Pink(getCurrency()))
+	if countAll > 0 {
+		fmt.Printf("Average Card: %s%s\n", Pink("%.2f", totalValue/float64(countAll)), Pink(getCurrency()))
+	}
 
+	total, _ := totalcoll.FindTotal()
 	fmt.Printf("History: \n")
 	showPriceHistory(total.Value, "* ", true)
 }
 
-func showReservedListStats(coll CardsCollection) {
-	reserved, _ := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$match", bson.D{
-				{"reserved", true}}}},
-		bson.D{
-			{"$group", bson.D{
-				{"_id", nil},
-				{"count", bson.D{{"$sum", 1}}},
-			}}},
-	})
-
-	var countReserved int32
-	if len(reserved) > 0 {
-		countReserved = reserved[0]["count"].(int32)
+func showReservedListStats(owned []OwnedCard) {
+	var countReserved int
+	for _, c := range owned {
+		if c.Reserved {
+			countReserved++
+		}
 	}
 	fmt.Printf("Reserved List: %s\n", Yellow("%d", countReserved))
 }
 
-func showRarityStats(coll CardsCollection) {
-	rar, _ := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$group", bson.D{
-				{"_id", "$rarity"},
-				{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-			}}},
-		bson.D{
-			{"$sort", bson.D{
-				{"_id", 1},
-			}}},
-	})
-	ri := convertRarities(rar)
+func showRarityStats(owned []OwnedCard) {
+	ri := rarityBreakdown(owned)
 	fmt.Printf("\n%s\n", Green("Rarity"))
 	fmt.Printf("Mythics: %s\n", Pink("%.0f", ri.Mythics))
 	fmt.Printf("Rares: %s\n", Pink("%.0f", ri.Rares))
@@ -150,120 +116,123 @@ func showRarityStats(coll CardsCollection) {
 	fmt.Printf("Commons: %s\n", Purple("%.0f", ri.Commons))
 }
 
-func showTypeStats(coll CardsCollection) {
-	cardTypes, _ := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$group", bson.D{
-				{"_id", "$typeline"},
-				{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-			}}},
-		bson.D{
-			{"$sort", bson.D{
-				{"count", -1},
-			}}},
-		bson.D{
-			{"$limit", 10},
-		},
-	})
+func showTypeStats(owned []OwnedCard) {
+	counts := map[string]int64{}
+	for _, c := range owned {
+		counts[c.TypeLine] += c.Count + c.CountFoil + c.CountEtched
+	}
+
+	type entry struct {
+		TypeLine string
+		Count    int64
+	}
+	entries := make([]entry, 0, len(counts))
+	for t, c := range counts {
+		entries = append(entries, entry{t, c})
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Count > entries[j].Count })
+	if len(entries) > 10 {
+		entries = entries[:10]
+	}
+
 	fmt.Printf("\n%s\n", Green("Types (Top 10)"))
-	for _, mc := range cardTypes {
-		fmt.Printf("%s: %s\n", mc["_id"], Purple("%.0f", mc["count"]))
+	for _, e := range entries {
+		fmt.Printf("%s: %s\n", e.TypeLine, Purple("%d", e.Count))
 	}
 }
 
-func showCardsAddedPerMonth(coll CardsCollection) {
+func showCardsAddedPerMonth(owned []OwnedCard) {
 	fmt.Printf("\n%s\n", Green("Cards added over time"))
-	type cardsAddedOverTime struct {
-		ID struct {
-			Year  int32 `mapstructure:"year"`
-			Month int32 `mapstructure:"month"`
-		} `mapstructure:"_id"`
-		Count int32 `mapstructure:"count"`
+
+	type monthKey struct{ Year, Month int }
+	counts := map[monthKey]int{}
+	for _, c := range owned {
+		t := stringToTime(c.Created)
+		var year, month int
+		fmt.Sscanf(t, "%d-%d-", &year, &month)
+		counts[monthKey{year, month}]++
 	}
-	caot, _ := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$project", bson.D{
-				{"month", bson.D{
-					{"$month", "$serra_created"}}},
-				{"year", bson.D{
-					{"$year", "$serra_created"}},
-				}},
-			}},
-		bson.D{
-			{"$group", bson.D{
-				{"_id", bson.D{{"month", "$month"}, {"year", "$year"}}},
-				{"count", bson.D{{"$sum", 1}}},
-			}},
-		},
-		bson.D{
-			{"$sort", bson.D{{"_id.year", 1}, {"_id.month", 1}}},
-		},
+
+	keys := make([]monthKey, 0, len(counts))
+	for k := range counts {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].Year != keys[j].Year {
+			return keys[i].Year < keys[j].Year
+		}
+		return keys[i].Month < keys[j].Month
 	})
-	for _, month := range caot {
-		thisMonth := new(cardsAddedOverTime)
-		mapstructure.Decode(month, thisMonth)
-		fmt.Printf("%d-%02d: %s\n", thisMonth.ID.Year, thisMonth.ID.Month, Purple("%d", thisMonth.Count))
+
+	for _, k := range keys {
+		fmt.Printf("%d-%02d: %s\n", k.Year, k.Month, Purple("%d", counts[k]))
 	}
 }
 
-func showManaCurveStats(coll CardsCollection) {
-	cmc, _ := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$group", bson.D{
-				{"_id", "$cmc"},
-				{"count", bson.D{{"$sum", 1}}},
-			}}},
-		bson.D{
-			{"$sort", bson.D{
-				{"_id", 1},
-			}}},
-	})
+func showManaCurveStats(owned []OwnedCard) {
+	counts := map[float64]int{}
+	for _, c := range owned {
+		counts[c.Cmc]++
+	}
+
+	cmcs := make([]float64, 0, len(counts))
+	for cmc := range counts {
+		cmcs = append(cmcs, cmc)
+	}
+	sort.Float64s(cmcs)
+
 	fmt.Printf("\n%s\n", Green("Mana Curve"))
-	for _, mc := range cmc {
-		fmt.Printf("%.0f: %s\n", mc["_id"], Purple("%d", mc["count"]))
+	for _, cmc := range cmcs {
+		fmt.Printf("%.0f: %s\n", cmc, Purple("%d", counts[cmc]))
 	}
 }
 
-func showArtistStats(coll CardsCollection) {
-	artists, _ := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$group", bson.D{
-				{"_id", "$artist"},
-				{"count", bson.D{{"$sum", 1}}},
-			}}},
-		bson.D{
-			{"$sort", bson.D{
-				{"count", -1},
-			}}},
-		bson.D{
-			{"$limit", 10}},
-	})
+func showArtistStats(owned []OwnedCard) {
+	counts := map[string]int{}
+	for _, c := range owned {
+		counts[c.Artist]++
+	}
+
+	type entry struct {
+		Artist string
+		Count  int
+	}
+	entries := make([]entry, 0, len(counts))
+	for a, c := range counts {
+		entries = append(entries, entry{a, c})
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Count > entries[j].Count })
+	if len(entries) > 10 {
+		entries = entries[:10]
+	}
+
 	fmt.Printf("\n%s\n", Green("Artists (Top 10)"))
-	for _, artist := range artists {
-		fmt.Printf("%s: %s\n", artist["_id"], Purple("%d", artist["count"]))
+	for _, e := range entries {
+		fmt.Printf("%s: %s\n", e.Artist, Purple("%d", e.Count))
 	}
 }
 
-func showColorStats(coll CardsCollection) {
-	sets, _ := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$match", bson.D{
-				{"coloridentity", bson.D{{"$size", 1}}}}}},
-		bson.D{
-			{"$group", bson.D{
-				{"_id", "$coloridentity"},
-				{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-			}}},
-		bson.D{
-			{"$sort", bson.D{
-				{"count", -1},
-			}}},
-	})
+func showColorStats(owned []OwnedCard) {
+	counts := map[string]int64{}
+	for _, c := range owned {
+		if len(c.ColorIdentity) != 1 {
+			continue
+		}
+		counts[c.ColorIdentity[0]] += c.Count + c.CountFoil + c.CountEtched
+	}
+
+	type entry struct {
+		Color string
+		Count int64
+	}
+	entries := make([]entry, 0, len(counts))
+	for color, c := range counts {
+		entries = append(entries, entry{color, c})
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Count > entries[j].Count })
 
 	fmt.Printf("\n%s\n", Green("Colors"))
-	for _, set := range sets {
-		x, _ := set["_id"].(primitive.A)
-		s := []any(x)
-		fmt.Printf("%s: %s\n", convertManaSymbols(s), Purple("%.0f", set["count"]))
+	for _, e := range entries {
+		fmt.Printf("%s: %s\n", convertManaSymbols([]any{e.Color}), Purple("%d", e.Count))
 	}
 }

@@ -7,12 +7,10 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/mitchellh/mapstructure"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -98,25 +96,26 @@ func fetchUpdatedCards() ([]Card, error) {
 	return updatedCards, nil
 }
 
+// updateCardsOfSet refreshes the cached Scryfall data for every card owned
+// in a set, and appends a new value snapshot to every inventory entry of
+// that set.
 func updateCardsOfSet(setCode string, updatedSet *Set, updatedCards []Card) error {
 	client := storageConnect()
 	l := Logger()
 	defer storageDisconnect(client)
 
-	// update sets
-	coll := client.getCardsCollection()
+	cardsColl := client.getCardsCollection()
+	invColl := client.getInventoryCollection()
 
-	updatedSet.PriceList = []PriceEntry{}
-
-	// fetch all cards in collection for this set
-	cards, _ := coll.FindCards(bson.D{{"set", setCode}}, bson.D{{"_id", 1}}, 0, 0)
+	// fetch all inventory entries owned in this set
+	entries, _ := invColl.FindInventoryEntries(bson.D{{"set", setCode}}, bson.D{}, 0, 0)
 
 	// if no cards in collection for this set, skip it
-	if len(cards) == 0 {
+	if len(entries) == 0 {
 		return errors.New("no cards in collection for this set, skipping update")
 	}
 
-	bar := progressbar.NewOptions(len(cards),
+	bar := progressbar.NewOptions(len(entries),
 		progressbar.OptionSetWidth(50),
 		progressbar.OptionSetDescription(fmt.Sprintf("%s, %s\t", updatedSet.ReleasedAt[0:4], Yellow(updatedSet.Code))),
 		progressbar.OptionEnableColorCodes(true),
@@ -130,37 +129,39 @@ func updateCardsOfSet(setCode string, updatedSet *Set, updatedCards []Card) erro
 		}),
 	)
 
-	for _, storedCard := range cards {
+	refreshedCards := map[string]bool{}
+	now := primitive.NewDateTimeFromTime(time.Now())
+
+	for _, entry := range entries {
 		bar.Add(1)
 
-		// fetch updatedCard from bulk file
-		updatedCard, err := getCardFromBulk(updatedCards, storedCard.Set, storedCard.CollectorNumber)
+		// fetch fresh scryfall data from bulk file
+		updatedCard, err := getCardFromBulk(updatedCards, setCode, entry.CollectorNumber)
 		if err != nil {
 			l.Error(err)
 			continue
 		}
 
-		// extend price entry from updatedCard with current timestamp
-		updatedCard.Prices.Date = primitive.NewDateTimeFromTime(time.Now())
+		// refresh cached scryfall doc once per card, not once per inventory entry
+		if !refreshedCards[updatedCard.ID] {
+			cardsColl.UpsertCard(updatedCard)
+			refreshedCards[updatedCard.ID] = true
+		}
 
-		// merge PriceList of storedCard with updatedCard.
-		updatedCard.PriceList = storedCard.PriceList
-		updatedCard.PriceList = append(updatedCard.PriceList, updatedCard.Prices)
+		// Scryfall occasionally re-keys a printing's ID. If that happened,
+		// migrate this inventory entry to the new card ID so it keeps
+		// pointing at valid Scryfall data.
+		if updatedCard.ID != entry.CardID {
+			invColl.RemoveInventoryEntry(entry.ID)
+			entry.CardID = updatedCard.ID
+			entry.ID = inventoryID(updatedCard.ID, entry.Finish, entry.Language, entry.Condition)
+			invColl.InsertInventoryEntry(&entry)
+		}
 
-		// set timestamp
-		updatedCard.Created = storedCard.Created
-		updatedCard.Updated = primitive.NewDateTimeFromTime(time.Now())
-
-		// set count and foil count from storedCard to updatedCard
-		updatedCard.Count = storedCard.Count
-		updatedCard.CountFoil = storedCard.CountFoil
-
-		// delete storedCard
-		coll.RemoveCard(&storedCard)
-
-		// add updatedCard to database
-		coll.AddCard(updatedCard)
-
+		// append finish-specific value snapshot
+		snapshot := priceEntryForFinish(updatedCard.Prices, entry.Finish)
+		snapshot.Date = now
+		invColl.AppendValueHistory(entry.ID, snapshot)
 	}
 	fmt.Println()
 
@@ -174,50 +175,42 @@ func updateSet(setCode string, updatedSet *Set) error {
 		return errors.New("set code mismatch between stored set and updated set")
 	}
 
-	// fetch storedSet
 	client := storageConnect()
-	coll := client.getCardsCollection()
 	setscoll := client.getSetsCollection()
 	defer storageDisconnect(client)
 
-	// fetch setfrom database, otherwise create it
+	// fetch set from database, otherwise create it
 	storedSet, err := setscoll.FindSetByCode(setCode)
 	if err != nil {
 		setscoll.AddSet(updatedSet)
 	}
 
-	// predefine query for set analysis. used for total stats later
-	matchStage := bson.D{{"$match", bson.D{{"set", updatedSet.Code}}}}
-	projectStage := bson.D{{"$project",
-		bson.D{
-			{"serra_count", true},
-			{"serra_count_foil", true},
-			{"set", true},
-			{"last_price", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}}
-	groupStage := bson.D{
-		{"$group", bson.D{
-			{"_id", ""},
-			{"eur", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur", "$serra_count"}}}}}},
-			{"eurfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur_foil", "$serra_count_foil"}}}}}},
-			{"usd", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd", "$serra_count"}}}}}},
-			{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
-		}}}
-
-	// calculate value summary
-	setValue, _ := coll.AggregateCards(mongo.Pipeline{matchStage, projectStage, groupStage})
-	if len(setValue) <= 0 {
+	owned, err := OwnedCards(bson.D{{"set", updatedSet.Code}})
+	if err != nil || len(owned) == 0 {
 		return fmt.Errorf("fetching set stats was not possible for set %s", setCode)
 	}
 
-	// extend set price list with new value entry
-	updatedSet.PriceList = storedSet.PriceList
+	var eur, eurfoil, usd, usdfoil float64
+	for _, c := range owned {
+		eur += c.Prices.Eur * float64(c.Count)
+		usd += c.Prices.Usd * float64(c.Count)
+		eurfoil += c.Prices.EurFoil * float64(c.CountFoil)
+		usdfoil += c.Prices.UsdFoil * float64(c.CountFoil)
+		// Etched cards have no dedicated history slot on sets/total, fold
+		// their value into the foil bucket as the closest analogue.
+		usdfoil += c.Prices.UsdEtched * float64(c.CountEtched)
+	}
 
-	// create empty priceEntry and use mapdecode to put aggregate result into PriceEntry struct
-	priceEntry := PriceEntry{}
-	s := setValue[0]
-	priceEntry.Date = primitive.NewDateTimeFromTime(time.Now())
-	mapstructure.Decode(s, &priceEntry)
-	updatedSet.PriceList = append(updatedSet.PriceList, priceEntry)
+	priceEntry := PriceEntry{
+		Date:    primitive.NewDateTimeFromTime(time.Now()),
+		Eur:     eur,
+		EurFoil: eurfoil,
+		Usd:     usd,
+		UsdFoil: usdfoil,
+	}
+
+	// extend set price list with new value entry
+	updatedSet.PriceList = append(storedSet.PriceList, priceEntry)
 
 	// set timestamp
 	updatedSet.Created = storedSet.Created
@@ -241,39 +234,39 @@ func updateSet(setCode string, updatedSet *Set) error {
 func updateTotal() error {
 	l := Logger()
 	client := storageConnect()
-	coll := client.getCardsCollection()
 	totalcoll := client.getTotalCollection()
+	defer storageDisconnect(client)
 
-	projectStage := bson.D{{"$project",
-		bson.D{
-			{"serra_count", true},
-			{"serra_count_foil", true},
-			{"set", true},
-			{"last_price", bson.D{{"$arrayElemAt", bson.A{"$serra_prices", -1}}}}}}}
-	groupStage := bson.D{
-		{"$group", bson.D{
-			{"_id", ""},
-			{"eur", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur", "$serra_count"}}}}}},
-			{"eurfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.eur_foil", "$serra_count_foil"}}}}}},
-			{"usd", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd", "$serra_count"}}}}}},
-			{"usdfoil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$last_price.usd_foil", "$serra_count_foil"}}}}}},
-		}}}
+	owned, err := OwnedCards(bson.D{})
+	if err != nil {
+		l.Error("Could not update total value of collection:", err)
+		return err
+	}
 
-	totalValue, _ := coll.AggregateCards(mongo.Pipeline{projectStage, groupStage})
+	var eur, eurfoil, usd, usdfoil float64
+	for _, c := range owned {
+		eur += c.Prices.Eur * float64(c.Count)
+		usd += c.Prices.Usd * float64(c.Count)
+		eurfoil += c.Prices.EurFoil * float64(c.CountFoil)
+		usdfoil += c.Prices.UsdFoil * float64(c.CountFoil)
+		usdfoil += c.Prices.UsdEtched * float64(c.CountEtched)
+	}
 
-	// create empty priceEntry and use mapdecode to put aggregate result into PriceEntry struct
-	t := PriceEntry{}
-	t.Date = primitive.NewDateTimeFromTime(time.Now())
-	mapstructure.Decode(totalValue[0], &t)
+	t := PriceEntry{
+		Date:    primitive.NewDateTimeFromTime(time.Now()),
+		Eur:     eur,
+		EurFoil: eurfoil,
+		Usd:     usd,
+		UsdFoil: usdfoil,
+	}
 
-	// HACK: This is here to be able to fetch currency from
-	// constructed new priceentry
-	tmpCard := Card{}
-	tmpCard.Prices = t
+	total := t.Eur + t.EurFoil
+	if getCurrency() != EUR {
+		total = t.Usd + t.UsdFoil
+	}
+	l.Infof("Updating total value of collection to: %s%s\n", Yellow("%.02f", total), Yellow(getCurrency()))
 
-	l.Infof("Updating total value of collection to: %s%s\n", Yellow("%.02f", tmpCard.getValue()+tmpCard.getFoilValue()), Yellow(getCurrency()))
-
-	err := totalcoll.AddTotal(t)
+	err = totalcoll.AddTotal(t)
 	if err != nil {
 		log.Error("Could not update total value of collection:", err)
 		return err

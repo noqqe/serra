@@ -29,7 +29,8 @@ var checkCmd = &cobra.Command{
 
 func checkCard(cardID string, detail bool) error {
 	client := storageConnect()
-	coll := client.getCardsCollection()
+	cardsColl := client.getCardsCollection()
+	invColl := client.getInventoryCollection()
 	defer storageDisconnect(client)
 
 	// Loop over different cards
@@ -38,8 +39,9 @@ func checkCard(cardID string, detail bool) error {
 		return err
 	}
 
-	card, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
-	if err == nil {
+	entries, err := invColl.FindInventoryEntriesBySetAndCollectorNumber(setName, collectorNumber)
+	if err == nil && len(entries) > 0 {
+		card, _ := cardsColl.FindCardByCollectorNumber(setName, collectorNumber)
 		fmt.Printf("PRESENT %s \"%s\" (%s, %.2f%s) %s\n", cardID, card.Name, card.Rarity, card.getValue(), getCurrency(), strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
 	} else {
 		if detail {
@@ -51,6 +53,5 @@ func checkCard(cardID string, detail bool) error {
 			fmt.Printf("MISSING \"%s\"\n", cardID)
 		}
 	}
-	storageDisconnect(client)
 	return nil
 }

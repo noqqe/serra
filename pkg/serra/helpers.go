@@ -3,7 +3,6 @@ package serra
 import (
 	"errors"
 	"fmt"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -110,31 +109,54 @@ func convertManaSymbols(sym []any) string {
 
 }
 
-// HACK:
-// this is maybe the ugliest way someone could choose to verify, if a rarity type is missing
-// [
-// { _id: { rarity: 'common' }, count: 20 },
-// { _id: { rarity: 'uncommon' }, count: 2 }
-// ]
-// if a result like this is there, 1 rarity type "rare" is not in the array. and needs to be
-// initialized with 0, otherwise we get a panic
-func convertRarities(rar []primitive.M) Rarities {
-
+// rarityBreakdown sums up owned copies (across all finishes) by rarity.
+func rarityBreakdown(cards []OwnedCard) Rarities {
 	var ri Rarities
-	for _, r := range rar {
-		switch r["_id"] {
+	for _, c := range cards {
+		total := float64(c.Count + c.CountFoil + c.CountEtched)
+		switch c.Rarity {
 		case "rare":
-			ri.Rares = r["count"].(float64)
+			ri.Rares += total
 		case "uncommon":
-			ri.Uncommons = r["count"].(float64)
+			ri.Uncommons += total
 		case "common":
-			ri.Commons = r["count"].(float64)
+			ri.Commons += total
 		case "mythic":
-			ri.Mythics = r["count"].(float64)
+			ri.Mythics += total
 		}
 	}
 	return ri
+}
 
+// languageName returns a human readable name for a Scryfall language code,
+// falling back to the code itself for unknown/uncommon languages.
+func languageName(code string) string {
+	switch code {
+	case "en":
+		return "English"
+	case "de":
+		return "German"
+	case "fr":
+		return "French"
+	case "it":
+		return "Italian"
+	case "es":
+		return "Spanish"
+	case "pt":
+		return "Portuguese"
+	case "ja":
+		return "Japanese"
+	case "ko":
+		return "Korean"
+	case "ru":
+		return "Russian"
+	case "zhs":
+		return "Chinese Simplified"
+	case "zht":
+		return "Chinese Traditional"
+	default:
+		return code
+	}
 }
 
 func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
@@ -193,27 +215,4 @@ func filterForDigits(str string) int {
 	}
 	s, _ := strconv.Atoi(numStr.String())
 	return s
-}
-
-func getFloat64(unknown any) (float64, error) {
-	switch i := unknown.(type) {
-	case float64:
-		return i, nil
-	case float32:
-		return float64(i), nil
-	case int64:
-		return float64(i), nil
-	case int32:
-		return float64(i), nil
-	case int:
-		return float64(i), nil
-	case uint64:
-		return float64(i), nil
-	case uint32:
-		return float64(i), nil
-	case uint:
-		return float64(i), nil
-	default:
-		return math.NaN(), errors.New("non-numeric type could not be converted to float")
-	}
 }

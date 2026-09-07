@@ -10,43 +10,65 @@ Do a database dump
 Do a collection export to json
 
     mongoexport  -u root -p root --authenticationDatabase admin -d serra -c cards > /backup/cards.json
+    mongoexport  -u root -p root --authenticationDatabase admin -d serra -c inventory > /backup/inventory.json
     mongoexport  -u root -p root --authenticationDatabase admin -d serra -c sets > /backup/sets.json
     mongoexport  -u root -p root --authenticationDatabase admin -d serra -c total > /backup/total.json
 
+## Schema
+
+* `cards` - pure Scryfall data, one document per printing, keyed by Scryfall ID (`_id`).
+* `inventory` - your ownership data, one document per unique
+  `card_id`+`finish`+`language`+`condition` combination:
+  * `card_id` references `cards._id`
+  * `finish` is `nonfoil`, `foil` or `etched`
+  * `count` how many copies you own of that exact combination
+  * `value_history` array of `{date, eur, usd}` snapshots
+  * `created`/`updated` timestamps
+* `sets` - cached Scryfall set data plus a `serra_prices` value history of the set's total value.
+* `total` - a single document tracking the value history of the whole collection.
+
 ## Cheatsheet Queries
 
-Find cards that increased prices
+Find cards that increased in value
 
-    db.cards.find({$expr: {$gt: [{$arrayElemAt: ["$serra_prices", -2]}, {$arrayElemAt: ["$serra_prices", -1]}]}}, {name:1})
+    db.inventory.find({$expr: {$gt: [{$arrayElemAt: ["$value_history", -2]}, {$arrayElemAt: ["$value_history", -1]}]}}, {card_id:1, finish:1})
 
-Update card Price
+Update an inventory entry's value directly
 
-		db.cards.update(
-		{'_id':'8fa2ecf9-b53c-4f1d-9028-ca3820d043cb'},
-		{$set:{'serra_updated':ISODate("2021-11-02T09:28:56.504Z")},
-		$push: {"serra_prices": { date: ISODate("2021-11-02T09:28:56.504Z"), value: 0.1 }}});
+		db.inventory.update(
+		{'_id':'<card_id>|nonfoil|en|nm'},
+		{$set:{'updated':ISODate("2021-11-02T09:28:56.504Z")},
+		$push: {"value_history": { date: ISODate("2021-11-02T09:28:56.504Z"), eur: 0.1, usd: 0.1 }}});
 
-Set value
+Set value (joins inventory with cards)
 
-    db.cards.aggregate([{ $group: { _id: { set: "$set" }, value: { $sum: { $multiply: ["$prices.eur", "$serra_count"] } }, count: { $sum: 1 } } }])
+    db.inventory.aggregate([
+      { $lookup: { from: "cards", localField: "card_id", foreignField: "_id", as: "card" } },
+      { $unwind: "$card" },
+      { $group: { _id: "$set", value: { $sum: { $multiply: ["$card.prices.eur", "$count"] } }, count: { $sum: "$count" } } }
+    ])
 
-Color distribution
+Color distribution (joins inventory with cards)
 
-     db.cards.aggregate([{ $group: { _id: { color: "$colors" }, count: { $sum: 1 } } }])
+    db.inventory.aggregate([
+      { $lookup: { from: "cards", localField: "card_id", foreignField: "_id", as: "card" } },
+      { $unwind: "$card" },
+      { $group: { _id: { color: "$card.colors" }, count: { $sum: "$count" } } }
+    ])
 
 Calculate value of all sets
 
     db.sets.aggregate({$match: {serra_prices: {$exists: true}}}, {$project: {name: 1, "totalValue": {$arrayElemAt: ["$serra_prices", -1]} }}, {$group: {_id: null, total: {$sum: "$totalValue.value" }}})
 
-Calculate what cards gained most value in percent
-
-    db.cards.aggregate({$project: {set: 1, collectornumber:1, name: 1, "old": {$arrayElemAt: ["$serra_prices.value", -2]}, "current": {$arrayElemAt: ["$serra_prices.value", -1]} }}, {$match: {old: {$gt: 2}}} ,{$project: {name: 1,set:1,collectornumber:1,current:1, "rate": {$subtract: [{$divide: ["$current", {$divide: ["$old", 100]}]}, 100]} }}, {$sort: { rate: -1}})
-
 Show when cards where added per month of the year
 
-    db.cards.aggregate({ $project: { month: { $month: "$serra_created" }, year: { $year: "$serra_created" }, name: 1 } }, { $group: { _id: { month: "$month", year: "$year" }, count: { $sum: 1 } } })
+    db.inventory.aggregate({ $project: { month: { $month: "$created" }, year: { $year: "$created" } } }, { $group: { _id: { month: "$month", year: "$year" }, count: { $sum: 1 } } })
 
-Show card count by artists
+Show card count by artists (joins inventory with cards)
 
-    db.cards.aggregate({$group: { _id : "$artist", total : {$sum:1}}}, {$sort: {total:-1}})
-
+    db.inventory.aggregate([
+      { $lookup: { from: "cards", localField: "card_id", foreignField: "_id", as: "card" } },
+      { $unwind: "$card" },
+      { $group: { _id : "$card.artist", total : {$sum:1}}},
+      { $sort: {total:-1} }
+    ])

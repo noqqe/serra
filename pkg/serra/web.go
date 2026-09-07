@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -49,7 +48,7 @@ type Query struct {
 
 type TemplateData struct {
 	Title    string
-	Cards    []Card
+	Cards    []OwnedCard
 	Sets     []SetsResult
 	Query    Query
 	Version  string
@@ -124,8 +123,6 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 
 	// Construct quick way for counting results
 	filter := bson.D{}
-	client := storageConnect()
-	coll := client.getCardsCollection()
 
 	if query.Set != "" {
 		filter = append(filter, bson.E{"set", query.Set})
@@ -135,27 +132,12 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 		filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + query.Name + ".*"}, {"$options", "i"}}})
 	}
 
-	counts, err := coll.AggregateCards(mongo.Pipeline{
-		bson.D{
-			{"$match", filter},
-		},
-		bson.D{
-			{"$group", bson.D{
-				{"_id", nil},
-				{"count", bson.D{{"$sum", 1}}},
-			}}},
-	})
+	matchingCards, err := OwnedCards(filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	defer storageDisconnect(client)
-
-	// Catch index error on no results
-	var numCards int32
-	if len(counts) != 0 {
-		numCards = counts[0]["count"].(int32)
-	}
+	numCards := len(matchingCards)
 
 	tmplData := TemplateData{
 		Title:    "Serra",

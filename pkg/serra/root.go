@@ -16,13 +16,16 @@ var (
 	setType         string
 	color           string
 	cmc             int64
+	condition       string
 	count           int64
 	detail          bool
+	etched          bool
 	foil            bool
 	format          string
 	interactive     bool
 	is              string
 	isNot           string
+	language        string
 	limit           float64
 	name            string
 	oracle          string

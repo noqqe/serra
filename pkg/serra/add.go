@@ -15,6 +15,9 @@ func init() {
 	addCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Spin up interactive terminal")
 	addCmd.Flags().StringVarP(&set, "set", "s", "", "Filter by set code (usg/mmq/vow)")
 	addCmd.Flags().BoolVarP(&foil, "foil", "f", false, "Add foil variant of card")
+	addCmd.Flags().BoolVarP(&etched, "etched", "", false, "Add etched foil variant of card")
+	addCmd.Flags().StringVarP(&language, "language", "l", DefaultLanguage, "Language of the card (en, de, fr, ...)")
+	addCmd.Flags().StringVarP(&condition, "condition", "", DefaultCondition, "Condition of the card (nm, lp, mp, hp, dmg)")
 	rootCmd.AddCommand(addCmd)
 }
 
@@ -103,7 +106,8 @@ func addCardsInteractive(unique bool, set string) {
 
 func addCard(cardID string, unique bool, count int64) error {
 	client := storageConnect()
-	coll := client.getCardsCollection()
+	cardsColl := client.getCardsCollection()
+	invColl := client.getInventoryCollection()
 	l := Logger()
 	defer storageDisconnect(client)
 
@@ -112,55 +116,46 @@ func addCard(cardID string, unique bool, count int64) error {
 		return err
 	}
 
-	// Check if card is already in collection
-	card, err := coll.FindCardByCollectorNumber(setName, collectorNumber)
-	if err == nil {
-		go playSoundNegative()
+	finish := FinishNonfoil
+	if foil {
+		finish = FinishFoil
+	}
+	if etched {
+		finish = FinishEtched
+	}
 
-		if unique {
-			if foil {
-				l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
-			} else {
-				l.Warnf("%dx \"%s\" (%s, %s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredValue(), getCurrency())
-			}
-			return nil
-		}
-
-		// Increase card count
-		coll.ModifyCardCount(card, count, foil)
-
-	} else {
-		// Fetch card from scryfall
-		card, err := fetchCard(setName, collectorNumber)
+	// Make sure Scryfall data for this card is cached
+	card, err := cardsColl.FindCardByCollectorNumber(setName, collectorNumber)
+	if err != nil {
+		card, err = fetchCard(setName, collectorNumber)
 		if err != nil {
 			l.Warn(err)
 			return err
 		}
-
-		// Write card to mongodb
-		var total int64 = 0
-		if foil {
-			card.CountFoil = count
-			total = card.CountFoil
-		} else {
-			card.Count = count
-			total = card.Count
-		}
-		err = coll.AddCard(card)
-		if err != nil {
+		if err := cardsColl.UpsertCard(card); err != nil {
 			l.Warn(err)
 			return err
-		}
-
-		// Give feedback of successfully added card
-		if foil {
-			go playSoundPositive()
-			l.Infof("%dx \"%s\" (%s, %s%s, foil) added", total, card.Name, card.Rarity, card.getColoredFoilValue(), getCurrency())
-		} else {
-			go playSoundPositive()
-			l.Infof("%dx \"%s\" (%s, %s%s) added", total, card.Name, card.Rarity, card.getColoredValue(), getCurrency())
 		}
 	}
-	storageDisconnect(client)
+
+	// Check if this exact variant (finish/language/condition) is already in the collection
+	id := inventoryID(card.ID, finish, language, condition)
+	if _, err := invColl.FindInventoryEntry(id); err == nil && unique {
+		go playSoundNegative()
+		l.Warnf("%dx \"%s\" (%s, %s%s%s) not added, because it already exists", count, card.Name, card.Rarity, card.getColoredValueForFinish(finish), getCurrency(), finishSuffix(finish))
+		return nil
+	}
+
+	snapshot := priceEntryForFinish(card.Prices, finish)
+
+	entry, err := invColl.IncrementInventory(card.ID, setName, collectorNumber, finish, language, condition, count, snapshot)
+	if err != nil {
+		l.Warn(err)
+		return err
+	}
+
+	go playSoundPositive()
+	l.Infof("%dx \"%s\" (%s, %s%s%s) added, now %d in collection", count, card.Name, card.Rarity, card.getColoredValueForFinish(finish), getCurrency(), finishSuffix(finish), entry.Count)
+
 	return nil
 }

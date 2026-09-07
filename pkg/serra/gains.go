@@ -2,10 +2,10 @@ package serra
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -41,11 +41,50 @@ var flopsCmd = &cobra.Command{
 	},
 }
 
-func Gains(limit float64, sort int) error {
+// historicValue returns the value of a value history snapshot in the
+// configured currency. Both inventory entry and set/total value history
+// entries hold their relevant value in the Eur/Usd fields.
+func historicValue(p PriceEntry) float64 {
+	if getCurrency() == EUR {
+		return p.Eur
+	}
+	return p.Usd
+}
 
+type gainRate struct {
+	Old, Current, Rate float64
+}
+
+// rateAt computes the rate of change between the "old" (0 = beginning, -2 =
+// second to last) and the last entry of a value history, or ok=false if
+// there is not enough history or the old value is below limit.
+func rateAt(history []float64, old int, limit float64) (gainRate, bool) {
+	if len(history) == 0 {
+		return gainRate{}, false
+	}
+	oldIdx := old
+	if oldIdx < 0 {
+		oldIdx = len(history) + oldIdx
+	}
+	if oldIdx < 0 || oldIdx >= len(history) {
+		return gainRate{}, false
+	}
+
+	oldVal := history[oldIdx]
+	curVal := history[len(history)-1]
+	if oldVal <= limit {
+		return gainRate{}, false
+	}
+
+	rate := (curVal/(oldVal/100) - 100)
+	return gainRate{Old: oldVal, Current: curVal, Rate: rate}, true
+}
+
+func Gains(limit float64, sortDir int) error {
 	client := storageConnect()
-	coll := client.getCardsCollection()
-	setcoll := client.getSetsCollection()
+	invColl := client.getInventoryCollection()
+	cardsColl := client.getCardsCollection()
+	setscoll := client.getSetsCollection()
 	defer storageDisconnect(client)
 
 	var old int
@@ -56,119 +95,80 @@ func Gains(limit float64, sort int) error {
 		old = -2
 	}
 
-	currencyField := "$serra_prices.usd"
-	if getCurrency() == EUR {
-		currencyField = "$serra_prices.eur"
+	// Card (inventory entry) level gains
+	entries, _ := invColl.FindInventoryEntries(bson.D{}, bson.D{}, 0, 0)
+
+	type cardGain struct {
+		Entry InventoryEntry
+		gainRate
+	}
+	var cardGains []cardGain
+	for _, e := range entries {
+		history := make([]float64, len(e.ValueHistory))
+		for i, p := range e.ValueHistory {
+			history[i] = historicValue(p)
+		}
+		if r, ok := rateAt(history, old, limit); ok {
+			cardGains = append(cardGains, cardGain{e, r})
+		}
 	}
 
-	cardRaisePipeline := mongo.Pipeline{
-		bson.D{{"$project",
-			bson.D{
-				{"name", true},
-				{"set", true},
-				{"collectornumber", true},
-				{"old",
-					bson.D{{"$arrayElemAt",
-						bson.A{currencyField, old},
-					}},
-				},
-				{"current",
-					bson.D{{"$arrayElemAt",
-						bson.A{currencyField, -1},
-					}},
-				},
-			},
-		}},
-		bson.D{{"$match",
-			bson.D{{"old", bson.D{{"$gt", limit}}}},
-		}},
-		bson.D{{"$project",
-			bson.D{
-				{"name", true},
-				{"set", true},
-				{"old", true},
-				{"current", true},
-				{"collectornumber", true},
-				{"rate",
-					bson.D{{"$subtract",
-						bson.A{
-							bson.D{{"$divide",
-								bson.A{"$current",
-									bson.D{{"$divide",
-										bson.A{"$old", 100},
-									}},
-								},
-							}},
-							100,
-						},
-					}},
-				},
-			},
-		}},
-		bson.D{{"$sort",
-			bson.D{{"rate", sort}}}},
-		bson.D{{"$limit", 20}},
+	sort.Slice(cardGains, func(i, j int) bool {
+		if sortDir < 0 {
+			return cardGains[i].Rate > cardGains[j].Rate
+		}
+		return cardGains[i].Rate < cardGains[j].Rate
+	})
+	if len(cardGains) > 20 {
+		cardGains = cardGains[:20]
 	}
-	cardRaise, _ := coll.AggregateCards(cardRaisePipeline)
 
-	setRaisePipeline := mongo.Pipeline{
-		bson.D{{"$project",
-			bson.D{
-				{"name", true},
-				{"code", true},
-				{"old",
-					bson.D{{"$arrayElemAt",
-						bson.A{currencyField, old},
-					}},
-				},
-				{"current",
-					bson.D{{"$arrayElemAt",
-						bson.A{currencyField, -1},
-					}},
-				},
-			},
-		}},
-		bson.D{{"$match",
-			bson.D{{"old", bson.D{{"$gt", limit}}}},
-		}},
-		bson.D{{"$project",
-			bson.D{
-				{"name", true},
-				{"code", true},
-				{"old", true},
-				{"current", true},
-				{"rate",
-					bson.D{{"$subtract",
-						bson.A{
-							bson.D{{"$divide",
-								bson.A{"$current",
-									bson.D{{"$divide",
-										bson.A{"$old", 100},
-									}},
-								},
-							}},
-							100,
-						},
-					}},
-				},
-			},
-		}},
-		bson.D{{"$sort",
-			bson.D{{"rate", sort}}}},
-		bson.D{{"$limit", 10}},
+	ids := make([]string, 0, len(cardGains))
+	seen := map[string]bool{}
+	for _, g := range cardGains {
+		if !seen[g.Entry.CardID] {
+			seen[g.Entry.CardID] = true
+			ids = append(ids, g.Entry.CardID)
+		}
 	}
-	setRaise, _ := setcoll.AggregateSet(setRaisePipeline)
+	cardsByID, _ := cardsColl.FindCardsByIDs(ids)
 
-	// TODO: bring back color coding for gains and losses
+	// Set level gains
+	sets, _ := setscoll.FindSet(bson.D{}, bson.D{})
+	type setGain struct {
+		Set Set
+		gainRate
+	}
+	var setGains []setGain
+	for _, s := range sets {
+		history := make([]float64, len(s.PriceList))
+		for i, p := range s.PriceList {
+			history[i] = historicValue(p)
+		}
+		if r, ok := rateAt(history, old, limit); ok {
+			setGains = append(setGains, setGain{s, r})
+		}
+	}
+
+	sort.Slice(setGains, func(i, j int) bool {
+		if sortDir < 0 {
+			return setGains[i].Rate > setGains[j].Rate
+		}
+		return setGains[i].Rate < setGains[j].Rate
+	})
+	if len(setGains) > 10 {
+		setGains = setGains[:10]
+	}
+
 	fmt.Printf("%s\n", Purple("Cards"))
-	// print each card
-	for _, e := range cardRaise {
-		fmt.Printf("%+.0f%% %s %s (%.2f->%s%s) \n", e["rate"], e["name"], Yellow("(%s/%s)", e["set"], fmt.Sprint(e["collectornumber"])), e["old"], Green("%.2f", e["current"]), Green(getCurrency()))
+	for _, g := range cardGains {
+		c := cardsByID[g.Entry.CardID]
+		fmt.Printf("%+.0f%% %s %s (%.2f->%s%s) \n", g.Rate, c.Name, Yellow("(%s/%s)", c.Set, c.CollectorNumber), g.Old, Green("%.2f", g.Current), Green(getCurrency()))
 	}
 
 	fmt.Printf("\n%s\n", Purple("Sets"))
-	for _, e := range setRaise {
-		fmt.Printf("%+.0f%% %s %s (%.2f->%s%s)\n", e["rate"], e["name"], Yellow("(%s)", e["code"]), e["old"], Green("%.2f", e["current"]), Green(getCurrency()))
+	for _, g := range setGains {
+		fmt.Printf("%+.0f%% %s %s (%.2f->%s%s)\n", g.Rate, g.Set.Name, Yellow("(%s)", g.Set.Code), g.Old, Green("%.2f", g.Current), Green(getCurrency()))
 	}
 	return nil
 

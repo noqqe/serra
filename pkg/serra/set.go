@@ -2,10 +2,10 @@ package serra
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -15,13 +15,12 @@ func init() {
 }
 
 type SetsResult struct {
-	ID        string  `bson:"_id"`
-	Code      string  `bson:"code"`
-	Value     float64 `bson:"value"`
-	ValueFoil float64 `bson:"value_foil"`
-	Count     int32   `bson:"count"`
-	Unique    int32   `bson:"unique"`
-	Release   string  `bson:"release"`
+	ID      string
+	Code    string
+	Value   float64
+	Count   int64
+	Unique  int64
+	Release string
 }
 
 var setCmd = &cobra.Command{
@@ -45,73 +44,47 @@ otherwise you'll get a list of sets as a search result.`,
 	},
 }
 
-func Sets(sort string, filter string) []SetsResult {
-
-	client := storageConnect()
-	coll := client.getCardsCollection()
-	defer storageDisconnect(client)
+func Sets(sortBy string, filter string) []SetsResult {
 	l := Logger()
 
-	matchStage := bson.D{{"$match", bson.D{}}}
+	cardFilter := bson.D{}
 	if filter != "all" {
-		matchStage = bson.D{
-			{"$match", bson.D{
-				{"settype", filter},
-			}},
-		}
+		cardFilter = append(cardFilter, bson.E{"settype", filter})
 	}
 
-	groupStage := bson.D{
-		{"$group", bson.D{
-			{"_id", "$setname"},
-			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(false), "$serra_count"}}}}}},
-			{"value_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(true), "$serra_count_foil"}}}}}},
-			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-			{"unique", bson.D{{"$sum", 1}}},
-			{"code", bson.D{{"$last", "$set"}}},
-			{"release", bson.D{{"$last", "$releasedat"}}},
-		}},
-	}
-
-	var sortStage bson.D
-	switch sort {
-	case "release":
-		sortStage = bson.D{
-			{"$sort", bson.D{
-				{"release", 1},
-			}}}
-	case "value":
-		sortStage = bson.D{
-			{"$sort", bson.D{
-				{"value", 1},
-			}}}
-	}
-
-	bsonList, err := coll.AggregateCards(mongo.Pipeline{matchStage, groupStage, sortStage})
-
+	owned, err := OwnedCards(cardFilter)
 	if err != nil {
 		l.Error("Error fetching sets:", err)
 		return nil
 	}
 
-	sets := []SetsResult{}
-	for _, bsonEntry := range bsonList {
-		var item SetsResult
-		// Unmarshal bson.M into myStruct
-		bsonData, err := bson.Marshal(bsonEntry)
-		if err != nil {
-			l.Error("Error marshalling set result:", err)
-			return nil
+	bySet := map[string]*SetsResult{}
+	order := []string{}
+	for _, c := range owned {
+		r, ok := bySet[c.SetName]
+		if !ok {
+			r = &SetsResult{ID: c.SetName, Code: c.Set, Release: c.ReleasedAt}
+			bySet[c.SetName] = r
+			order = append(order, c.SetName)
 		}
-		err = bson.Unmarshal(bsonData, &item)
-		if err != nil {
-			l.Error("Error unmarshalling set result:", err)
-			return nil
-		}
-		sets = append(sets, item)
+		r.Value += c.getValue()*float64(c.Count) + c.getFoilValue()*float64(c.CountFoil) + c.getEtchedValue()*float64(c.CountEtched)
+		r.Count += c.Count + c.CountFoil + c.CountEtched
+		r.Unique++
 	}
-	return sets
 
+	sets := make([]SetsResult, 0, len(order))
+	for _, k := range order {
+		sets = append(sets, *bySet[k])
+	}
+
+	switch sortBy {
+	case "value":
+		sort.Slice(sets, func(i, j int) bool { return sets[i].Value < sets[j].Value })
+	default:
+		sort.Slice(sets, func(i, j int) bool { return sets[i].Release < sets[j].Release })
+	}
+
+	return sets
 }
 
 func showSetList(sets []SetsResult) {
@@ -131,20 +104,17 @@ func showSetList(sets []SetsResult) {
 func ShowSet(setname string) error {
 
 	client := storageConnect()
-	coll := client.getCardsCollection()
 	l := Logger()
 	defer storageDisconnect(client)
 
-	// fetch all cards in set ordered by currently used currency
-	cardSortCurrency := bson.D{{"prices.usd", -1}}
-	if getCurrency() == EUR {
-		cardSortCurrency = bson.D{{"prices.eur", -1}}
-	}
-	cards, err := coll.FindCards(bson.D{{"set", setname}}, cardSortCurrency, 0, 0)
+	cards, err := OwnedCards(bson.D{{"set", setname}})
 	if (err != nil) || len(cards) == 0 {
 		l.Errorf("Set %s not found or no card in your collection.", setname)
 		return err
 	}
+
+	// sort cards by value, most valuable first, for the "Most valuable cards" section
+	sort.Slice(cards, func(i, j int) bool { return cards[i].getValue() > cards[j].getValue() })
 
 	// fetch set informations
 	setcoll := client.getSetsCollection()
@@ -154,69 +124,34 @@ func ShowSet(setname string) error {
 		return err
 	}
 
-	// set values
-	matchStage := bson.D{
-		{"$match", bson.D{
-			{"set", setname},
-		}},
+	var normalValue, foilValue, etchedValue float64
+	var normalCount, foilCount, etchedCount int64
+	for _, c := range cards {
+		normalValue += c.getValue() * float64(c.Count)
+		foilValue += c.getFoilValue() * float64(c.CountFoil)
+		etchedValue += c.getEtchedValue() * float64(c.CountEtched)
+		normalCount += c.Count
+		foilCount += c.CountFoil
+		etchedCount += c.CountEtched
 	}
-	groupStage := bson.D{
-		{"$group", bson.D{
-			{"_id", "$setname"},
-			{"value", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(false), "$serra_count"}}}}}},
-			{"value_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{getCurrencyField(true), "$serra_count_foil"}}}}}},
-			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-			{"count_foil", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count_foil"}}}}}},
-		}},
-	}
-	stats, _ := coll.AggregateCards(mongo.Pipeline{matchStage, groupStage})
+	totalValue := normalValue + foilValue + etchedValue
 
-	// set rarities
-	matchStage = bson.D{
-		{"$match", bson.D{
-			{"set", setname},
-		}},
-	}
-	groupStage = bson.D{
-		{"$group", bson.D{
-			{"_id", "$rarity"},
-			{"count", bson.D{{"$sum", bson.D{{"$multiply", bson.A{1.0, "$serra_count"}}}}}},
-		}}}
-
-	sortStage := bson.D{
-		{"$sort", bson.D{
-			{"_id", 1},
-		}}}
-	rar, _ := coll.AggregateCards(mongo.Pipeline{matchStage, groupStage, sortStage})
-
-	ri := convertRarities(rar)
+	ri := rarityBreakdown(cards)
 
 	fmt.Printf("%s\n", Green(set.Name))
 	fmt.Printf("Type: %s\n", set.SetType)
 	fmt.Printf("Released: %s\n", set.ReleasedAt)
 	fmt.Printf("Set Cards: %d/%d\n", len(cards), set.CardCount)
-	fmt.Printf("Total Cards: %.0f\n", stats[0]["count"])
-	fmt.Printf("Foil Cards: %.0f\n", stats[0]["count_foil"])
-
-	normalValue, err := getFloat64(stats[0]["value"])
-	if err != nil {
-		l.Error(err)
-		normalValue = 0
-	}
-	foilValue, err := getFloat64(stats[0]["value_foil"])
-	if err != nil {
-		l.Error(err)
-		foilValue = 0
-	}
-	totalValue := normalValue + foilValue
-
-	normalCount, _ := getFloat64(stats[0]["count"])
-	foilCount, _ := getFloat64(stats[0]["count_foil"])
+	fmt.Printf("Total Cards: %d\n", normalCount+foilCount+etchedCount)
+	fmt.Printf("Foil Cards: %d\n", foilCount)
 
 	fmt.Printf("\n%s\n", Purple("Current Value"))
-	fmt.Printf("Total: %.0fx %s%s\n", normalCount+foilCount, Yellow("%.2f", totalValue), Yellow(getCurrency()))
-	fmt.Printf("Normal: %.0fx %s%s\n", stats[0]["count"], Yellow("%.2f", normalValue), Yellow(getCurrency()))
-	fmt.Printf("Foil: %.0fx %s%s\n", stats[0]["count_foil"], Yellow("%.2f", foilValue), Yellow(getCurrency()))
+	fmt.Printf("Total: %dx %s%s\n", normalCount+foilCount+etchedCount, Yellow("%.2f", totalValue), Yellow(getCurrency()))
+	fmt.Printf("Normal: %dx %s%s\n", normalCount, Yellow("%.2f", normalValue), Yellow(getCurrency()))
+	fmt.Printf("Foil: %dx %s%s\n", foilCount, Yellow("%.2f", foilValue), Yellow(getCurrency()))
+	if etchedCount > 0 {
+		fmt.Printf("Etched: %dx %s%s\n", etchedCount, Yellow("%.2f", etchedValue), Yellow(getCurrency()))
+	}
 
 	fmt.Printf("\n%s\n", Purple("Rarities"))
 	fmt.Printf("Mythics: %.0f\n", ri.Mythics)
