@@ -62,6 +62,17 @@ func priceEntryForFinish(p PriceEntry, finish string) PriceEntry {
 	return entry
 }
 
+// priceHistoryForFinish narrows a full Scryfall price history (as cached for
+// every card, owned or not) down to the values relevant to a single finish,
+// so it can be displayed the same way an inventory entry's value history is.
+func priceHistoryForFinish(history []PriceEntry, finish string) []PriceEntry {
+	narrowed := make([]PriceEntry, len(history))
+	for i, p := range history {
+		narrowed[i] = priceEntryForFinish(p, finish)
+	}
+	return narrowed
+}
+
 // Getter for currency specific value
 func (c Card) getValue() float64 {
 	return c.valueForFinish(FinishNonfoil)

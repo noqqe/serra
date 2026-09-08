@@ -330,9 +330,23 @@ func showCardDetails(card *OwnedCard) error {
 		fmt.Printf("* Etched: %dx %s%s %s\n", card.CountEtched, Yellow("%.2f", card.getEtchedValue()), Yellow(getCurrency()), DarkGray("(%.2f)", float64(card.CountEtched)*card.getEtchedValue()))
 	}
 
-	for _, e := range card.Entries {
-		fmt.Printf("\n%s\n", Green(fmt.Sprintf("Value History (%s, %s, %s)", e.Finish, e.Language, e.Condition)))
-		showPriceHistory(e.ValueHistory, "* ", false)
+	if inInventory {
+		for _, e := range card.Entries {
+			fmt.Printf("\n%s\n", Green(fmt.Sprintf("Value History (%s, %s, %s)", e.Finish, e.Language, e.Condition)))
+			showPriceHistory(e.ValueHistory, "* ", false)
+		}
+	} else if len(card.PriceHistory) > 0 {
+		// Not owned, so there's no per-entry value history - fall back to the
+		// Scryfall price history cached for every card regardless of
+		// ownership, narrowed down to the finishes this printing exists in.
+		if card.Nonfoil {
+			fmt.Printf("\n%s\n", Green("Value History (Nonfoil)"))
+			showPriceHistory(priceHistoryForFinish(card.PriceHistory, FinishNonfoil), "* ", false)
+		}
+		if card.Foil {
+			fmt.Printf("\n%s\n", Green("Value History (Foil)"))
+			showPriceHistory(priceHistoryForFinish(card.PriceHistory, FinishFoil), "* ", false)
+		}
 	}
 	return nil
 }
