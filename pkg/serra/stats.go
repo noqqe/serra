@@ -25,8 +25,8 @@ var statsCmd = &cobra.Command{
 
 func Stats() {
 	client := storageConnect()
+	defer storageDisconnect(client)
 	totalcoll := client.getTotalCollection()
-	storageDisconnect(client)
 
 	owned, err := OwnedCards(bson.D{})
 	if err != nil {
