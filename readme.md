@@ -136,6 +136,10 @@ The update mechanism iterates over each card in your collection and fetches
 its price. After all cards you own in a set are updated, the set value will
 update. After all Sets are updated, the whole collection value is updated.
 
+Every run also imports the entire Scryfall bulk file into the `cards`
+collection, appending a price snapshot to every printing - not just the ones
+you own. This lets you track price history for any card, owned or not.
+
 ![](https://github.com/noqqe/serra/blob/main/imgs/update.png)
 
 ## Check

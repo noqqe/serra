@@ -3,8 +3,10 @@ package serra
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -113,6 +115,11 @@ type Card struct {
 	TypeLine       string  `json:"type_line"`
 	URI            string  `json:"uri"`
 	Variation      bool    `json:"variation"`
+
+	// PriceHistory holds a snapshot of Prices for every update the card has
+	// gone through, regardless of whether it is owned. It is never present
+	// in Scryfall's own data and is maintained solely by UpsertCard(s).
+	PriceHistory []PriceEntry `json:"-" bson:"price_history,omitempty"`
 }
 
 type CardsCollection struct {
@@ -124,15 +131,109 @@ func (client StorageClient) getCardsCollection() CardsCollection {
 }
 
 // UpsertCard inserts a card or replaces it in place if it already exists
-// (keyed by its Scryfall ID). Used to (re-)cache Scryfall data.
+// (keyed by its Scryfall ID), appending a snapshot of its current prices to
+// its price history. Used to (re-)cache Scryfall data.
 func (coll CardsCollection) UpsertCard(card *Card) error {
 	l := Logger()
-	opts := options.Replace().SetUpsert(true)
-	_, err := coll.ReplaceOne(context.TODO(), bson.M{"_id": card.ID}, card, opts)
+	now := primitive.NewDateTimeFromTime(time.Now())
+
+	pipeline, err := cardUpsertPipeline(card, now)
+	if err != nil {
+		l.Fatalf("Could not build update pipeline for card data: %s", err.Error())
+		return err
+	}
+
+	_, err = coll.UpdateOne(context.TODO(), bson.M{"_id": card.ID}, pipeline, options.Update().SetUpsert(true))
 	if err != nil {
 		l.Fatalf("Could not store card data due to connection errors to database: %s", err.Error())
 	}
 	return err
+}
+
+// UpsertCards upserts a whole batch of cards in one round trip, appending a
+// price snapshot to each card's price history. Used to import the full
+// Scryfall bulk file so that prices can be tracked for every printing,
+// regardless of ownership.
+func (coll CardsCollection) UpsertCards(cards []Card) error {
+	l := Logger()
+	now := primitive.NewDateTimeFromTime(time.Now())
+
+	const batchSize = 500
+	for start := 0; start < len(cards); start += batchSize {
+		end := start + batchSize
+		if end > len(cards) {
+			end = len(cards)
+		}
+
+		models := make([]mongo.WriteModel, 0, end-start)
+		for i := range cards[start:end] {
+			card := &cards[start+i]
+			pipeline, err := cardUpsertPipeline(card, now)
+			if err != nil {
+				l.Error("Could not build update pipeline for card, skipping:", err)
+				continue
+			}
+			models = append(models, mongo.NewUpdateOneModel().
+				SetFilter(bson.M{"_id": card.ID}).
+				SetUpdate(pipeline).
+				SetUpsert(true))
+		}
+
+		if len(models) == 0 {
+			continue
+		}
+
+		if _, err := coll.BulkWrite(context.TODO(), models, options.BulkWrite().SetOrdered(false)); err != nil {
+			l.Fatalf("Could not bulk store card data due to connection errors to database: %s", err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
+// cardUpsertPipeline builds an aggregation-pipeline update that replaces a
+// card document's Scryfall data wholesale while appending (rather than
+// clobbering) its price_history array. A plain $set/$replace can't do this
+// in one step since the incoming Card value doesn't carry the existing
+// history with it.
+func cardUpsertPipeline(card *Card, snapshotDate primitive.DateTime) (mongo.Pipeline, error) {
+	cardDoc, err := toBsonM(card)
+	if err != nil {
+		return nil, err
+	}
+	delete(cardDoc, "price_history")
+
+	snapshot := card.Prices
+	snapshot.Date = snapshotDate
+	snapshotDoc, err := toBsonM(snapshot)
+	if err != nil {
+		return nil, err
+	}
+
+	return mongo.Pipeline{
+		bson.D{{"$replaceWith", bson.D{{"$mergeObjects", bson.A{
+			"$$ROOT",
+			cardDoc,
+			bson.D{{"price_history", bson.D{{"$concatArrays", bson.A{
+				bson.D{{"$ifNull", bson.A{"$price_history", bson.A{}}}},
+				bson.A{snapshotDoc},
+			}}}}}},
+		}}}},
+	}, nil
+}
+
+// toBsonM marshals a value to its bson.M representation, following its bson
+// struct tags exactly as a driver Insert/Replace would.
+func toBsonM(v any) (bson.M, error) {
+	raw, err := bson.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	var m bson.M
+	if err := bson.Unmarshal(raw, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // FindCards returns a list of cards by a given filter, sort and pagination options.

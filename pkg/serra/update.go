@@ -47,6 +47,12 @@ var updateCmd = &cobra.Command{
 			return err
 		}
 
+		if err := importBulkCards(updatedCards); err != nil {
+			log.Error("Could not import bulk cards:", err)
+			log.Error("Exiting")
+			return err
+		}
+
 		if len(setCodes) > 0 {
 			for _, setCode := range setCodes {
 				updateCardsOfSet(setCode, updatedSets.GetSetByCode(setCode), updatedCards)
@@ -96,6 +102,23 @@ func fetchUpdatedCards() ([]Card, error) {
 	return updatedCards, nil
 }
 
+// importBulkCards caches every card from the Scryfall bulk file into the
+// cards collection, appending a price snapshot to each - regardless of
+// whether the card is owned. This is what allows price history to be
+// tracked for cards outside of your collection.
+func importBulkCards(updatedCards []Card) error {
+	l := Logger()
+	client := storageConnect()
+	defer storageDisconnect(client)
+
+	l.Infof("Importing %d cards from bulk data...", len(updatedCards))
+	if err := client.getCardsCollection().UpsertCards(updatedCards); err != nil {
+		return err
+	}
+	l.Info("Finished importing bulk cards.")
+	return nil
+}
+
 // updateCardsOfSet refreshes the cached Scryfall data for every card owned
 // in a set, and appends a new value snapshot to every inventory entry of
 // that set.
@@ -104,7 +127,6 @@ func updateCardsOfSet(setCode string, updatedSet *Set, updatedCards []Card) erro
 	l := Logger()
 	defer storageDisconnect(client)
 
-	cardsColl := client.getCardsCollection()
 	invColl := client.getInventoryCollection()
 
 	// fetch all inventory entries owned in this set
@@ -129,23 +151,17 @@ func updateCardsOfSet(setCode string, updatedSet *Set, updatedCards []Card) erro
 		}),
 	)
 
-	refreshedCards := map[string]bool{}
 	now := primitive.NewDateTimeFromTime(time.Now())
 
 	for _, entry := range entries {
 		bar.Add(1)
 
-		// fetch fresh scryfall data from bulk file
+		// fetch fresh scryfall data from bulk file (already cached into the
+		// cards collection by importBulkCards for the whole bulk file)
 		updatedCard, err := getCardFromBulk(updatedCards, setCode, entry.CollectorNumber)
 		if err != nil {
 			l.Error(err)
 			continue
-		}
-
-		// refresh cached scryfall doc once per card, not once per inventory entry
-		if !refreshedCards[updatedCard.ID] {
-			cardsColl.UpsertCard(updatedCard)
-			refreshedCards[updatedCard.ID] = true
 		}
 
 		// Scryfall occasionally re-keys a printing's ID. If that happened,
