@@ -274,8 +274,17 @@ func showCard(cardID string) error {
 	l := Logger()
 	card, err := FindOwnedCard(setCode, collectorNumber)
 	if err != nil {
-		l.Errorf("Card %s not found in collection", cardID)
-		return err
+		// Not (or no longer) in the inventory - fall back to the cached
+		// Scryfall data so the card can still be displayed.
+		client := storageConnect()
+		defer storageDisconnect(client)
+
+		scryfallCard, ferr := client.getCardsCollection().FindCardByCollectorNumber(setCode, collectorNumber)
+		if ferr != nil {
+			l.Errorf("Card %s not found", cardID)
+			return ferr
+		}
+		card = &OwnedCard{Card: *scryfallCard}
 	}
 
 	showCardDetails(card)
@@ -302,8 +311,15 @@ func showCardList(cards []OwnedCard, detail bool) {
 }
 
 func showCardDetails(card *OwnedCard) error {
+	inInventory := card.Count+card.CountFoil+card.CountEtched > 0
+
 	fmt.Printf("%s (%s/%s)\n", Purple(card.Name), card.Set, card.CollectorNumber)
-	fmt.Printf("Added: %s\n", stringToTime(card.Created))
+	if inInventory {
+		fmt.Printf("Status: %s\n", Green("In Inventory"))
+		fmt.Printf("Added: %s\n", stringToTime(card.Created))
+	} else {
+		fmt.Printf("Status: %s\n", Red("Not in Inventory"))
+	}
 	fmt.Printf("Rarity: %s\n", card.Rarity)
 	fmt.Printf("Scryfall: %s\n", strings.Replace(card.ScryfallURI, "?utm_source=api", "", 1))
 
