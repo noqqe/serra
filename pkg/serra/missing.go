@@ -22,6 +22,7 @@ cards you dont own (yet) :)`,
 	RunE: func(cmd *cobra.Command, setNames []string) error {
 		client := storageConnect()
 		invColl := client.getInventoryCollection()
+		cardsColl := client.getCardsCollection()
 		l := Logger()
 		defer storageDisconnect(client)
 
@@ -57,7 +58,7 @@ cards you dont own (yet) :)`,
 			// Fetch all missing cards
 			missingCards := []*Card{}
 			for _, m := range misses {
-				card, err := fetchCard(setName, m)
+				card, err := cardsColl.FindCardByCollectorNumber(setName, m)
 				if err != nil {
 					continue
 				}
