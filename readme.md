@@ -72,7 +72,7 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   flops       What cards lost most value
   help        Help about any command
-  migrate     One-time migration of the legacy cards collection into cards + inventory
+  migrate     Bring the database up to the schema this version of serra expects
   missing     Display missing cards from a set
   remove      Remove a card from your collection
   set         Search & show sets from your collection
@@ -190,6 +190,16 @@ wget https://github.com/noqqe/serra/releases/download/3.10.0/serra_Darwin_x86_64
 tar zxfv serra_Darwin_x86_64.tar.gz
 ./serra 
 ```
+
+## Database Schema Versioning
+
+serra tracks which schema version its database is at in a `meta` collection.
+Every command warns if the database is behind the version this build
+expects, and refuses to run if it's ahead (i.e. you downgraded the binary).
+
+Run `serra migrate` to bring the database up to date, or `serra migrate
+--status` to check the current/expected version without changing anything.
+It is always safe to run more than once.
 
 ## Upgrade Notes
 

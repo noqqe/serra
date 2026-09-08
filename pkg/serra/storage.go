@@ -24,7 +24,9 @@ func storageConnect() StorageClient {
 		l.Fatalf("Could not connect to mongodb at %s", uri)
 	}
 
-	return StorageClient{client}
+	storageClient := StorageClient{client}
+	storageClient.CheckSchemaVersion()
+	return storageClient
 }
 
 // storageDisconnect disconnects from the MongoDB database and returns an error

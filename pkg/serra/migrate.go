@@ -2,12 +2,15 @@ package serra
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+var migrateStatus bool
 
 // toDateTime best-effort converts a decoded legacy timestamp (typically a
 // primitive.DateTime) back into a primitive.DateTime, falling back to now if
@@ -20,23 +23,53 @@ func toDateTime(v interface{}) primitive.DateTime {
 }
 
 func init() {
+	migrateCmd.Flags().BoolVar(&migrateStatus, "status", false, "Show the database's current schema version without migrating")
 	rootCmd.AddCommand(migrateCmd)
 }
 
 var migrateCmd = &cobra.Command{
 	Use:   "migrate",
-	Short: "One-time migration of the legacy cards collection into cards + inventory",
-	Long: `Older versions of serra stored ownership data (count, value history,
-added/updated timestamps) directly inside the "cards" collection, alongside
-the cached Scryfall data. This command splits any such legacy documents into
-a pure Scryfall "cards" collection and a new "inventory" collection (one
-entry per card/finish/language/condition combination).
+	Short: "Bring the database up to the schema this version of serra expects",
+	Long: `Brings the database up to date in two steps:
+
+1. A one-time migration of the legacy "cards" collection, where older
+   versions of serra stored ownership data (count, value history,
+   added/updated timestamps) directly alongside the cached Scryfall data.
+   This splits any such legacy documents into a pure Scryfall "cards"
+   collection and a new "inventory" collection (one entry per
+   card/finish/language/condition combination).
+
+2. Applying any schema migrations needed to reach the current schema
+   version (see 'serra migrate --status' for the database's current
+   version).
 
 It is safe to run multiple times.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if migrateStatus {
+			return showSchemaStatus()
+		}
 		return runMigration()
 	},
+}
+
+func showSchemaStatus() error {
+	l := Logger()
+	client := storageConnect()
+	defer storageDisconnect(client)
+
+	version, err := client.getSchemaVersion()
+	if err != nil {
+		l.Fatalf("Could not determine database schema version: %s", err.Error())
+		return err
+	}
+
+	fmt.Printf("Database schema version: %d\n", version)
+	fmt.Printf("Expected schema version: %d\n", CurrentSchemaVersion)
+	if version < CurrentSchemaVersion {
+		fmt.Println("Run 'serra migrate' to update.")
+	}
+	return nil
 }
 
 // legacyCard mirrors the pre-migration shape of a "cards" document, where
@@ -139,5 +172,11 @@ func runMigration() error {
 	}
 
 	l.Infof("Migration finished: %d cards, %d inventory entries", migratedCards, migratedEntries)
+
+	if err := client.ApplySchemaMigrations(); err != nil {
+		l.Fatalf("Could not apply schema migrations: %s", err.Error())
+		return err
+	}
+
 	return nil
 }
