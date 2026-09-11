@@ -26,6 +26,7 @@ var (
 	is              string
 	isNot           string
 	language        string
+	legal           string
 	limit           float64
 	name            string
 	oracle          string

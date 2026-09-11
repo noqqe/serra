@@ -27,6 +27,7 @@ func init() {
 	cardCmd.Flags().BoolVarP(&foil, "foil", "f", false, "If card is foil list")
 	cardCmd.Flags().StringVarP(&is, "is", "y", "", "If card has certain attribute")
 	cardCmd.Flags().StringVarP(&isNot, "isnot", "x", "", "If card does not have certain attribute")
+	cardCmd.Flags().StringVarP(&legal, "legal", "l", "", "Filter by format legality (standard, pioneer, modern, legacy, vintage, commander, pauper, premodern, ...)")
 	rootCmd.AddCommand(cardCmd)
 }
 
@@ -40,7 +41,7 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, is, isNot)
+			cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, is, isNot, legal)
 			showCardList(cardList, detail)
 		} else {
 			for _, card := range cards {
@@ -156,7 +157,7 @@ func FindOwnedCard(setCode, collectorNumber string) (*OwnedCard, error) {
 
 // Cards fetches card based on search parameters
 // TODO:Create search object instead of a bazillion parameters
-func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot string) []OwnedCard {
+func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot, legal string) []OwnedCard {
 	filter := bson.D{}
 
 	switch rarity {
@@ -209,6 +210,10 @@ func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bo
 
 	if reserved {
 		filter = append(filter, bson.E{"reserved", true})
+	}
+
+	if len(legal) > 0 {
+		filter = append(filter, bson.E{"legalities." + strings.ToLower(legal), "legal"})
 	}
 
 	cards, _ := OwnedCards(filter)

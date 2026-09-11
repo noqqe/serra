@@ -26,7 +26,7 @@ var exportCmd = &cobra.Command{
 		Supports multiple output formats depending on where you want to export your collection.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, "", "")
+		cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, "", "", "")
 
 		switch format {
 		case "tcgpowertools":
