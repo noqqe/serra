@@ -11,6 +11,7 @@ import (
 var (
 	Version         = "unknown"
 	address         string
+	allCards        bool
 	artist          string
 	cardType        string
 	setType         string

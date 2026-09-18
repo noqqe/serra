@@ -14,9 +14,11 @@ func init() {
 	topsCmd.Flags().Float64VarP(&limit, "limit", "l", 0, "Minimum card price to be shown in analysis")
 	topsCmd.Flags().BoolVarP(&sinceLastUpdate, "since-last-update", "u", false, "Show gains since last update")
 	topsCmd.Flags().BoolVarP(&sinceBeginning, "since-beginning", "b", true, "Show gains since beginning of records")
+	topsCmd.Flags().BoolVarP(&allCards, "all", "a", false, "Show gains across the entire card database instead of just your inventory")
 	flopsCmd.Flags().Float64VarP(&limit, "limit", "l", 0, "Minimum card price to be shown in analysis")
 	flopsCmd.Flags().BoolVarP(&sinceLastUpdate, "since-last-update", "u", false, "Show losses since last update")
 	flopsCmd.Flags().BoolVarP(&sinceBeginning, "since-beginning", "b", true, "Show losses since beginning of records")
+	flopsCmd.Flags().BoolVarP(&allCards, "all", "a", false, "Show losses across the entire card database instead of just your inventory")
 }
 
 var topsCmd = &cobra.Command{
@@ -95,21 +97,34 @@ func Gains(limit float64, sortDir int) error {
 		old = -2
 	}
 
-	// Card (inventory entry) level gains
-	entries, _ := invColl.FindInventoryEntries(bson.D{}, bson.D{}, 0, 0)
-
+	// Card level gains, either restricted to what's in the inventory or
+	// spanning the entire cached card database (--all).
 	type cardGain struct {
-		Entry InventoryEntry
+		CardID string
 		gainRate
 	}
 	var cardGains []cardGain
-	for _, e := range entries {
-		history := make([]float64, len(e.ValueHistory))
-		for i, p := range e.ValueHistory {
-			history[i] = historicValue(p)
+	if allCards {
+		cards, _ := cardsColl.FindCards(bson.D{}, bson.D{}, 0, 0)
+		for _, c := range cards {
+			history := make([]float64, len(c.PriceHistory))
+			for i, p := range c.PriceHistory {
+				history[i] = historicValue(p)
+			}
+			if r, ok := rateAt(history, old, limit); ok {
+				cardGains = append(cardGains, cardGain{c.ID, r})
+			}
 		}
-		if r, ok := rateAt(history, old, limit); ok {
-			cardGains = append(cardGains, cardGain{e, r})
+	} else {
+		entries, _ := invColl.FindInventoryEntries(bson.D{}, bson.D{}, 0, 0)
+		for _, e := range entries {
+			history := make([]float64, len(e.ValueHistory))
+			for i, p := range e.ValueHistory {
+				history[i] = historicValue(p)
+			}
+			if r, ok := rateAt(history, old, limit); ok {
+				cardGains = append(cardGains, cardGain{e.CardID, r})
+			}
 		}
 	}
 
@@ -126,9 +141,9 @@ func Gains(limit float64, sortDir int) error {
 	ids := make([]string, 0, len(cardGains))
 	seen := map[string]bool{}
 	for _, g := range cardGains {
-		if !seen[g.Entry.CardID] {
-			seen[g.Entry.CardID] = true
-			ids = append(ids, g.Entry.CardID)
+		if !seen[g.CardID] {
+			seen[g.CardID] = true
+			ids = append(ids, g.CardID)
 		}
 	}
 	cardsByID, _ := cardsColl.FindCardsByIDs(ids)
@@ -162,7 +177,7 @@ func Gains(limit float64, sortDir int) error {
 
 	fmt.Printf("%s\n", Purple("Cards"))
 	for _, g := range cardGains {
-		c := cardsByID[g.Entry.CardID]
+		c := cardsByID[g.CardID]
 		fmt.Printf("%+.0f%% %s %s (%.2f->%s%s) \n", g.Rate, c.Name, Yellow("(%s/%s)", c.Set, c.CollectorNumber), g.Old, Green("%.2f", g.Current), Green(getCurrency()))
 	}
 
