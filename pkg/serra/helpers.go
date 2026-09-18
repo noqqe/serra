@@ -182,7 +182,10 @@ func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 		}
 
 		// calculate percent difference
-		diffPercent := (value / before * 100) - 100
+		var diffPercent float64
+		if before != 0 {
+			diffPercent = (value/before*100) - 100
+		}
 
 		// always display first history entry
 		if i == 0 {
@@ -197,7 +200,7 @@ func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 		}
 
 		// price decreased or first or last element in history
-		if (value < before) && (diffPercent < -5 || i == last) {
+		if (value < before) && (diffPercent < -5 || i+1 == last) {
 			fmt.Printf("%s%s %s%s (%+.2f%%, %+.2f%s)\n", prefix, stringToTime(e.Date), Red("%.2f", value), Red(getCurrency()), diffPercent, value-before, getCurrency())
 		}
 
