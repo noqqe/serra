@@ -195,11 +195,10 @@ func updateSet(setCode string, updatedSet *Set) error {
 	setscoll := client.getSetsCollection()
 	defer storageDisconnect(client)
 
-	// fetch set from database, otherwise create it
-	storedSet, err := setscoll.FindSetByCode(setCode)
-	if err != nil {
-		setscoll.AddSet(updatedSet)
-	}
+	// fetch set from database for its price history/created timestamp; a
+	// zero-value Set{} (not found - this is a brand-new set) is fine to
+	// build on, UpsertSet below will insert it.
+	storedSet, _ := setscoll.FindSetByCode(setCode)
 
 	owned, err := OwnedCards(bson.D{{"set", updatedSet.Code}})
 	if err != nil || len(owned) == 0 {
@@ -232,15 +231,8 @@ func updateSet(setCode string, updatedSet *Set) error {
 	updatedSet.Created = storedSet.Created
 	updatedSet.Updated = primitive.NewDateTimeFromTime(time.Now())
 
-	err = setscoll.RemoveSet(storedSet)
-	if err != nil {
-		l.Error("Could not remove set during update, skipping set update:", err)
-		return err
-	}
-
-	_, err = setscoll.AddSet(updatedSet)
-	if err != nil {
-		l.Error("Could not add set during update, skipping set update:", err)
+	if err := setscoll.UpsertSet(updatedSet); err != nil {
+		l.Error("Could not upsert set during update, skipping set update:", err)
 		return err
 	}
 

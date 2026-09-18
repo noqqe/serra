@@ -55,27 +55,17 @@ func (client StorageClient) getSetsCollection() SetsCollection {
 	return SetsCollection{client.Database("serra").Collection("sets")}
 }
 
-// AddSet adds a set to the collection. If the set already exists, an error is returned.
-func (coll SetsCollection) AddSet(set *Set) (*mongo.InsertOneResult, error) {
-	id, err := coll.InsertOne(context.TODO(), set)
-	if err != nil {
-		return id, err
-	}
-	return id, err
-}
-
-// RemoveSet removes a set from the collection. If the set does not exist, an error is returned.
-func (coll SetsCollection) RemoveSet(set *Set) error {
+// UpsertSet replaces a set document outright, inserting it if it does not
+// exist yet, keyed by its Scryfall ID. Used by update to write back a set's
+// refreshed data plus appended price history in a single atomic step.
+func (coll SetsCollection) UpsertSet(set *Set) error {
 	l := Logger()
 
-	filter := bson.M{"_id": set.ID}
-	_, err := coll.DeleteOne(context.TODO(), filter)
+	_, err := coll.ReplaceOne(context.TODO(), bson.M{"_id": set.ID}, set, options.Replace().SetUpsert(true))
 	if err != nil {
-		l.Fatalf("Could remove set due to connection errors to database: %s", err.Error())
-		return err
+		l.Fatalf("Could not upsert set due to connection errors to database: %s", err.Error())
 	}
-
-	return nil
+	return err
 }
 
 // FindSet returns a list of sets by a given filter and sort options.
