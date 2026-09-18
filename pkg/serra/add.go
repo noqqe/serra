@@ -52,7 +52,6 @@ func addCardsInteractive(unique bool, set string) {
 	defer rl.Close()
 
 	for {
-		var cardID string
 		line, err := rl.Readline()
 		if err != nil { // io.EOF
 			break
@@ -64,41 +63,43 @@ func addCardsInteractive(unique bool, set string) {
 		// default is count 1
 		count = 1
 
-		// Detect if input contains a dash, if it does it means the user wants to add a range of cards
-		if strings.Contains(line, "-") {
-			// Split input into two parts
-			parts := strings.Split(line, "-")
-			// Check if both parts are numbers
-			if _, err := strconv.Atoi(parts[0]); err == nil {
-				if _, err = strconv.Atoi(parts[1]); err == nil {
-					// Loop over range and add each card to card slice
-					start, _ := strconv.Atoi(parts[0])
-					end, _ := strconv.Atoi(parts[1])
-					for i := start; i <= end; i++ {
-						cardID = fmt.Sprintf("%s/%d", set, i)
-					}
-				}
-			}
-		} else {
-			cardID = fmt.Sprintf("%s/%s", set, strings.Split(line, " ")[0])
-		}
+		fields := strings.Split(line, " ")
 
 		// Are there extra arguments?
-		if len(strings.Split(line, " ")) == 2 {
+		if len(fields) == 2 {
 
 			// foil shortcut
-			if strings.Split(line, " ")[1] == "f" {
+			if fields[1] == "f" {
 				foil = true
 			}
 
 			// amount shortcut
-			if amount, err := strconv.Atoi(strings.Split(line, " ")[1]); err == nil {
+			if amount, err := strconv.Atoi(fields[1]); err == nil {
 				if amount > 1 {
 					count = int64(amount)
 				}
 			}
 		}
 
+		// Detect if input contains a dash, if it does it means the user wants to add a range of cards
+		if strings.Contains(fields[0], "-") {
+			// Split input into two parts
+			parts := strings.Split(fields[0], "-")
+			// Check if both parts are numbers
+			if len(parts) == 2 {
+				if start, err := strconv.Atoi(parts[0]); err == nil {
+					if end, err := strconv.Atoi(parts[1]); err == nil {
+						// Loop over range and add each card individually
+						for i := start; i <= end; i++ {
+							addCard(fmt.Sprintf("%s/%d", set, i), unique, count)
+						}
+						continue
+					}
+				}
+			}
+		}
+
+		cardID := fmt.Sprintf("%s/%s", set, fields[0])
 		addCard(cardID, unique, count)
 	}
 
