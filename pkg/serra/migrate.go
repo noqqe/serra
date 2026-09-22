@@ -46,6 +46,10 @@ var migrateCmd = &cobra.Command{
 It is safe to run multiple times.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Both paths below report on the legacy format themselves, so the
+		// connect-time hint to run this command would only be noise.
+		skipLegacyCheck = true
+
 		if migrateStatus {
 			return showSchemaStatus()
 		}
@@ -58,15 +62,27 @@ func showSchemaStatus() error {
 	client := storageConnect()
 	defer storageDisconnect(client)
 
-	version, err := client.getSchemaVersion()
+	version, recorded, err := client.getSchemaVersion()
 	if err != nil {
 		l.Fatalf("Could not determine database schema version: %s", err.Error())
 		return err
 	}
 
-	fmt.Printf("Database schema version: %d\n", version)
+	if recorded {
+		fmt.Printf("Database schema version: %d\n", version)
+	} else {
+		fmt.Printf("Database schema version: %d (assumed, never recorded)\n", version)
+	}
 	fmt.Printf("Expected schema version: %d\n", CurrentSchemaVersion)
-	if version < CurrentSchemaVersion {
+
+	// A pre-5.0 database records no version at all, so the numbers above
+	// look fine while the ownership data still sits in the old format.
+	legacy := client.hasLegacyOwnershipData()
+	if legacy {
+		fmt.Println("Ownership data: still in the pre-5.0 format")
+	}
+
+	if version < CurrentSchemaVersion || legacy {
 		fmt.Println("Run 'serra migrate' to update.")
 	}
 	return nil
@@ -118,8 +134,9 @@ func runMigration() error {
 		created := toDateTime(lc.Created)
 		updated := toDateTime(lc.Updated)
 
-		// Re-save the card as pure Scryfall data (strips the legacy
-		// serra_* fields once written back).
+		// Re-save the card as pure Scryfall data. This merges rather than
+		// replaces, so the legacy serra_* fields are cleared separately once
+		// their ownership data has been converted below.
 		card := lc.Card
 		if err := cardsColl.UpsertCard(&card); err != nil {
 			l.Errorf("Could not migrate card %s: %s", card.ID, err.Error())
@@ -136,6 +153,7 @@ func runMigration() error {
 			{FinishEtched, lc.CountEtched},
 		}
 
+		converted := true
 		for _, f := range finishes {
 			if f.Count <= 0 {
 				continue
@@ -165,9 +183,20 @@ func runMigration() error {
 
 			if err := invColl.upsertMigratedEntry(&entry); err != nil {
 				l.Errorf("Could not migrate inventory entry %s: %s", entry.ID, err.Error())
+				converted = false
 				continue
 			}
 			migratedEntries++
+		}
+
+		// Only once every finish made it across is it safe to drop the
+		// legacy fields; otherwise leave them in place so re-running the
+		// migration picks this card up again.
+		if !converted {
+			continue
+		}
+		if err := cardsColl.clearLegacyFields(card.ID); err != nil {
+			l.Errorf("Could not clear legacy fields on card %s: %s", card.ID, err.Error())
 		}
 	}
 

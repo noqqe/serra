@@ -150,6 +150,37 @@ func (coll CardsCollection) UpsertCard(card *Card) error {
 	return err
 }
 
+// legacyOwnershipFields are the fields 4.x and older stored ownership data
+// in, directly on the card document.
+var legacyOwnershipFields = []string{
+	"serra_count",
+	"serra_count_foil",
+	"serra_count_etched",
+	"serra_prices",
+	"serra_created",
+	"serra_updated",
+}
+
+// clearLegacyFields removes the pre-5.0 ownership fields from a card
+// document. UpsertCard merges into the existing document rather than
+// replacing it, so re-saving a card does not drop these on its own: they have
+// to be cleared explicitly, once the ownership data they hold has been
+// converted into inventory entries.
+//
+// Leaving them behind is not cosmetic. A later 'serra migrate' would find the
+// document still looking legacy, convert it a second time, and overwrite the
+// inventory entry's accumulated value history with the stale snapshot frozen
+// in serra_prices.
+func (coll CardsCollection) clearLegacyFields(cardID string) error {
+	unset := bson.M{}
+	for _, field := range legacyOwnershipFields {
+		unset[field] = ""
+	}
+
+	_, err := coll.UpdateOne(context.TODO(), bson.M{"_id": cardID}, bson.M{"$unset": unset})
+	return err
+}
+
 // UpsertCards upserts a whole batch of cards in one round trip, appending a
 // price snapshot to each card's price history. Used to import the full
 // Scryfall bulk file so that prices can be tracked for every printing,
