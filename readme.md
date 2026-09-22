@@ -24,6 +24,43 @@ an overview in what cards you own and what value they have.
 
 * Does not verify condition/language input against a fixed enum - anything you type is stored as-is
 
+# What's new in 5.0.0
+
+5.0.0 is a **breaking release**: the database schema changed. After upgrading
+the binary, run `./serra migrate` once (see [Upgrade Notes](#4xx---5xx)).
+
+Highlights:
+
+* **`cards` and `inventory` are now separate collections.** Cached Scryfall
+  data and your ownership data no longer share a document.
+* **Language, condition and etched-foil tracking.** `add`/`remove` take
+  `--language`, `--condition` and `--etched`, and each combination is its own
+  inventory entry.
+* **Price history for every card, not just the ones you own.** Every `update`
+  imports the full Scryfall bulk file, so you can look at the price
+  development of cards you are only thinking about buying.
+* **`--all` on `tops`/`flops`** to analyse the whole card database instead of
+  just your collection, and **`--legal`** to filter cards by format legality.
+* **`missing` runs against the local database**, which makes it much faster.
+* **Schema versioning.** serra now tells you when your database needs
+  migrating instead of misbehaving quietly.
+
+The full list, including bugfixes, is in [CHANGELOG.md](CHANGELOG.md).
+
+## A note on how this release was built
+
+Most of 5.0.0 was written together with [Claude](https://claude.ai). This is
+a hobby project I maintain in the evenings, and the honest reason is time: I
+have a long list of changes I want in serra and no realistic chance of doing
+all of them by hand. Pairing with an LLM is what got the schema split, the
+per-copy language/condition tracking and a pile of long-standing bugfixes
+over the line instead of sitting in my notes for another year.
+
+Everything in this release was reviewed and tested by me before it shipped,
+and the commits that were written this way say so in their trailers. I'm
+mentioning it here because I think it's worth being upfront about, not
+because it changes what serra does.
+
 # Quickstart
 
 ## Install Binaries
@@ -205,24 +242,74 @@ It is always safe to run more than once.
 
 ### 4.x.x -> 5.x.x
 
-The database schema changed: the `cards` collection used to hold both cached
-Scryfall data and your ownership data (count, value history, added/updated
-timestamps) in the same document. These are now split:
+**This upgrade requires a migration.** The database schema changed: the
+`cards` collection used to hold both cached Scryfall data and your ownership
+data (count, value history, added/updated timestamps) in the same document.
+These are now split:
 
-* `cards` only holds cached Scryfall data.
+* `cards` only holds cached Scryfall data, one document per printing.
 * `inventory` holds ownership data, with one entry per card/finish
-  (normal/foil/etched)/language/condition combination.
+  (normal/foil/etched)/language/condition combination, carrying its own
+  `count` and value history.
 
 `add`/`remove` now support `--language` and `--condition` flags (defaulting
 to `en`/`nm`) to track those per copy, and `--etched` to add/remove the
 etched finish.
 
-After upgrading the binary, run the migration once to split your existing
-data:
+#### Back up first
+
+The migration rewrites documents in place. It is well-behaved and re-runnable,
+but this is your collection — take a dump before you start:
+
+    mongodump -d serra -o ./backup/
+
+(see `mongodb_queries.md` for the authenticated variant)
+
+#### Run the migration
+
+After upgrading the binary:
 
     ./serra migrate
 
-It is safe to run more than once.
+This does two things:
+
+1. Splits every legacy `cards` document that carries ownership data into a
+   clean `cards` document plus one `inventory` entry per finish you owned.
+   Existing price history is carried over, narrowed down to the finish it
+   belongs to. Copies are assumed to be `en`/`nm`, since older versions did
+   not track language or condition — adjust afterwards if you kept that
+   information elsewhere.
+2. Applies any pending schema migrations and records the schema version, so
+   future upgrades have a stored baseline to count from rather than an
+   assumption.
+
+It is safe to run more than once. Converted documents have their old fields
+cleared, so a second run finds nothing left to do and reports `0 cards, 0
+inventory entries`. A partial failure can simply be resumed by running it
+again: anything that did not make it across keeps its old format and gets
+picked up on the next run.
+
+#### Verify
+
+    ./serra migrate --status
+    ./serra stats
+
+`migrate --status` should report the database and expected schema version as
+the same number, no longer mention the pre-5.0 format, and `stats` should
+show your collection again.
+
+If you skip the migration, serra notices: a 4.x database records no schema
+version to compare against, so instead of trusting the version number serra
+checks whether ownership data is still sitting in the old format, and warns
+on every command until you convert it. Your data is not lost in the
+meantime — it just hasn't been moved into `inventory` yet, so the collection
+reads as empty.
+
+#### Downgrading
+
+Going back to a 4.x binary after migrating is not supported: it knows nothing
+about the `inventory` collection and would show an empty collection. Restore
+the dump if you need to go back.
 
 ### 3.x.x -> 4.x.x
 
@@ -269,6 +356,9 @@ bash add_commands.sh
 
 ## Install
 
-    go build .
+    task build
     ./serra
+
+(`task build` bakes the version string in via `git describe`. A plain `go
+build ./cmd/serra` works too, it just reports its version as `unknown`.)
 
