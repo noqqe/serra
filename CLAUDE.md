@@ -12,13 +12,37 @@ and `mongodb_queries.md` for schema/query cheatsheet.
 
 ## Commands
 
-    go build .              # build the `serra` binary (or `task build` / `task`, see Taskfile.yaml)
+    task build              # the real build (default task) - see Taskfile.yaml
+    go build ./cmd/serra    # same binary, but Version stays "unknown"
+    go build ./...          # compile-check everything
+    go vet ./...            # static checks - not clean, see below
     ./serra <command>       # run it, e.g. ./serra add usg/17
-    go build -v ./...       # build everything including cmd/
-    go vet ./...            # static checks
+
+`go build .` does **not** work - the repo root contains no Go files. `task
+build` is what to use: it injects `-X
+github.com/noqqe/serra/pkg/serra.Version=$(git describe --tags)`, and that
+`Version` string feeds `--version`, the web UI footer *and* the `User-Agent`
+sent to Scryfall (`queryScryfall()`), so a hand-rolled `go build` produces a
+binary that identifies itself as `Serra/unknown`.
+
+`go vet ./...` is **not** clean on a pristine checkout: it emits ~51 "struct
+literal uses unkeyed fields" warnings for the unkeyed `bson.E{...}` /
+`primitive.E{...}` literals used throughout the query builders. That is the
+codebase's established style - compare against that baseline rather than
+assuming a change introduced them.
 
 There are no automated tests in this repo (`*_test.go` files do not exist).
 There is no linter config beyond `go vet`.
+
+Run the binary **from the repo root**. Three runtime paths are relative to
+the working directory: `sounds/*.mp3` (`sound.go` `panic()`s if a file is
+missing, and it is called as `go playSound...()`, so the panic takes the
+whole process down), plus `templates/*.gohtml` and `./assets` (`web.go`).
+`colorizeValue()` fires `go playSoundCash()` for any card worth more than 1,
+so even read-only commands touch `./sounds`.
+
+`.tool-versions` pins `golang 1.21.3` and is stale - `go.mod` requires go
+1.26.1 and the Dockerfile builds on `golang:1.26-alpine`.
 
 Running against a real database requires:
 
@@ -31,6 +55,13 @@ Release process (`task release`) tags, pushes, runs `goreleaser release
 --clean`, and builds/pushes a Docker image — not something to run without the
 user explicitly asking.
 
+## Version control
+
+This is a **colocated Jujutsu repo**: `.jj/` uses a git backend pointing at
+`.git`, so git HEAD is normally detached and "the current branch" is not a
+meaningful question. Check `jj st` / `jj log` before doing anything
+VCS-related, and do not "fix" the detached HEAD.
+
 ## Architecture
 
 Everything lives in a single Go package, `pkg/serra`, with `cmd/serra/serra.go`
@@ -39,6 +70,13 @@ is a self-contained vertical slice: a cobra command (`*Cmd` var + `init()`
 registering flags/subcommand on `rootCmd` in `root.go`) plus the logic it
 needs. Cobra flag variables (`set`, `count`, `foil`, `language`, ...) are
 declared once as package-level vars in `root.go` and reused across commands.
+
+Those globals are a sharp edge: cobra/pflag assigns a flag's default to its
+variable at *registration* time (i.e. in `init()`, for every command), and
+some query helpers read them directly instead of taking them as parameters
+— `Cards()` has a dozen parameters but still reads `artist`, `cmc`, `color`
+and `count` (`--min-count`) off the package level. Calling `Cards()` from a
+non-CLI context (`web.go`) therefore inherits whatever those defaults are.
 
 ### Data model: Scryfall cache vs. ownership
 
@@ -119,3 +157,20 @@ be resumed by re-running.
 - `getCurrency()` (`env.go`) reads `SERRA_CURRENCY` and drives which
   Eur/Usd(/Foil/Etched) fields of `PriceEntry` are used everywhere value is
   displayed or compared.
+- The Mongo database name is hardcoded to `serra` in every collection getter;
+  only the host part of `MONGODB_URI` matters.
+- `Card` carries no bson tags apart from `_id` and `price_history`, so its
+  Mongo field names are the **lowercased Go field names**, not the Scryfall
+  JSON names: `collectornumber`, `typeline`, `oracletext`, `coloridentity`,
+  `scryfalluri`. Filters in `card.go`/`web.go` and the queries in
+  `mongodb_queries.md` follow that spelling.
+- `OwnedCards()` calls `storageConnect()`/`storageDisconnect()` itself, so a
+  command that already connected ends up with a second client. It also joins
+  in Go rather than in Mongo: it loads *every* inventory entry, aggregates
+  per card ID, then fetches the matching `cards` with an `$in` over all owned
+  IDs — fine at a personal collection's scale, but it means filtering is
+  memory-bound, and `--min-count`/`--foil`/sorting happen after the fetch.
+- Storage helpers mostly call `l.Fatalf(...)` on driver errors *and* return
+  the error, so a DB failure usually exits the process rather than
+  propagating to the cobra `RunE`. Follow that convention when adding to
+  `storage_*.go` rather than mixing in a new error style.
