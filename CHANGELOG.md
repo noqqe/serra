@@ -6,8 +6,7 @@ Notable changes per release. For releases before 5.0.0, see the
 ## 5.0.0
 
 The biggest release so far, and a breaking one: the database schema changed.
-**Run `./serra migrate` once after upgrading** — see [Upgrade
-Notes](readme.md#4xx---5xx) in the readme.
+**Run `./serra migrate` once after upgrading** — see [UPGRADE.md](UPGRADE.md).
 
 ### Breaking
 

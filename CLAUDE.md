@@ -80,8 +80,8 @@ non-CLI context (`web.go`) therefore inherits whatever those defaults are.
 
 ### Data model: Scryfall cache vs. ownership
 
-The core architectural split (post schema v1, see "Upgrade Notes" in
-`readme.md` for the pre-split legacy shape) is between cached Scryfall data
+The core architectural split (post schema v1, see `UPGRADE.md`
+for the pre-split legacy shape) is between cached Scryfall data
 and personal ownership data, stored in separate Mongo collections:
 
 - **`cards`** (`storage_cards.go`, type `Card`) — pure Scryfall data for every
