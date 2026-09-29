@@ -2,6 +2,7 @@ package serra
 
 import (
 	"html/template"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -18,6 +19,13 @@ func init() {
 	webCmd.Flags().Uint64VarP(&port, "port", "p", 8080, "Port to listen on")
 	rootCmd.AddCommand(webCmd)
 }
+
+const (
+	// defaultPageLimit is how many cards a page shows when ?limit= is absent,
+	// maxPageLimit the ceiling a request may ask for.
+	defaultPageLimit = 500
+	maxPageLimit     = 1000
+)
 
 // needed for template functions, as Go templates don't support basic math operations
 func add(a, b int64) int64 {
@@ -104,16 +112,37 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 	query.Set = r.FormValue("set")
 	query.Sort = r.FormValue("sort")
 	query.Name = r.FormValue("name")
-	pageStr := r.FormValue("page")
-	if pageStr != "" {
-		query.Page, _ = strconv.ParseInt(pageStr, 10, 64)
+	if pageStr := r.FormValue("page"); pageStr != "" {
+		page, err := strconv.ParseInt(pageStr, 10, 64)
+		if err != nil || page < 0 {
+			http.Error(w, "Invalid page parameter", http.StatusBadRequest)
+			return
+		}
+		query.Page = page
 	}
 
 	// Construct per Page results "limit"
-	strLimit := r.URL.Query().Get("limit")
-	limit, _ := strconv.ParseInt(strLimit, 10, 64)
-	if limit == 0 {
-		limit = 500
+	limit := int64(defaultPageLimit)
+	if strLimit := r.URL.Query().Get("limit"); strLimit != "" {
+		parsed, err := strconv.ParseInt(strLimit, 10, 64)
+		if err != nil || parsed < 0 {
+			http.Error(w, "Invalid limit parameter", http.StatusBadRequest)
+			return
+		}
+		if parsed > 0 {
+			limit = parsed
+		}
+		if limit > maxPageLimit {
+			limit = maxPageLimit
+		}
+	}
+
+	// Cards() slices its results with page*limit as the offset, so an
+	// absurd ?page= must not be allowed to overflow that into a negative
+	// bound.
+	if query.Page > math.MaxInt64/limit {
+		http.Error(w, "Invalid page parameter", http.StatusBadRequest)
+		return
 	}
 
 	// The search box is a literal name search, not a regex one. Quoting it
