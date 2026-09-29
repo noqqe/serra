@@ -216,7 +216,11 @@ func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bo
 		filter = append(filter, bson.E{"legalities." + strings.ToLower(legal), "legal"})
 	}
 
-	cards, _ := OwnedCards(filter)
+	cards, err := OwnedCards(filter)
+	if err != nil {
+		Logger().Errorf("Could not search cards: %s", err.Error())
+		return []OwnedCard{}
+	}
 
 	if foil {
 		temp := cards[:0]

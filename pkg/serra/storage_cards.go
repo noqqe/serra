@@ -274,12 +274,15 @@ func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([
 
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {
-		l.Fatalf("Could not query data due to connection errors to database: %s", err.Error())
+		// Deliberately not Fatalf: this is reachable from the web
+		// handlers, where exiting would let any request kill the server.
+		l.Errorf("Could not query data due to connection errors to database: %s", err.Error())
+		return []Card{}, err
 	}
 
 	var results []Card
 	if err = cursor.All(context.TODO(), &results); err != nil {
-		l.Fatal(err)
+		l.Errorf("Could not read card query results: %s", err.Error())
 		return []Card{}, err
 	}
 	return results, nil

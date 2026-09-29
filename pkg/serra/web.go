@@ -3,6 +3,7 @@ package serra
 import (
 	"html/template"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -115,11 +116,18 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 		limit = 500
 	}
 
+	// The search box is a literal name search, not a regex one. Quoting it
+	// keeps a hostile ?name= from injecting regex syntax into the $regex
+	// filters below: a malformed one errors the query, a catastrophic one
+	// backtracks over every cached printing. query.Name itself stays raw,
+	// since it is echoed back into the form and the pagination links.
+	nameFilter := regexp.QuoteMeta(query.Name)
+
 	// Fetch all sets for Dropdown
 	sets := Sets("release", "all")
 
 	// Fetch all results based on filter criteria
-	cards := Cards("", query.Set, query.Sort, query.Name, "", "", false, false, query.Page*int64(limit), limit, "", "", "")
+	cards := Cards("", query.Set, query.Sort, nameFilter, "", "", false, false, query.Page*int64(limit), limit, "", "", "")
 
 	// Construct quick way for counting results
 	filter := bson.D{}
@@ -128,8 +136,8 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 		filter = append(filter, bson.E{"set", query.Set})
 	}
 
-	if query.Name != "" {
-		filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + query.Name + ".*"}, {"$options", "i"}}})
+	if nameFilter != "" {
+		filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + nameFilter + ".*"}, {"$options", "i"}}})
 	}
 
 	matchingCards, err := OwnedCards(filter)
