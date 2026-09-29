@@ -106,46 +106,66 @@ own, so you can watch the price of something you're only thinking about
 buying. It then refreshes each card you own, rolls that up into the set value,
 and finally into the total collection value.
 
-## Screenshots
+## Demo
+
+Each gif is recorded from a [VHS](https://github.com/charmbracelet/vhs) tape
+in [`vhs/`](vhs) against a small throwaway collection, so they can be
+regenerated whenever the output changes — see [vhs/README.md](vhs/README.md).
 
 <details>
 <summary><b>Click to expand</b></summary>
 
-**Add** — add a card to your collection
+**`add`** — add cards to your collection
 
-![](imgs/add.png)
+![](imgs/add.gif)
 
-**Cards** — query all of your cards with filters
+**`remove`** — take them back out
 
-![](imgs/cards.png)
+![](imgs/remove.gif)
 
-**Sets** — list all your sets
+**`card`** — query your cards with filters
 
-![](imgs/sets.png)
+![](imgs/card.gif)
 
-**Set** — details of a single set
+**`set`** — list the sets you own cards from
 
-![](imgs/set.png)
+![](imgs/sets.gif)
 
-**Stats** — statistics across your collection
+**`set <code>`** — details of a single set
 
-![](imgs/stats.png)
+![](imgs/set.gif)
 
-**Tops** — what gained the most value
+**`check`** — is this card already in the collection?
 
-![](imgs/tops.png)
+![](imgs/check.gif)
 
-**Flops** — what lost the most value
+**`missing`** — what is still missing from a set
 
-![](imgs/flops.png)
+![](imgs/missing.gif)
 
-**Update** — refresh prices from Scryfall
+**`stats`** — statistics across your collection
 
-![](imgs/update.png)
+![](imgs/stats.gif)
 
-**Check** — is this card already in the collection?
+**`tops`** — what gained the most value
 
-![](imgs/check.png)
+![](imgs/tops.gif)
+
+**`flops`** — what lost the most value
+
+![](imgs/flops.gif)
+
+**`update`** — refresh prices from Scryfall
+
+![](imgs/update.gif)
+
+**`migrate`** — bring the database up to the expected schema
+
+![](imgs/migrate.gif)
+
+**`web`** — start the web interface
+
+![](imgs/web.gif)
 
 </details>
 
@@ -175,6 +195,10 @@ task build
 
 `task build` bakes the version string in via `git describe`. A plain
 `go build ./cmd/serra` works too, it just reports its version as `unknown`.
+
+The gifs above are regenerated with `task gifs`, which seeds a throwaway
+database and replays the tapes in [`vhs/`](vhs). Details in
+[vhs/README.md](vhs/README.md).
 
 ---
 

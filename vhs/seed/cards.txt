@@ -1,0 +1,45 @@
+# The demo collection the README gifs are recorded against.
+#
+# One "serra add" invocation per line: everything after the "#" is dropped,
+# the rest is passed to "serra add" verbatim, so flags work as usual.
+# Keep it small - every line is one Scryfall API call during seeding.
+
+# --- Urza's Saga: the expensive corner of the collection -----------------
+usg/321                 # Gaea's Cradle
+usg/325                 # Serra's Sanctum
+usg/330                 # Tolarian Academy
+usg/171                 # Yawgmoth's Will
+usg/76                  # Gilded Drake
+usg/103                 # Time Spiral
+usg/250                 # Exploration
+usg/96                  # Show and Tell
+--count 3 usg/17        # a playset-ish common, and the README's example card
+--count 4 usg/61
+usg/120
+usg/200
+
+# --- Phyrexia: All Will Be One: a modern set, incl. foils ---------------
+one/23                  # Mondrak, Glory Dominus
+--foil one/23           # ... and its foil, to show per-finish tracking
+one/196                 # Atraxa, Grand Unifier
+one/414                 # Elesh Norn, Mother of Machines
+one/118                 # All Will Be One
+one/105                 # Phyrexian Obliterator
+--count 2 one/1
+one/3
+one/4
+--count 2 one/5
+
+# --- Modern Horizons 3 --------------------------------------------------
+mh3/38                  # Ocelot Pride
+mh3/303                 # Phyrexian Tower
+mh3/224                 # Polluted Delta
+--foil mh3/242          # Tamiyo, Inquisitive Student
+mh3/297                 # Urza's Incubator
+mh3/110                 # Warren Soultrader
+
+# --- Dominaria United ---------------------------------------------------
+dmu/369                 # Sheoldred, the Apocalypse
+dmu/373                 # Liliana of the Veil
+dmu/252                 # Plaza of Heroes
+--count 2 dmu/177

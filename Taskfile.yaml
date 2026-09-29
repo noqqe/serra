@@ -2,6 +2,13 @@
 
 version: '3'
 
+vars:
+  # Recording order matters. The read-only tapes go first so they see a
+  # freshly seeded collection, then add/remove (which cancel each other
+  # out), and finally update, which pulls the whole Scryfall bulk file and
+  # takes by far the longest.
+  GIF_TAPES: stats card sets set check missing tops flops migrate web add remove update
+
 tasks:
   build:
     cmds:
@@ -11,6 +18,43 @@ tasks:
       - "cmd/serra/serra.go"
     generates:
       - "./serra"
+
+  gifs:
+    desc: Re-record all README gifs into imgs/ (needs vhs and docker)
+    deps: [build]
+    preconditions:
+      - sh: command -v vhs
+        msg: "vhs is not installed - see https://github.com/charmbracelet/vhs"
+    cmds:
+      # Start from a known collection, otherwise the numbers in the gifs
+      # depend on whatever the last recording session left behind.
+      - vhs/demo-db.sh reset
+      # vhs resolves Source and Output against the working directory, so
+      # the tapes are recorded from vhs/ and write into ../imgs.
+      - for t in {{.GIF_TAPES}}; do (cd vhs && vhs "$t.tape") || exit 1; done
+
+  gif:
+    desc: Re-record a single gif, e.g. "task gif -- stats"
+    deps: [build]
+    preconditions:
+      - sh: command -v vhs
+        msg: "vhs is not installed - see https://github.com/charmbracelet/vhs"
+      - sh: test -n "{{.CLI_ARGS}}"
+        msg: "which tape? e.g. task gif -- stats"
+    cmds:
+      - vhs/demo-db.sh up
+      - cd vhs && vhs "{{.CLI_ARGS}}.tape"
+
+  gifs:db:
+    desc: Start and seed the throwaway demo database the gifs are recorded against
+    deps: [build]
+    cmds:
+      - vhs/demo-db.sh up
+
+  gifs:clean:
+    desc: Remove the demo database container again
+    cmds:
+      - vhs/demo-db.sh down
 
   release:
     interactive: true
@@ -25,4 +69,3 @@ tasks:
   default:
     cmds:
       - task: build
-
