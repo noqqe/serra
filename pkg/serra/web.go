@@ -1,9 +1,9 @@
 package serra
 
 import (
+	"html/template"
 	"net/http"
 	"strconv"
-	"text/template"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
