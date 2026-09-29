@@ -1,6 +1,7 @@
 package serra
 
 import (
+	"bytes"
 	"html/template"
 	"math"
 	"net/http"
@@ -100,7 +101,9 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 	// Load the template files
 	tmpl, err := templates.ParseGlob("templates/*.gohtml")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		Logger().Errorf("Could not parse templates: %s", err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	// Parse query parameters
@@ -171,7 +174,9 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 
 	matchingCards, err := OwnedCards(filter)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		Logger().Errorf("Could not count matching cards: %s", err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	numCards := len(matchingCards)
@@ -190,8 +195,18 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 		NumPages: int64(numCards) / limit,
 	}
 
-	err = tmpl.ExecuteTemplate(w, "index.gohtml", tmplData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// Render into a buffer first. Executing straight into the
+	// ResponseWriter commits a 200 and a partial body, after which a
+	// mid-template failure can no longer be reported as a 500.
+	var rendered bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&rendered, "index.gohtml", tmplData); err != nil {
+		Logger().Errorf("Could not render template: %s", err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if _, err := rendered.WriteTo(w); err != nil {
+		Logger().Errorf("Could not write response: %s", err.Error())
 	}
 }
