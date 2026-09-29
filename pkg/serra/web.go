@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -26,6 +27,24 @@ const (
 	// maxPageLimit the ceiling a request may ask for.
 	defaultPageLimit = 500
 	maxPageLimit     = 1000
+)
+
+const (
+	// readHeaderTimeout bounds how long a client may take to send its
+	// request headers. This is what keeps a Slowloris-style peer from
+	// holding a connection, and its goroutine, open indefinitely.
+	readHeaderTimeout = 10 * time.Second
+	// readTimeout bounds headers plus body.
+	readTimeout = 15 * time.Second
+	// writeTimeout starts when the request headers have been read, so it
+	// covers handler execution as well as the write itself. It is generous
+	// because indexPage runs OwnedCards twice, and OwnedCards loads the
+	// entire inventory and joins it in Go.
+	writeTimeout = 60 * time.Second
+	// idleTimeout bounds how long a keep-alive connection may sit unused.
+	idleTimeout = 120 * time.Second
+	// maxHeaderBytes caps the request headers a client can make us buffer.
+	maxHeaderBytes = 1 << 20
 )
 
 // needed for template functions, as Go templates don't support basic math operations
@@ -85,8 +104,19 @@ func startWeb() error {
 	// Landing page route
 	router.Get("/", indexPage)
 
-	// Start the server
-	return http.ListenAndServe(address+":"+strconv.FormatUint(port, 10), router)
+	// Start the server. Note this is an explicit http.Server rather than
+	// http.ListenAndServe, which would leave every timeout at zero.
+	srv := &http.Server{
+		Addr:              address + ":" + strconv.FormatUint(port, 10),
+		Handler:           router,
+		ReadHeaderTimeout: readHeaderTimeout,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
+		MaxHeaderBytes:    maxHeaderBytes,
+	}
+
+	return srv.ListenAndServe()
 }
 
 // indexPage handles the landing page, rendering the template with the appropriate data
