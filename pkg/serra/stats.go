@@ -28,7 +28,7 @@ func Stats() {
 	defer storageDisconnect(client)
 	totalcoll := client.getTotalCollection()
 
-	owned, err := OwnedCards(bson.D{})
+	owned, err := OwnedCardsWithoutHistory(bson.D{})
 	if err != nil {
 		Logger().Error("Error fetching stats:", err)
 		return

@@ -33,6 +33,13 @@ var updateCmd = &cobra.Command{
 			l.Info("Starting update for whole collection")
 		}
 
+		client := storageConnect()
+		err := client.ensureIndexes()
+		storageDisconnect(client)
+		if err != nil {
+			return err
+		}
+
 		updatedSets, err := fetchSets()
 		if err != nil {
 			l.Error("Could not fetch updated sets:", err)

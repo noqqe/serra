@@ -52,7 +52,7 @@ func Sets(sortBy string, filter string) []SetsResult {
 		cardFilter = append(cardFilter, bson.E{"settype", filter})
 	}
 
-	owned, err := OwnedCards(cardFilter)
+	owned, err := OwnedCardsWithoutHistory(cardFilter)
 	if err != nil {
 		l.Error("Error fetching sets:", err)
 		return nil
@@ -97,10 +97,17 @@ func setsFromCards(owned []OwnedCard, sortBy string) []SetsResult {
 func showSetList(sets []SetsResult) {
 
 	client := storageConnect()
-	setscoll := client.getSetsCollection()
+	defer storageDisconnect(client)
+
+	// One query for all sets instead of one round trip per listed set.
+	allSets, _ := client.getSetsCollection().FindSet(bson.D{}, bson.D{})
+	byCode := make(map[string]Set, len(allSets))
+	for _, s := range allSets {
+		byCode[s.Code] = s
+	}
 
 	for _, set := range sets {
-		setobj, _ := setscoll.FindSetByCode(set.Code)
+		setobj := byCode[set.Code]
 		fmt.Printf("* %s %s (%s)\n", fmt.Sprintf("%.4s", set.Release), Purple(set.ID), Cyan(set.Code))
 		fmt.Printf("  Cards: %s Total: %d \n", Yellow("%d/%d", set.Unique, setobj.CardCount), set.Count)
 		fmt.Printf("  Value: %s%s\n", Pink("%.2f", set.Value), Pink(getCurrency()))
@@ -114,7 +121,7 @@ func ShowSet(setname string) error {
 	l := Logger()
 	defer storageDisconnect(client)
 
-	cards, err := OwnedCards(bson.D{{"set", setname}})
+	cards, err := OwnedCardsWithoutHistory(bson.D{{"set", setname}})
 	if (err != nil) || len(cards) == 0 {
 		l.Errorf("Set %s not found or no card in your collection.", setname)
 		return err

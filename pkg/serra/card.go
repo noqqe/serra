@@ -87,12 +87,13 @@ func ownedCards(cardFilter bson.D, withHistory bool) ([]OwnedCard, error) {
 	invColl := client.getInventoryCollection()
 	cardsColl := client.getCardsCollection()
 
+	invFilter := inventoryFilterFor(cardFilter)
 	var entries []InventoryEntry
 	var err error
 	if withHistory {
-		entries, err = invColl.FindInventoryEntries(bson.D{}, bson.D{}, 0, 0)
+		entries, err = invColl.FindInventoryEntries(invFilter, bson.D{}, 0, 0)
 	} else {
-		entries, err = invColl.FindInventoryEntriesWithoutHistory(bson.D{})
+		entries, err = invColl.FindInventoryEntriesWithoutHistory(invFilter)
 	}
 	if err != nil {
 		return nil, err
@@ -163,6 +164,20 @@ func ownedCards(cardFilter bson.D, withHistory bool) ([]OwnedCard, error) {
 	}
 
 	return owned, nil
+}
+
+// inventoryFilterFor picks the parts of a cards filter that inventory
+// entries also carry (set and collector number), so a filtered lookup like
+// `serra set usg` only loads that set's entries instead of every one. The
+// full filter is still applied to the cards afterwards.
+func inventoryFilterFor(cardFilter bson.D) bson.D {
+	invFilter := bson.D{}
+	for _, e := range cardFilter {
+		if e.Key == "set" || e.Key == "collectornumber" {
+			invFilter = append(invFilter, e)
+		}
+	}
+	return invFilter
 }
 
 // FindOwnedCard returns the single owned card for a given set + collector
