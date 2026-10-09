@@ -1,3 +1,10 @@
+// Audio cues need an audio backend. oto talks to CoreAudio via purego on
+// darwin and to WinMM/WASAPI via syscall on windows, so those build without
+// cgo - everywhere else (linux, the BSDs) it binds ALSA through cgo. Release
+// builds are CGO_ENABLED=0, so on those platforms the cues are compiled out
+// entirely by sound_disabled.go instead of failing to link.
+//go:build darwin || windows || cgo
+
 package serra
 
 import (
