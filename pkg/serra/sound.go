@@ -2,13 +2,19 @@ package serra
 
 import (
 	"bytes"
-	"os"
+	"embed"
 	"sync"
 	"time"
 
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/go-mp3"
 )
+
+// The cues are compiled into the binary so a release is a single file and
+// does not care about the working directory it is started from.
+//
+//go:embed sounds/*.mp3
+var soundFiles embed.FS
 
 var once sync.Once
 var ctx *oto.Context
@@ -32,7 +38,10 @@ func initSound() {
 	// Remember that you should **not** create more than one context
 	otoCtx, readyChan, err := oto.NewContext(op)
 	if err != nil {
-		panic("oto.NewContext failed: " + err.Error())
+		// No audio device (headless server, container, CI). Leave ctx nil
+		// and let playSound() skip the cue instead of killing the command.
+		Logger().Debugf("oto.NewContext failed: %v", err)
+		return
 	}
 	// It might take a bit for the hardware audio devices to be ready, so we wait on the channel.
 	<-readyChan
@@ -42,11 +51,12 @@ func initSound() {
 
 func playSound(file string) {
 
-	once.Do(initSound)
-	// Read the mp3 file into memory
-	fileBytes, err := os.ReadFile(file)
+	// These run as fire-and-forget goroutines, so a broken cue must never
+	// take the whole command down with it.
+	fileBytes, err := soundFiles.ReadFile("sounds/" + file)
 	if err != nil {
-		panic("reading mp3 failed: " + err.Error())
+		Logger().Debugf("reading mp3 failed: %v", err)
+		return
 	}
 
 	// Convert the pure bytes into a reader object that can be used with the mp3 decoder
@@ -55,7 +65,13 @@ func playSound(file string) {
 	// Decode file
 	decodedMp3, err := mp3.NewDecoder(fileBytesReader)
 	if err != nil {
-		panic("mp3.NewDecoder failed: " + err.Error())
+		Logger().Debugf("mp3.NewDecoder failed: %v", err)
+		return
+	}
+
+	once.Do(initSound)
+	if ctx == nil {
+		return
 	}
 
 	// Create a new 'player' that will handle our sound. Paused by default.
@@ -72,13 +88,13 @@ func playSound(file string) {
 }
 
 func playSoundPositive() {
-	playSound("./sounds/success.mp3")
+	playSound("success.mp3")
 }
 
 func playSoundNegative() {
-	playSound("./sounds/error.mp3")
+	playSound("error.mp3")
 }
 
 func playSoundCash() {
-	playSound("./sounds/cash.mp3")
+	playSound("cash.mp3")
 }

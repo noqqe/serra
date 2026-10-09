@@ -34,12 +34,10 @@ assuming a change introduced them.
 There are no automated tests in this repo (`*_test.go` files do not exist).
 There is no linter config beyond `go vet`.
 
-Run the binary **from the repo root**. Three runtime paths are relative to
-the working directory: `sounds/*.mp3` (`sound.go` `panic()`s if a file is
-missing, and it is called as `go playSound...()`, so the panic takes the
-whole process down), plus `templates/*.gohtml` and `./assets` (`web.go`).
-`colorizeValue()` fires `go playSoundCash()` for any card worth more than 1,
-so even read-only commands touch `./sounds`.
+Run the `web` command **from the repo root**: `templates/*.gohtml` and
+`./assets` (`web.go`) are still loaded relative to the working directory.
+The audio cues are not - `pkg/serra/sounds/*.mp3` is `//go:embed`ed into the
+binary by `sound.go`, so every other command runs from anywhere.
 
 `.tool-versions` pins `golang 1.21.3` and is stale - `go.mod` requires go
 1.26.1 and the Dockerfile builds on `golang:1.26-alpine`.
@@ -151,6 +149,11 @@ be resumed by re-running.
   `OwnedCards()` functions as the CLI, rendering `templates/index.gohtml`.
 - `sound.go` plays small audio cues (success/error/cash-register) on
   add/remove/high-value cards — fire-and-forget via `go playSound...()`.
+  The mp3s live in `pkg/serra/sounds/` and are embedded via `//go:embed`,
+  so they ship inside the release binary and the Docker image. Because
+  these run as detached goroutines, nothing in there is fatal: a missing
+  audio device (container, CI, ssh session) leaves the oto context nil and
+  the cue is skipped.
 - `Logger()` (`helpers.go`) returns a fresh `charmbracelet/log` logger per
   call; color helpers (`Purple`, `Green`, `Red`, `Yellow`, ...) are
   package-level `fatih/color` funcs used throughout for CLI output.
