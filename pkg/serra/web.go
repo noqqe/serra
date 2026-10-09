@@ -170,7 +170,7 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Cards() slices its results with page*limit as the offset, so an
+	// paginateCards slices the results with page*limit as the offset, so an
 	// absurd ?page= must not be allowed to overflow that into a negative
 	// bound.
 	if query.Page > math.MaxInt64/limit {
@@ -178,38 +178,42 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The search box is a literal name search, not a regex one. Quoting it
-	// keeps a hostile ?name= from injecting regex syntax into the $regex
-	// filters below: a malformed one errors the query, a catastrophic one
-	// backtracks over every cached printing. query.Name itself stays raw,
-	// since it is echoed back into the form and the pagination links.
-	nameFilter := regexp.QuoteMeta(query.Name)
+	// The search box is a literal, case-insensitive name search, not a regex
+	// one. Quoting it keeps a hostile ?name= from injecting regex syntax
+	// (and a catastrophic pattern from backtracking). query.Name itself stays
+	// raw, since it is echoed back into the form and the pagination links.
+	nameFilter := regexp.MustCompile("(?i)" + regexp.QuoteMeta(query.Name))
 
-	// Fetch all sets for Dropdown
-	sets := Sets("release", "all")
-
-	// Fetch all results based on filter criteria
-	cards := Cards("", query.Set, query.Sort, nameFilter, "", "", false, false, query.Page*int64(limit), limit, "", "", "")
-
-	// Construct quick way for counting results
-	filter := bson.D{}
-
-	if query.Set != "" {
-		filter = append(filter, bson.E{"set", query.Set})
-	}
-
-	if nameFilter != "" {
-		filter = append(filter, bson.E{"name", bson.D{{"$regex", ".*" + nameFilter + ".*"}, {"$options", "i"}}})
-	}
-
-	matchingCards, err := OwnedCards(filter)
+	// Loading the owned cards means loading the entire inventory and
+	// joining it in Go, which is by far the most expensive part of this
+	// page. Load it once and derive the set dropdown, the result count and
+	// the current page from it, instead of querying once per use. The page
+	// shows no history, so leave it out of the transfer.
+	owned, err := OwnedCardsWithoutHistory(bson.D{})
 	if err != nil {
-		Logger().Errorf("Could not count matching cards: %s", err.Error())
+		Logger().Errorf("Could not load owned cards: %s", err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
+	// All sets for the dropdown, regardless of the current filter
+	sets := setsFromCards(owned, "release")
+
+	matchingCards := make([]OwnedCard, 0, len(owned))
+	for _, c := range owned {
+		if query.Set != "" && c.Set != query.Set {
+			continue
+		}
+		if !nameFilter.MatchString(c.Name) {
+			continue
+		}
+		matchingCards = append(matchingCards, c)
+	}
+
 	numCards := len(matchingCards)
+
+	sortCards(matchingCards, query.Sort)
+	cards := paginateCards(matchingCards, query.Page*limit, limit)
 
 	tmplData := TemplateData{
 		Title:    "Serra",

@@ -69,13 +69,31 @@ type OwnedCard struct {
 // returning only cards that are actually owned (i.e. have at least one
 // inventory entry), matching the given Scryfall attribute filter.
 func OwnedCards(cardFilter bson.D) ([]OwnedCard, error) {
+	return ownedCards(cardFilter, true)
+}
+
+// OwnedCardsWithoutHistory is OwnedCards without the cards' price_history
+// and the entries' value_history. Those histories grow with every `serra
+// update` and dominate the transferred data, so callers that only show
+// current counts and prices (web.go) should use this.
+func OwnedCardsWithoutHistory(cardFilter bson.D) ([]OwnedCard, error) {
+	return ownedCards(cardFilter, false)
+}
+
+func ownedCards(cardFilter bson.D, withHistory bool) ([]OwnedCard, error) {
 	client := storageConnect()
 	defer storageDisconnect(client)
 
 	invColl := client.getInventoryCollection()
 	cardsColl := client.getCardsCollection()
 
-	entries, err := invColl.FindInventoryEntries(bson.D{}, bson.D{}, 0, 0)
+	var entries []InventoryEntry
+	var err error
+	if withHistory {
+		entries, err = invColl.FindInventoryEntries(bson.D{}, bson.D{}, 0, 0)
+	} else {
+		entries, err = invColl.FindInventoryEntriesWithoutHistory(bson.D{})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +138,12 @@ func OwnedCards(cardFilter bson.D) ([]OwnedCard, error) {
 	}
 
 	filter := append(bson.D{{"_id", bson.D{{"$in", ids}}}}, cardFilter...)
-	cards, err := cardsColl.FindCards(filter, bson.D{}, 0, 0)
+	var cards []Card
+	if withHistory {
+		cards, err = cardsColl.FindCards(filter, bson.D{}, 0, 0)
+	} else {
+		cards, err = cardsColl.FindCardsWithoutHistory(filter)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -241,6 +264,13 @@ func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bo
 	}
 	cards = temp
 
+	sortCards(cards, sortBy)
+	return paginateCards(cards, skip, limit)
+}
+
+// sortCards sorts cards in place by value, number, added, count or (the
+// default) name.
+func sortCards(cards []OwnedCard, sortBy string) {
 	switch sortBy {
 	case "value":
 		sort.Slice(cards, func(i, j int) bool { return cards[i].getValue() < cards[j].getValue() })
@@ -259,7 +289,11 @@ func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bo
 	default:
 		sort.Slice(cards, func(i, j int) bool { return cards[i].Name < cards[j].Name })
 	}
+}
 
+// paginateCards returns at most limit cards starting at skip. A zero skip
+// and limit returns all cards.
+func paginateCards(cards []OwnedCard, skip, limit int64) []OwnedCard {
 	if skip > 0 || limit > 0 {
 		if skip > int64(len(cards)) {
 			return []OwnedCard{}

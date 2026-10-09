@@ -180,8 +180,19 @@ func (coll InventoryCollection) FindInventoryEntry(id string) (*InventoryEntry, 
 // FindInventoryEntries returns inventory entries by a given filter, sort and
 // pagination options.
 func (coll InventoryCollection) FindInventoryEntries(filter, sort bson.D, skip, limit int64) ([]InventoryEntry, error) {
+	return coll.findInventoryEntries(filter, options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit))
+}
+
+// FindInventoryEntriesWithoutHistory is FindInventoryEntries without
+// pagination and with value_history left out of the result. That history
+// grows with every `serra update` and makes up most of an entry, so this is
+// far cheaper for callers that only need current counts.
+func (coll InventoryCollection) FindInventoryEntriesWithoutHistory(filter bson.D) ([]InventoryEntry, error) {
+	return coll.findInventoryEntries(filter, options.Find().SetProjection(bson.D{{"value_history", 0}}))
+}
+
+func (coll InventoryCollection) findInventoryEntries(filter bson.D, opts *options.FindOptions) ([]InventoryEntry, error) {
 	l := Logger()
-	opts := options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit)
 
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {

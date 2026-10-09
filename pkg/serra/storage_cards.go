@@ -269,8 +269,18 @@ func toBsonM(v any) (bson.M, error) {
 
 // FindCards returns a list of cards by a given filter, sort and pagination options.
 func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([]Card, error) {
+	return coll.findCards(filter, options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit))
+}
+
+// FindCardsWithoutHistory is FindCards without pagination and with
+// price_history left out of the result, for callers that only need the
+// current prices.
+func (coll CardsCollection) FindCardsWithoutHistory(filter bson.D) ([]Card, error) {
+	return coll.findCards(filter, options.Find().SetProjection(bson.D{{"price_history", 0}}))
+}
+
+func (coll CardsCollection) findCards(filter bson.D, opts *options.FindOptions) ([]Card, error) {
 	l := Logger()
-	opts := options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit)
 
 	cursor, err := coll.Find(context.TODO(), filter, opts)
 	if err != nil {

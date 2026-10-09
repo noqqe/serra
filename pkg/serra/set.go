@@ -58,6 +58,13 @@ func Sets(sortBy string, filter string) []SetsResult {
 		return nil
 	}
 
+	return setsFromCards(owned, sortBy)
+}
+
+// setsFromCards aggregates already loaded owned cards into per-set results,
+// so callers that hold the owned cards anyway (web.go) need not query them
+// a second time.
+func setsFromCards(owned []OwnedCard, sortBy string) []SetsResult {
 	bySet := map[string]*SetsResult{}
 	order := []string{}
 	for _, c := range owned {

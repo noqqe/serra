@@ -1,59 +1,453 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
   <title>{{.Title}}{{ if .Query.Set }} - Set: {{.Query.Set}}{{end}}</title>
-  <link rel="stylesheet" href="https://jenil.github.io/bulmaswatch/cosmo/bulmaswatch.min.css">
 
   <style>
+    /* Dracula palette - https://draculatheme.com/contribute */
+    :root {
+      --bg: #282a36;
+      --bg-dark: #21222c;
+      --bg-darker: #191a21;
+      --line: #44475a;
+      --fg: #f8f8f2;
+      --comment: #6272a4;
+      --cyan: #8be9fd;
+      --green: #50fa7b;
+      --orange: #ffb86c;
+      --pink: #ff79c6;
+      --purple: #bd93f9;
+      --red: #ff5555;
+      --yellow: #f1fa8c;
+
+      --radius: 10px;
+      --mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--pink);
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(25, 26, 33, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    header .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 64px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .brand a {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .brand span {
+      color: var(--comment);
+      font-size: 0.9rem;
+    }
+
+    .stat {
+      color: var(--comment);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .stat strong {
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+    }
+
+    main.container {
+      padding-top: 28px;
+      padding-bottom: 40px;
+    }
+
+    /* Filter bar */
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(180px, 2fr) minmax(150px, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      padding: 20px;
+      background: var(--bg-dark);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--purple);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      color: var(--fg);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .field select {
+      appearance: none;
+      padding-right: 32px;
+      background-image: linear-gradient(45deg, transparent 50%, var(--comment) 50%),
+        linear-gradient(135deg, var(--comment) 50%, transparent 50%);
+      background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+      background-size: 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    .field input::placeholder {
+      color: var(--comment);
+    }
+
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.25);
+    }
+
+    .button {
+      height: 40px;
+      padding: 0 22px;
+      color: var(--bg-darker);
+      background: var(--purple);
+      border: 0;
+      border-radius: 8px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.05s;
+    }
+
+    .button:hover {
+      background: var(--pink);
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    /* Results table */
+    .table-wrap {
+      background: var(--bg-dark);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      position: sticky;
+      top: 64px;
+      z-index: 5;
+      background: var(--bg-darker);
+      color: var(--comment);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    thead th:first-child {
+      border-top-left-radius: var(--radius);
+    }
+
+    thead th:last-child {
+      border-top-right-radius: var(--radius);
+    }
+
+    abbr {
+      text-decoration: none;
+      cursor: help;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(68, 71, 90, 0.5);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:hover td {
+      background: rgba(68, 71, 90, 0.45);
+    }
+
+    .num {
+      text-align: right;
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .count {
+      color: var(--orange);
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    .foil {
+      margin-left: 4px;
+      color: var(--yellow);
+      font-size: 0.8em;
+    }
+
+    .type {
+      color: var(--comment);
+    }
+
+    .price {
+      color: var(--green);
+    }
+
+    .price.none {
+      color: var(--line);
+    }
+
+    .set-code {
+      display: inline-block;
+      padding: 1px 8px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(139, 233, 253, 0.1);
+      border-radius: 6px;
+    }
+
+    .collector {
+      color: var(--comment);
+      font-family: var(--mono);
+    }
+
+    .rarity {
+      display: inline-block;
+      padding: 1px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: capitalize;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      color: var(--fg);
+    }
+
+    .rarity-uncommon { color: var(--cyan); }
+    .rarity-rare     { color: var(--yellow); }
+    .rarity-mythic   { color: var(--orange); }
+    .rarity-special,
+    .rarity-bonus    { color: var(--pink); }
+
+    /* Card image preview on hover */
     .cardpreview {
       position: relative;
       display: inline-block;
-      border-bottom: 1px dotted black;
+    }
+
+    .cardpreview a {
+      color: var(--fg);
+      font-weight: 600;
+      border-bottom: 1px dotted var(--comment);
+    }
+
+    .cardpreview a:hover {
+      color: var(--pink);
+      border-bottom-color: var(--pink);
     }
 
     .cardpreview .cardpreviewtext {
-      visibility: hidden;
       display: none;
-      width: 300px;
-      color: #fff;
-
-      /* Position the cardpreview */
       position: absolute;
-      z-index: 1;
+      left: calc(100% + 16px);
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 20;
+      width: 260px;
+      pointer-events: none;
+    }
+
+    .cardpreview .cardpreviewtext img {
+      display: block;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--line);
     }
 
     .cardpreview:hover .cardpreviewtext {
-      visibility: visible;
-      display: inline-block;
+      display: block;
     }
 
-   @media only screen and (max-width: 900px) {
-     .level-item {
-       justify-content: unset
-     }
+    .empty {
+      padding: 48px 16px;
+      text-align: center;
+      color: var(--comment);
+    }
 
-      table#cards td,
-      table#cards th {
-         display: none;
+    /* Pagination */
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 24px;
+    }
+
+    .pagination a,
+    .pagination span {
+      min-width: 38px;
+      height: 38px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pagination a {
+      color: var(--fg);
+      background: var(--bg-dark);
+      border: 1px solid var(--line);
+    }
+
+    .pagination a:hover {
+      color: var(--fg);
+      border-color: var(--purple);
+    }
+
+    .pagination a.is-current {
+      color: var(--bg-darker);
+      background: var(--purple);
+      border-color: var(--purple);
+      font-weight: 700;
+    }
+
+    .pagination span {
+      color: var(--comment);
+    }
+
+    /* Footer */
+    footer {
+      padding: 24px 0 32px;
+      border-top: 1px solid var(--line);
+      color: var(--comment);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    footer strong a {
+      color: var(--purple);
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        padding: 0 16px;
       }
 
-      table#cards th:nth-child(1),
-      table#cards th:nth-child(2),
-      table#cards th:nth-child(4),
-      table#cards th:nth-child(5),
-      table#cards th:nth-child(9) {
-         display: revert;
+      .brand span {
+        display: none;
       }
 
-      table#cards td:nth-child(1),
-      table#cards td:nth-child(2),
-      table#cards td:nth-child(4),
-      table#cards td:nth-child(5),
-      table#cards td:nth-child(9) {
-         display: revert;
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .filters .field-name {
+        grid-column: 1 / -1;
+        order: -1;
+      }
+
+      .filters .button {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
+
+      .hide-sm {
+        display: none;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      thead th {
+        position: static;
+      }
+
+      .cardpreview .cardpreviewtext {
+        display: none !important;
       }
     }
   </style>
@@ -61,209 +455,134 @@
 
 <body>
 
-  <!-- Site Title -->
-  <section class="hero is-black">
-    <div class="hero-body">
-      <p class="title">
+  <header>
+    <div class="container">
+      <div class="brand">
         <a href="/">{{ .Title }}</a>
-      </p>
-      <p class="subtitle">
-        <i>Magic: The Gathering</i> Collection
-      </p>
+        <span><i>Magic: The Gathering</i> Collection</span>
+      </div>
+      <div class="stat"><strong>{{ .NumCards }}</strong> cards{{ if .Query.Set }} in <span class="set-code">{{ .Query.Set }}</span>{{ end }}</div>
     </div>
-  </section>
+  </header>
 
-  <!-- Nav Bar -->
-  <section class="section">
-    <nav class="level">
+  <main class="container">
 
-      <!-- Left side -->
-      <div class="level-left">
-        <div class="level-item">
-          <div class="field">
-            <label class="label">Set</label>
-            <div class="control">
-              <div class="select">
-                <select name="set" id="set" form="searchform">
-                  <option value="">-</option>
-                  {{range .Sets}}
-                  <option value="{{ .Code }}">{{ printf "%.25s" (.ID) }} ({{ .Count }})
-                  </option>
-                  {{end}}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="level-item">
-          <div class="field">
-            <label class="label">Name</label>
-            <div class="control">
-              <input form="searchform" name="name" class="input" id="name" type="text" placeholder="Tolarian Academy">
-            </div>
-          </div>
-        </div>
-
-        <input type="hidden" id="limit" name="limit" value="500" form="searchform">
-        <input type="hidden" id="page" name="page" value="0" form="searchform">
-
-        <div class="level-item">
-          <div class="field">
-            <label class="label">Sort</label>
-            <div class="control">
-              <div class="select">
-                <select name="sort" id="sort" form="searchform">
-                  <option value="name" selected>Name</option>
-                  <option value="value">Value</option>
-                  <option value="number">Collector Number</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
+    <form action="/" class="filters">
+      <div class="field">
+        <label for="set">Set</label>
+        <select name="set" id="set">
+          <option value="">All sets</option>
+          {{range .Sets}}
+          <option value="{{ .Code }}" {{ if eq .Code $.Query.Set }}selected{{ end }}>{{ printf "%.25s" (.ID) }} ({{ .Count }})</option>
+          {{end}}
+        </select>
       </div>
 
-      <!-- Right side -->
-      <div class="level-right">
-        <form action="/" id="searchform">
-          <input class="button is-primary" type="submit" value="Search">
-        </form>
+      <div class="field field-name">
+        <label for="name">Name</label>
+        <input name="name" id="name" type="search" value="{{ .Query.Name }}" placeholder="Tolarian Academy">
       </div>
-    </nav>
 
-    <!-- Results Table -->
-    <table id="cards" class="table is-fullwidth">
-      <thead>
-        <tr>
-          <th><abbr title="Amount">#</abbr></th>
-          <th>Name</th>
-          <th>Type</th>
-          <th><abbr title="Set Code">Set</abbr></th>
-          <th><abbr title="Collector Number">C</abbr></th>
-          <th><abbr title="Rarity">Rar</abbr></th>
-          <th><abbr title="Price">$</abbr></th>
-          <th><abbr title="Price Foil">$*</abbr></th>
-          <th><abbr title="Price Eur">€</abbr></th>
-          <th><abbr title="Price Eur Foil">€*</abbr></th>
-        </tr>
-      </thead>
-      <tfoot>
-        <tr>
-          <th><abbr title="Amount">#</abbr></th>
-          <th>Name</th>
-          <th>Type</th>
-          <th><abbr title="Set Code">Set</abbr></th>
-          <th><abbr title="Collector Number">C</abbr></th>
-          <th><abbr title="Rarity">Rar</abbr></th>
-          <th><abbr title="Price">$</abbr></th>
-          <th><abbr title="Price Foil">$*</abbr></th>
-          <th><abbr title="Price Eur">€</abbr></th>
-          <th><abbr title="Price Eur Foil">€*</abbr></th>
-        </tr>
-      </tfoot>
-      <tbody>
-        {{range .Cards}}
-        <tr>
-          <td>{{ add .Count .CountFoil }}</td>
-          <td>
-            <div class="cardpreview"><strong>{{.Name }}</strong>
-              <span class="cardpreviewtext">
-                <img loading="lazy" src="{{ .ImageUris.Normal }}" alt="" />
-              </span>
-            </div>
-          </td>
-          <td>{{.TypeLine}}</td>
-          <td>{{.Set}}</td>
-          <td>{{.CollectorNumber}}</td>
-          <td>{{.Rarity}}</td>
-          <td>{{.Prices.Usd}}</td>
-          <td>{{.Prices.UsdFoil}}</td>
-          <td>{{.Prices.Eur}}</td>
-          <td>{{.Prices.EurFoil}}</td>
-        </tr>
-        {{end}}
-      </tbody>
-    </table>
-  </section>
+      <div class="field">
+        <label for="sort">Sort</label>
+        <select name="sort" id="sort">
+          <option value="name" {{ if eq .Query.Sort "name" }}selected{{ end }}>Name</option>
+          <option value="value" {{ if eq .Query.Sort "value" }}selected{{ end }}>Value</option>
+          <option value="number" {{ if eq .Query.Sort "number" }}selected{{ end }}>Collector Number</option>
+        </select>
+      </div>
 
-  {{ if ne .NumPages 0 }}
-  <div class="hero-body">
+      <input type="hidden" name="limit" value="{{ .Limit }}">
+
+      <button class="button" type="submit">Search</button>
+    </form>
+
+    <div class="table-wrap">
+      <table id="cards">
+        <thead>
+          <tr>
+            <th class="num"><abbr title="Amount">#</abbr></th>
+            <th>Name</th>
+            <th class="hide-sm">Type</th>
+            <th><abbr title="Set Code">Set</abbr></th>
+            <th class="hide-sm"><abbr title="Collector Number">No.</abbr></th>
+            <th class="hide-sm">Rarity</th>
+            <th class="num hide-sm"><abbr title="Price USD">$</abbr></th>
+            <th class="num hide-sm"><abbr title="Price USD Foil">$ ✦</abbr></th>
+            <th class="num"><abbr title="Price EUR">€</abbr></th>
+            <th class="num hide-sm"><abbr title="Price EUR Foil">€ ✦</abbr></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Cards}}
+          <tr>
+            <td class="num"><span class="count">{{ add .Count .CountFoil }}</span>{{ if .CountFoil }}<span class="foil" title="{{ .CountFoil }} foil">✦</span>{{ end }}</td>
+            <td>
+              <div class="cardpreview">
+                <a href="{{ .ScryfallURI }}" target="_blank" rel="noopener">{{ .Name }}</a>
+                <span class="cardpreviewtext">
+                  <img loading="lazy" src="{{ .ImageUris.Normal }}" alt="{{ .Name }}" />
+                </span>
+              </div>
+            </td>
+            <td class="type hide-sm">{{ .TypeLine }}</td>
+            <td><span class="set-code">{{ .Set }}</span></td>
+            <td class="collector hide-sm">{{ .CollectorNumber }}</td>
+            <td class="hide-sm"><span class="rarity rarity-{{ .Rarity }}">{{ .Rarity }}</span></td>
+            <td class="num hide-sm">{{ if .Prices.Usd }}<span class="price">{{ printf "%.2f" .Prices.Usd }}</span>{{ else }}<span class="price none">–</span>{{ end }}</td>
+            <td class="num hide-sm">{{ if .Prices.UsdFoil }}<span class="price">{{ printf "%.2f" .Prices.UsdFoil }}</span>{{ else }}<span class="price none">–</span>{{ end }}</td>
+            <td class="num">{{ if .Prices.Eur }}<span class="price">{{ printf "%.2f" .Prices.Eur }}</span>{{ else }}<span class="price none">–</span>{{ end }}</td>
+            <td class="num hide-sm">{{ if .Prices.EurFoil }}<span class="price">{{ printf "%.2f" .Prices.EurFoil }}</span>{{ else }}<span class="price none">–</span>{{ end }}</td>
+          </tr>
+          {{else}}
+          <tr>
+            <td colspan="10" class="empty">No cards match this search.</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+
+    {{ if ne .NumPages 0 }}
     <nav class="pagination" role="navigation" aria-label="pagination">
 
       {{ if ge .PrevPage 0 }}
-      <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.PrevPage}}" class="pagination-previous">Previous</a>
+      <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.PrevPage}}" aria-label="Previous page">&larr;</a>
       {{ end }}
+
+      {{ if ne .Page 0 }}
+      <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page=0" aria-label="Goto page 0">0</a>
+      <span>&hellip;</span>
+      {{end}}
+
+      {{ if gt .PrevPage 0 }}
+      <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.PrevPage}}" aria-label="Goto page {{.PrevPage}}">{{.PrevPage}}</a>
+      {{end}}
+
+      <a class="is-current" href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.Page}}" aria-label="Page {{ .Page }}" aria-current="page">{{.Page}}</a>
+
+      {{ if and (ne .NextPage .NumPages) ( lt .NextPage .NumPages) }}
+      <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.NextPage}}" aria-label="Goto page {{.NextPage}}">{{.NextPage}}</a>
+      {{ end }}
+
+      {{ if ne .NumPages .Page }}
+      <span>&hellip;</span>
+      <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.NumPages}}" aria-label="Goto page {{.NumPages}}">{{.NumPages}}</a>
+      {{end}}
 
       {{ if ( le .NextPage .NumPages) }}
-      <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.NextPage}}" class="pagination-next">Next page</a>
+      <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.NextPage}}" aria-label="Next page">&rarr;</a>
       {{ end }}
 
-      <ul class="pagination-list">
-
-        {{ if ne .Page 0 }}
-        <li>
-          <a class="pagination-link" href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page=0" aria-label="Goto page 0">0</a>
-        </li>
-
-        <li>
-          <span class="pagination-ellipsis">&hellip;</span>
-        </li>
-        {{end}}
-
-        {{ if gt .PrevPage 0 }}
-        <li>
-          <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.PrevPage}}" class="pagination-link" aria-label="Goto page {{.PrevPage}}">{{.PrevPage}}</a>
-        </li>
-        {{end}}
-        <li>
-          <a class="pagination-link is-current" href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.Page}}" aria-label="Page {{ .Page }}" aria-current="page">{{.Page}}</a>
-        </li>
-
-        {{ if and (ne .NextPage .NumPages) ( lt .NextPage .NumPages) }}
-        <li>
-          <a href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.NextPage}}" class="pagination-link" aria-label="Goto page {{.NextPage}} ">{{.NextPage}}</a>
-        </li>
-        {{ end }}
-
-        {{ if ne .NumPages .Page }}
-        <li>
-          <span class="pagination-ellipsis">&hellip;</span>
-        </li>
-        <li>
-          <a class="pagination-link" href="/?set={{.Query.Set}}&name={{.Query.Name}}&sort={{.Query.Sort}}&limit={{.Limit}}&page={{.NumPages}}" aria-label="Goto page {{.NumPages}}">{{.NumPages}}</a>
-        </li>
-        {{end}}
-
-      </ul>
     </nav>
-  </div>
-  {{ end }}
+    {{ end }}
 
-  <!-- Select set from last search -->
-  <script>
-    function getParam(paramName) {
-      return decodeURI(
-        (RegExp(paramName + '=' + '(.+?)(&|$)').exec(location.search) || [, 500])[1]
-      );
-    }
-    var selectedSetVal = getParam("set");
-    document.getElementById("set").value = selectedSetVal;
+  </main>
 
-    var selectedLimitVal = getParam("limit");
-    document.getElementById("limit").value = selectedLimitVal;
-
-    var selectedSortVal = getParam("sort");
-    document.getElementById("sort").value = selectedSortVal;
-  </script>
-
-  <footer class="footer">
-    <div class="content has-text-centered">
-      <p>
-        <strong><a href="https://github.com/noqqe/serra">Serra</a></strong> Version {{ .Version }} by <a href="https://noqqe.de">noqqe</a>.
-        <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
-      </p>
+  <footer>
+    <div class="container">
+      <strong><a href="https://github.com/noqqe/serra">Serra</a></strong> Version {{ .Version }} by <a href="https://noqqe.de">noqqe</a>.
+      <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
     </div>
   </footer>
 
