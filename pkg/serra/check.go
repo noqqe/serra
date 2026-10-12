@@ -20,18 +20,20 @@ var checkCmd = &cobra.Command{
 	Long:          "Check if a card is in your collection. Useful for list comparsions",
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
+		// One connection for all cards instead of reconnecting per card.
+		client := storageConnect()
+		defer storageDisconnect(client)
+
 		for _, card := range cards {
-			checkCard(card, detail)
+			checkCard(client, card, detail)
 		}
 		return nil
 	},
 }
 
-func checkCard(cardID string, detail bool) error {
-	client := storageConnect()
+func checkCard(client StorageClient, cardID string, detail bool) error {
 	cardsColl := client.getCardsCollection()
 	invColl := client.getInventoryCollection()
-	defer storageDisconnect(client)
 
 	// Loop over different cards
 	setName, collectorNumber, err := parseCardID(cardID)

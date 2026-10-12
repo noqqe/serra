@@ -28,18 +28,23 @@ var addCmd = &cobra.Command{
 	Long:          "Adds a card from scryfall to your collection. Amount can be modified using flags",
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
+		// One connection for all cards (and the whole interactive session)
+		// instead of reconnecting per card.
+		client := storageConnect()
+		defer storageDisconnect(client)
+
 		if interactive {
-			addCardsInteractive(unique, set)
+			addCardsInteractive(client, unique, set)
 		} else {
 			for _, card := range cards {
-				addCard(card, unique, count)
+				addCard(client, card, unique, count)
 			}
 		}
 		return nil
 	},
 }
 
-func addCardsInteractive(unique bool, set string) {
+func addCardsInteractive(client StorageClient, unique bool, set string) {
 	l := Logger()
 	if len(set) == 0 {
 		l.Fatal("Option --set <set> must be given in interactive mode")
@@ -91,7 +96,7 @@ func addCardsInteractive(unique bool, set string) {
 					if end, err := strconv.Atoi(parts[1]); err == nil {
 						// Loop over range and add each card individually
 						for i := start; i <= end; i++ {
-							addCard(fmt.Sprintf("%s/%d", set, i), unique, count)
+							addCard(client, fmt.Sprintf("%s/%d", set, i), unique, count)
 						}
 						continue
 					}
@@ -100,17 +105,15 @@ func addCardsInteractive(unique bool, set string) {
 		}
 
 		cardID := fmt.Sprintf("%s/%s", set, fields[0])
-		addCard(cardID, unique, count)
+		addCard(client, cardID, unique, count)
 	}
 
 }
 
-func addCard(cardID string, unique bool, count int64) error {
-	client := storageConnect()
+func addCard(client StorageClient, cardID string, unique bool, count int64) error {
 	cardsColl := client.getCardsCollection()
 	invColl := client.getInventoryCollection()
 	l := Logger()
-	defer storageDisconnect(client)
 
 	setName, collectorNumber, err := parseCardID(cardID)
 	if err != nil {

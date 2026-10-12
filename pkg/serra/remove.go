@@ -27,19 +27,23 @@ var removeCmd = &cobra.Command{
 	Long:          "Removes a card from your collection. Amount can be modified using flags",
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
+		// One connection for all cards (and the whole interactive session)
+		// instead of reconnecting per card.
+		client := storageConnect()
+		defer storageDisconnect(client)
 
 		if interactive {
-			removeCardsInteractive(set)
+			removeCardsInteractive(client, set)
 		} else {
 			for _, card := range cards {
-				removeCard(card, count)
+				removeCard(client, card, count)
 			}
 		}
 		return nil
 	},
 }
 
-func removeCardsInteractive(set string) {
+func removeCardsInteractive(client StorageClient, set string) {
 	l := Logger()
 
 	if len(set) == 0 {
@@ -59,18 +63,15 @@ func removeCardsInteractive(set string) {
 		}
 
 		card := fmt.Sprintf("%s/%s", set, strings.TrimSpace(line))
-		removeCard(card, count)
+		removeCard(client, card, count)
 	}
 
 }
 
-func removeCard(cardID string, count int64) error {
-	// Connect to the DB & load the collection
-	client := storageConnect()
+func removeCard(client StorageClient, cardID string, count int64) error {
 	cardsColl := client.getCardsCollection()
 	invColl := client.getInventoryCollection()
 	l := Logger()
-	defer storageDisconnect(client)
 
 	setName, collectorNumber, err := parseCardID(cardID)
 	if err != nil {
