@@ -272,11 +272,37 @@ func (coll CardsCollection) FindCards(filter, sort bson.D, skip, limit int64) ([
 	return coll.findCards(filter, options.Find().SetSort(sort).SetSkip(skip).SetLimit(limit))
 }
 
+// summaryProjection leaves out of a card what no summary view (stats, set,
+// card lists, CSV exports, the web UI, update's value totals) reads: the
+// price history plus Scryfall fields serra never uses. Together they are
+// over half of every card document. A field listed here comes back empty
+// from FindCardsWithoutHistory, so remove it from this list before showing
+// it in one of those views.
+var summaryProjection = bson.D{
+	{"price_history", 0},
+	{"relateduris", 0},
+	{"purchaseuris", 0},
+	{"legalities", 0},
+	{"oracletext", 0},
+	{"uri", 0},
+	{"seturi", 0},
+	{"setsearchuri", 0},
+	{"scryfallseturi", 0},
+	{"rulingsuri", 0},
+	{"printssearchuri", 0},
+	{"oracleid", 0},
+	{"setid", 0},
+	{"illustrationid", 0},
+	{"cardbackid", 0},
+	{"artistids", 0},
+}
+
 // FindCardsWithoutHistory is FindCards without pagination and with
-// price_history left out of the result, for callers that only need the
-// current prices.
+// price_history and unused Scryfall fields (summaryProjection) left out of
+// the result, for callers that only need current prices and basic card
+// attributes.
 func (coll CardsCollection) FindCardsWithoutHistory(filter bson.D) ([]Card, error) {
-	return coll.findCards(filter, options.Find().SetProjection(bson.D{{"price_history", 0}}))
+	return coll.findCards(filter, options.Find().SetProjection(summaryProjection))
 }
 
 func (coll CardsCollection) findCards(filter bson.D, opts *options.FindOptions) ([]Card, error) {

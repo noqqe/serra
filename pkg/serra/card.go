@@ -74,10 +74,10 @@ func OwnedCards(cardFilter bson.D) ([]OwnedCard, error) {
 	return client.ownedCards(cardFilter, true)
 }
 
-// OwnedCardsWithoutHistory is OwnedCards without the cards' price_history
-// and the entries' value_history. Those histories grow with every `serra
-// update` and dominate the transferred data, so callers that only show
-// current counts and prices (web.go) should use this.
+// OwnedCardsWithoutHistory is OwnedCards without the cards' price_history,
+// the entries' value_history and the Scryfall fields in summaryProjection.
+// Those dominate the transferred data, so callers that only show current
+// counts, prices and basic card attributes should use this.
 func OwnedCardsWithoutHistory(cardFilter bson.D) ([]OwnedCard, error) {
 	client := storageConnect()
 	defer storageDisconnect(client)
