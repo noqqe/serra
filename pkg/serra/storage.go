@@ -85,3 +85,41 @@ func (client StorageClient) ensureIndexes() error {
 	}
 	return nil
 }
+
+// historyEndpoint is a document reduced to the two entries of its price or
+// value history that a gain/loss rate is computed from. Old or Current is
+// nil when the history is too short to hold that entry.
+type historyEndpoint struct {
+	ID      string      `bson:"_id"`
+	CardID  string      `bson:"card_id"`
+	Old     *PriceEntry `bson:"old"`
+	Current *PriceEntry `bson:"current"`
+}
+
+// findHistoryEndpoints returns, for every document in coll, only the entry
+// at index old (negative counts from the end) and the last entry of its
+// historyField array. Histories grow with every update, and gains only ever
+// compares those two entries, so leaving the rest on the server is what
+// keeps tops/flops fast.
+func findHistoryEndpoints(coll *mongo.Collection, historyField string, old int) ([]historyEndpoint, error) {
+	l := Logger()
+	history := "$" + historyField
+	pipeline := mongo.Pipeline{{{"$project", bson.D{
+		{"card_id", 1},
+		{"old", bson.D{{"$arrayElemAt", bson.A{history, old}}}},
+		{"current", bson.D{{"$arrayElemAt", bson.A{history, -1}}}},
+	}}}}
+
+	cursor, err := coll.Aggregate(context.TODO(), pipeline)
+	if err != nil {
+		l.Fatalf("Could not query history of %s: %v", coll.Name(), err)
+		return nil, err
+	}
+
+	var results []historyEndpoint
+	if err := cursor.All(context.TODO(), &results); err != nil {
+		l.Fatalf("Could not decode history of %s: %v", coll.Name(), err)
+		return nil, err
+	}
+	return results, nil
+}

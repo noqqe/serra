@@ -103,28 +103,26 @@ func Gains(limit float64, sortDir int) error {
 		CardID string
 		gainRate
 	}
-	var cardGains []cardGain
+	// Only the two history entries compared are fetched, not whole
+	// histories (or, with --all, whole Scryfall card documents).
+	var endpoints []historyEndpoint
 	if allCards {
-		cards, _ := cardsColl.FindCards(bson.D{}, bson.D{}, 0, 0)
-		for _, c := range cards {
-			history := make([]float64, len(c.PriceHistory))
-			for i, p := range c.PriceHistory {
-				history[i] = historicValue(p)
-			}
-			if r, ok := rateAt(history, old, limit); ok {
-				cardGains = append(cardGains, cardGain{c.ID, r})
-			}
+		endpoints, _ = findHistoryEndpoints(cardsColl.Collection, "price_history", old)
+		for i := range endpoints {
+			endpoints[i].CardID = endpoints[i].ID
 		}
 	} else {
-		entries, _ := invColl.FindInventoryEntries(bson.D{}, bson.D{}, 0, 0)
-		for _, e := range entries {
-			history := make([]float64, len(e.ValueHistory))
-			for i, p := range e.ValueHistory {
-				history[i] = historicValue(p)
-			}
-			if r, ok := rateAt(history, old, limit); ok {
-				cardGains = append(cardGains, cardGain{e.CardID, r})
-			}
+		endpoints, _ = findHistoryEndpoints(invColl.Collection, "value_history", old)
+	}
+
+	var cardGains []cardGain
+	for _, e := range endpoints {
+		if e.Old == nil || e.Current == nil {
+			continue
+		}
+		history := []float64{historicValue(*e.Old), historicValue(*e.Current)}
+		if r, ok := rateAt(history, 0, limit); ok {
+			cardGains = append(cardGains, cardGain{e.CardID, r})
 		}
 	}
 
