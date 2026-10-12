@@ -41,7 +41,7 @@ otherwise you'll get a list of cards as a search result.`,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, cards []string) error {
 		if len(cards) == 0 {
-			cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, is, isNot, legal)
+			cardList := Cards(rarity, set, sortBy, name, oracle, cardType, reserved, foil, 0, 0, is, isNot, legal, false)
 			showCardList(cardList, detail)
 		} else {
 			for _, card := range cards {
@@ -196,9 +196,11 @@ func FindOwnedCard(setCode, collectorNumber string) (*OwnedCard, error) {
 	return &owned[0], nil
 }
 
-// Cards fetches card based on search parameters
+// Cards fetches card based on search parameters. withHistory also loads the
+// cards' price history and the entries' value history, which most callers
+// never show but which dominate the transferred data.
 // TODO:Create search object instead of a bazillion parameters
-func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot, legal string) []OwnedCard {
+func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bool, skip, limit int64, is, isNot, legal string, withHistory bool) []OwnedCard {
 	filter := bson.D{}
 
 	switch rarity {
@@ -257,7 +259,13 @@ func Cards(rarity, set, sortBy, name, oracle, cardType string, reserved, foil bo
 		filter = append(filter, bson.E{"legalities." + strings.ToLower(legal), "legal"})
 	}
 
-	cards, err := OwnedCards(filter)
+	var cards []OwnedCard
+	var err error
+	if withHistory {
+		cards, err = OwnedCards(filter)
+	} else {
+		cards, err = OwnedCardsWithoutHistory(filter)
+	}
 	if err != nil {
 		Logger().Errorf("Could not search cards: %s", err.Error())
 		return []OwnedCard{}
