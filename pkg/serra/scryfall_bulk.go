@@ -141,13 +141,26 @@ func loadBulkFile(gzipFilePath string) ([]Card, error) {
 	return cards, nil
 }
 
-func getCardFromBulk(cards []Card, setName, collectorNumber string) (*Card, error) {
-	var foundCard Card
-	for _, v := range cards {
-		if v.CollectorNumber == collectorNumber && v.Set == setName {
-			foundCard = v
-			return &foundCard, nil
+// bulkCardIndex maps "set/collectornumber" to its card in the bulk data, so
+// update can look up each owned card directly instead of scanning the whole
+// bulk file once per inventory entry.
+type bulkCardIndex map[string]*Card
+
+func newBulkCardIndex(cards []Card) bulkCardIndex {
+	index := make(bulkCardIndex, len(cards))
+	for i := range cards {
+		key := cards[i].Set + "/" + cards[i].CollectorNumber
+		// keep the first match, as a linear scan of the bulk data would
+		if _, ok := index[key]; !ok {
+			index[key] = &cards[i]
 		}
+	}
+	return index
+}
+
+func (index bulkCardIndex) get(setName, collectorNumber string) (*Card, error) {
+	if card, ok := index[setName+"/"+collectorNumber]; ok {
+		return card, nil
 	}
 	return &Card{}, fmt.Errorf("Card %s/%s not found in bulk data", setName, collectorNumber)
 }

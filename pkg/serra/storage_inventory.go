@@ -113,18 +113,6 @@ func (coll InventoryCollection) upsertMigratedEntry(entry *InventoryEntry) error
 	return err
 }
 
-// InsertInventoryEntry inserts a fully constructed inventory entry as-is.
-// Used when migrating an entry to a new deterministic ID (e.g. after
-// Scryfall re-keys a card's ID).
-func (coll InventoryCollection) InsertInventoryEntry(entry *InventoryEntry) error {
-	l := Logger()
-	_, err := coll.InsertOne(context.TODO(), entry)
-	if err != nil {
-		l.Fatalf("Could not store inventory data due to connection errors to database: %s", err.Error())
-	}
-	return err
-}
-
 // SetInventoryCount overwrites the count of an inventory entry.
 func (coll InventoryCollection) SetInventoryCount(id string, count int64) error {
 	l := Logger()
@@ -139,17 +127,25 @@ func (coll InventoryCollection) SetInventoryCount(id string, count int64) error 
 	return err
 }
 
-// AppendValueHistory pushes a new value snapshot onto an inventory entry.
-func (coll InventoryCollection) AppendValueHistory(id string, snapshot PriceEntry) error {
-	l := Logger()
-	now := primitive.NewDateTimeFromTime(time.Now())
-	_, err := coll.UpdateOne(context.TODO(),
-		bson.M{"_id": id},
-		bson.M{
+// valueHistoryAppend is the write AppendValueHistory performs, for batching
+// many of them into one BulkWrite.
+func valueHistoryAppend(id string, snapshot PriceEntry, now primitive.DateTime) mongo.WriteModel {
+	return mongo.NewUpdateOneModel().
+		SetFilter(bson.M{"_id": id}).
+		SetUpdate(bson.M{
 			"$push": bson.M{"value_history": snapshot},
 			"$set":  bson.M{"updated": now},
-		},
-	)
+		})
+}
+
+// BulkWriteInventory applies the given writes in order, in a single round
+// trip.
+func (coll InventoryCollection) BulkWriteInventory(models []mongo.WriteModel) error {
+	l := Logger()
+	if len(models) == 0 {
+		return nil
+	}
+	_, err := coll.BulkWrite(context.TODO(), models, options.BulkWrite().SetOrdered(true))
 	if err != nil {
 		l.Fatalf("Could not update inventory data due to connection errors to database: %s", err.Error())
 	}

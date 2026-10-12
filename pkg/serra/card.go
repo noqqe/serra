@@ -69,7 +69,9 @@ type OwnedCard struct {
 // returning only cards that are actually owned (i.e. have at least one
 // inventory entry), matching the given Scryfall attribute filter.
 func OwnedCards(cardFilter bson.D) ([]OwnedCard, error) {
-	return ownedCards(cardFilter, true)
+	client := storageConnect()
+	defer storageDisconnect(client)
+	return client.ownedCards(cardFilter, true)
 }
 
 // OwnedCardsWithoutHistory is OwnedCards without the cards' price_history
@@ -77,13 +79,14 @@ func OwnedCards(cardFilter bson.D) ([]OwnedCard, error) {
 // update` and dominate the transferred data, so callers that only show
 // current counts and prices (web.go) should use this.
 func OwnedCardsWithoutHistory(cardFilter bson.D) ([]OwnedCard, error) {
-	return ownedCards(cardFilter, false)
-}
-
-func ownedCards(cardFilter bson.D, withHistory bool) ([]OwnedCard, error) {
 	client := storageConnect()
 	defer storageDisconnect(client)
+	return client.ownedCards(cardFilter, false)
+}
 
+// ownedCards is OwnedCards on an existing connection, for callers that run
+// it many times in a row (update.go does so once per set).
+func (client StorageClient) ownedCards(cardFilter bson.D, withHistory bool) ([]OwnedCard, error) {
 	invColl := client.getInventoryCollection()
 	cardsColl := client.getCardsCollection()
 

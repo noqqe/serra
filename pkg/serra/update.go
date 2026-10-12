@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func init() {
@@ -33,10 +34,11 @@ var updateCmd = &cobra.Command{
 			l.Info("Starting update for whole collection")
 		}
 
+		// One connection for the whole run, instead of several per set.
 		client := storageConnect()
-		err := client.ensureIndexes()
-		storageDisconnect(client)
-		if err != nil {
+		defer storageDisconnect(client)
+
+		if err := client.ensureIndexes(); err != nil {
 			return err
 		}
 
@@ -54,23 +56,25 @@ var updateCmd = &cobra.Command{
 			return err
 		}
 
-		if err := importBulkCards(updatedCards); err != nil {
+		if err := importBulkCards(client, updatedCards); err != nil {
 			log.Error("Could not import bulk cards:", err)
 			log.Error("Exiting")
 			return err
 		}
 
+		bulkIndex := newBulkCardIndex(updatedCards)
+
 		if len(setCodes) > 0 {
 			for _, setCode := range setCodes {
-				updateCardsOfSet(setCode, updatedSets.GetSetByCode(setCode), updatedCards)
-				updateSet(setCode, updatedSets.GetSetByCode(setCode))
+				updateCardsOfSet(client, setCode, updatedSets.GetSetByCode(setCode), bulkIndex)
+				updateSet(client, setCode, updatedSets.GetSetByCode(setCode))
 			}
 		} else {
 			for _, set := range updatedSets.Data {
-				updateCardsOfSet(set.Code, updatedSets.GetSetByCode(set.Code), updatedCards)
-				updateSet(set.Code, updatedSets.GetSetByCode(set.Code))
+				updateCardsOfSet(client, set.Code, updatedSets.GetSetByCode(set.Code), bulkIndex)
+				updateSet(client, set.Code, updatedSets.GetSetByCode(set.Code))
 			}
-			updateTotal()
+			updateTotal(client)
 
 		}
 		l.Info("Update finished successfully")
@@ -113,10 +117,8 @@ func fetchUpdatedCards() ([]Card, error) {
 // cards collection, appending a price snapshot to each - regardless of
 // whether the card is owned. This is what allows price history to be
 // tracked for cards outside of your collection.
-func importBulkCards(updatedCards []Card) error {
+func importBulkCards(client StorageClient, updatedCards []Card) error {
 	l := Logger()
-	client := storageConnect()
-	defer storageDisconnect(client)
 
 	l.Infof("Importing %d cards from bulk data...", len(updatedCards))
 	if err := client.getCardsCollection().UpsertCards(updatedCards); err != nil {
@@ -129,10 +131,8 @@ func importBulkCards(updatedCards []Card) error {
 // updateCardsOfSet refreshes the cached Scryfall data for every card owned
 // in a set, and appends a new value snapshot to every inventory entry of
 // that set.
-func updateCardsOfSet(setCode string, updatedSet *Set, updatedCards []Card) error {
-	client := storageConnect()
+func updateCardsOfSet(client StorageClient, setCode string, updatedSet *Set, bulkIndex bulkCardIndex) error {
 	l := Logger()
-	defer storageDisconnect(client)
 
 	invColl := client.getInventoryCollection()
 
@@ -160,12 +160,16 @@ func updateCardsOfSet(setCode string, updatedSet *Set, updatedCards []Card) erro
 
 	now := primitive.NewDateTimeFromTime(time.Now())
 
+	// All writes for this set go out as one ordered BulkWrite below, rather
+	// than one round trip per entry.
+	var writes []mongo.WriteModel
+
 	for _, entry := range entries {
 		bar.Add(1)
 
 		// fetch fresh scryfall data from bulk file (already cached into the
 		// cards collection by importBulkCards for the whole bulk file)
-		updatedCard, err := getCardFromBulk(updatedCards, setCode, entry.CollectorNumber)
+		updatedCard, err := bulkIndex.get(setCode, entry.CollectorNumber)
 		if err != nil {
 			l.Error(err)
 			continue
@@ -175,39 +179,37 @@ func updateCardsOfSet(setCode string, updatedSet *Set, updatedCards []Card) erro
 		// migrate this inventory entry to the new card ID so it keeps
 		// pointing at valid Scryfall data.
 		if updatedCard.ID != entry.CardID {
-			invColl.RemoveInventoryEntry(entry.ID)
+			writes = append(writes, mongo.NewDeleteOneModel().SetFilter(bson.M{"_id": entry.ID}))
 			entry.CardID = updatedCard.ID
 			entry.ID = inventoryID(updatedCard.ID, entry.Finish, entry.Language, entry.Condition)
-			invColl.InsertInventoryEntry(&entry)
+			writes = append(writes, mongo.NewInsertOneModel().SetDocument(entry))
 		}
 
 		// append finish-specific value snapshot
 		snapshot := priceEntryForFinish(updatedCard.Prices, entry.Finish)
 		snapshot.Date = now
-		invColl.AppendValueHistory(entry.ID, snapshot)
+		writes = append(writes, valueHistoryAppend(entry.ID, snapshot, now))
 	}
 	fmt.Println()
 
-	return nil
+	return invColl.BulkWriteInventory(writes)
 }
 
-func updateSet(setCode string, updatedSet *Set) error {
+func updateSet(client StorageClient, setCode string, updatedSet *Set) error {
 	l := Logger()
 
 	if setCode != updatedSet.Code {
 		return errors.New("set code mismatch between stored set and updated set")
 	}
 
-	client := storageConnect()
 	setscoll := client.getSetsCollection()
-	defer storageDisconnect(client)
 
 	// fetch set from database for its price history/created timestamp; a
 	// zero-value Set{} (not found - this is a brand-new set) is fine to
 	// build on, UpsertSet below will insert it.
 	storedSet, _ := setscoll.FindSetByCode(setCode)
 
-	owned, err := OwnedCards(bson.D{{"set", updatedSet.Code}})
+	owned, err := client.ownedCards(bson.D{{"set", updatedSet.Code}}, false)
 	if err != nil || len(owned) == 0 {
 		return fmt.Errorf("fetching set stats was not possible for set %s", setCode)
 	}
@@ -246,13 +248,11 @@ func updateSet(setCode string, updatedSet *Set) error {
 	return nil
 }
 
-func updateTotal() error {
+func updateTotal(client StorageClient) error {
 	l := Logger()
-	client := storageConnect()
 	totalcoll := client.getTotalCollection()
-	defer storageDisconnect(client)
 
-	owned, err := OwnedCards(bson.D{})
+	owned, err := client.ownedCards(bson.D{}, false)
 	if err != nil {
 		l.Error("Could not update total value of collection:", err)
 		return err
