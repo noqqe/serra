@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="imgs/logo.png" alt="serra" width="140">
+<img src="imgs/banner.png" alt="serra" width="800">
 
 # serra
 
