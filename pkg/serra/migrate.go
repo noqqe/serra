@@ -6,20 +6,19 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var migrateStatus bool
 
 // toDateTime best-effort converts a decoded legacy timestamp (typically a
-// primitive.DateTime) back into a primitive.DateTime, falling back to now if
+// bson.DateTime) back into a bson.DateTime, falling back to now if
 // it is missing or of an unexpected type.
-func toDateTime(v interface{}) primitive.DateTime {
-	if dt, ok := v.(primitive.DateTime); ok {
+func toDateTime(v interface{}) bson.DateTime {
+	if dt, ok := v.(bson.DateTime); ok {
 		return dt
 	}
-	return primitive.NewDateTimeFromTime(time.Now())
+	return bson.NewDateTimeFromTime(time.Now())
 }
 
 func init() {

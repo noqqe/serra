@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // CurrentSchemaVersion is the schema version this build of serra expects the
@@ -68,7 +68,7 @@ func (client StorageClient) setSchemaVersion(version int) error {
 		context.TODO(),
 		bson.M{"_id": schemaVersionDocID},
 		bson.M{"$set": bson.M{"version": version}},
-		options.Update().SetUpsert(true),
+		options.UpdateOne().SetUpsert(true),
 	)
 	return err
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 	"slices"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // StorageClient is a wrapper around the mongo.Client struct to add methods for
@@ -25,7 +25,7 @@ func storageConnect() StorageClient {
 	// move tens of MB. Compression is negotiated with the server and cuts
 	// that several-fold; compressors set in the URI still take precedence.
 	opts := options.Client().SetCompressors([]string{"zstd", "snappy"}).ApplyURI(uri)
-	client, err := mongo.Connect(context.TODO(), opts)
+	client, err := mongo.Connect(opts)
 	if err != nil {
 		l.Fatalf("Could not connect to mongodb at %s", uri)
 	}
@@ -76,7 +76,7 @@ func (client StorageClient) ensureIndexes() error {
 			if !slices.Contains(names, spec.Name) {
 				continue
 			}
-			if _, err := db.Collection(coll).Indexes().DropOne(context.TODO(), spec.Name); err != nil {
+			if err := db.Collection(coll).Indexes().DropOne(context.TODO(), spec.Name); err != nil {
 				l.Fatalf("Could not drop stale index %s on %s: %v", spec.Name, coll, err)
 				return err
 			}

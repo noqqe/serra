@@ -11,7 +11,7 @@ require (
 	github.com/hajimehoshi/go-mp3 v0.3.4
 	github.com/schollz/progressbar/v3 v3.19.1
 	github.com/spf13/cobra v1.10.2
-	go.mongodb.org/mongo-driver v1.17.10
+	go.mongodb.org/mongo-driver/v2 v2.9.2
 )
 
 require (
@@ -26,7 +26,6 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/ebitengine/purego v0.11.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
-	github.com/golang/snappy v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jfreymuth/pulse v0.1.3 // indirect
 	github.com/klauspost/compress v1.20.3 // indirect
@@ -35,7 +34,6 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.31 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
-	github.com/montanaflynn/stats v0.13.0 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect

@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func init() {

@@ -9,9 +9,9 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func init() {
@@ -158,7 +158,7 @@ func updateCardsOfSet(client StorageClient, setCode string, updatedSet *Set, bul
 		}),
 	)
 
-	now := primitive.NewDateTimeFromTime(time.Now())
+	now := bson.NewDateTimeFromTime(time.Now())
 
 	// All writes for this set go out as one ordered BulkWrite below, rather
 	// than one round trip per entry.
@@ -226,7 +226,7 @@ func updateSet(client StorageClient, setCode string, updatedSet *Set) error {
 	}
 
 	priceEntry := PriceEntry{
-		Date:    primitive.NewDateTimeFromTime(time.Now()),
+		Date:    bson.NewDateTimeFromTime(time.Now()),
 		Eur:     eur,
 		EurFoil: eurfoil,
 		Usd:     usd,
@@ -238,7 +238,7 @@ func updateSet(client StorageClient, setCode string, updatedSet *Set) error {
 
 	// set timestamp
 	updatedSet.Created = storedSet.Created
-	updatedSet.Updated = primitive.NewDateTimeFromTime(time.Now())
+	updatedSet.Updated = bson.NewDateTimeFromTime(time.Now())
 
 	if err := setscoll.UpsertSet(updatedSet); err != nil {
 		l.Error("Could not upsert set during update, skipping set update:", err)
@@ -268,7 +268,7 @@ func updateTotal(client StorageClient) error {
 	}
 
 	t := PriceEntry{
-		Date:    primitive.NewDateTimeFromTime(time.Now()),
+		Date:    bson.NewDateTimeFromTime(time.Now()),
 		Eur:     eur,
 		EurFoil: eurfoil,
 		Usd:     usd,

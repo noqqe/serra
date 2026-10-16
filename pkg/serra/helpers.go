@@ -11,7 +11,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	termColor "github.com/fatih/color"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type Rarities struct {
@@ -36,7 +36,7 @@ func Logger() *log.Logger {
 	return l
 }
 
-func stringToTime(s primitive.DateTime) string {
+func stringToTime(s bson.DateTime) string {
 	return time.UnixMilli(int64(s)).Format("2006-01-02")
 }
 
@@ -184,7 +184,7 @@ func showPriceHistory(prices []PriceEntry, prefix string, total bool) {
 		// calculate percent difference
 		var diffPercent float64
 		if before != 0 {
-			diffPercent = (value/before*100) - 100
+			diffPercent = (value / before * 100) - 100
 		}
 
 		// always display first history entry

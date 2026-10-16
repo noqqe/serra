@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func init() {
@@ -60,8 +59,8 @@ type OwnedCard struct {
 	Count       int64
 	CountFoil   int64
 	CountEtched int64
-	Created     primitive.DateTime
-	Updated     primitive.DateTime
+	Created     bson.DateTime
+	Updated     bson.DateTime
 	Entries     []InventoryEntry
 }
 
@@ -104,7 +103,7 @@ func (client StorageClient) ownedCards(cardFilter bson.D, withHistory bool) ([]O
 
 	type aggregate struct {
 		Count, CountFoil, CountEtched int64
-		Created, Updated              primitive.DateTime
+		Created, Updated              bson.DateTime
 		Entries                       []InventoryEntry
 	}
 

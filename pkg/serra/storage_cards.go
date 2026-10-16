@@ -5,10 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type CardList struct {
@@ -135,7 +135,7 @@ func (client StorageClient) getCardsCollection() CardsCollection {
 // its price history. Used to (re-)cache Scryfall data.
 func (coll CardsCollection) UpsertCard(card *Card) error {
 	l := Logger()
-	now := primitive.NewDateTimeFromTime(time.Now())
+	now := bson.NewDateTimeFromTime(time.Now())
 
 	pipeline, err := cardUpsertPipeline(card, now)
 	if err != nil {
@@ -143,7 +143,7 @@ func (coll CardsCollection) UpsertCard(card *Card) error {
 		return err
 	}
 
-	_, err = coll.UpdateOne(context.TODO(), bson.M{"_id": card.ID}, pipeline, options.Update().SetUpsert(true))
+	_, err = coll.UpdateOne(context.TODO(), bson.M{"_id": card.ID}, pipeline, options.UpdateOne().SetUpsert(true))
 	if err != nil {
 		l.Fatalf("Could not store card data due to connection errors to database: %s", err.Error())
 	}
@@ -187,7 +187,7 @@ func (coll CardsCollection) clearLegacyFields(cardID string) error {
 // regardless of ownership.
 func (coll CardsCollection) UpsertCards(cards []Card) error {
 	l := Logger()
-	now := primitive.NewDateTimeFromTime(time.Now())
+	now := bson.NewDateTimeFromTime(time.Now())
 
 	const batchSize = 500
 	for start := 0; start < len(cards); start += batchSize {
@@ -227,7 +227,7 @@ func (coll CardsCollection) UpsertCards(cards []Card) error {
 // clobbering) its price_history array. A plain $set/$replace can't do this
 // in one step since the incoming Card value doesn't carry the existing
 // history with it.
-func cardUpsertPipeline(card *Card, snapshotDate primitive.DateTime) (mongo.Pipeline, error) {
+func cardUpsertPipeline(card *Card, snapshotDate bson.DateTime) (mongo.Pipeline, error) {
 	cardDoc, err := toBsonM(card)
 	if err != nil {
 		return nil, err
@@ -305,7 +305,7 @@ func (coll CardsCollection) FindCardsWithoutHistory(filter bson.D) ([]Card, erro
 	return coll.findCards(filter, options.Find().SetProjection(summaryProjection))
 }
 
-func (coll CardsCollection) findCards(filter bson.D, opts *options.FindOptions) ([]Card, error) {
+func (coll CardsCollection) findCards(filter bson.D, opts *options.FindOptionsBuilder) ([]Card, error) {
 	l := Logger()
 
 	cursor, err := coll.Find(context.TODO(), filter, opts)

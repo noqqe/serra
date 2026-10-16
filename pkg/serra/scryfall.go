@@ -8,17 +8,17 @@ import (
 	"log"
 	"net/http"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type PriceEntry struct {
-	Date      primitive.DateTime `bson:"date"`
-	Eur       float64            `json:"eur,string" bson:"eur,float64"`
-	EurFoil   float64            `json:"eur_foil,string" bson:"eur_foil,float64"`
-	Tix       float64            `json:"tix,string" bson:"tix,float64"`
-	Usd       float64            `json:"usd,string" bson:"usd,float64"`
-	UsdEtched float64            `json:"usd_etched,string" bson:"usd_etched,float64"`
-	UsdFoil   float64            `json:"usd_foil,string" bson:"usd_foil,float64"`
+	Date      bson.DateTime `bson:"date"`
+	Eur       float64       `json:"eur,string" bson:"eur,float64"`
+	EurFoil   float64       `json:"eur_foil,string" bson:"eur_foil,float64"`
+	Tix       float64       `json:"tix,string" bson:"tix,float64"`
+	Usd       float64       `json:"usd,string" bson:"usd,float64"`
+	UsdEtched float64       `json:"usd_etched,string" bson:"usd_etched,float64"`
+	UsdFoil   float64       `json:"usd_foil,string" bson:"usd_foil,float64"`
 }
 
 // valueForFinish returns the currency specific value for a given finish

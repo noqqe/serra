@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type SetList struct {
@@ -26,10 +26,10 @@ func (s SetList) GetSetByCode(code string) *Set {
 }
 
 type Set struct {
-	PriceList []PriceEntry       `bson:"serra_prices"`
-	Created   primitive.DateTime `bson:"serra_created"`
-	Updated   primitive.DateTime `bson:"serra_updated"`
-	CardCount int64              `json:"card_count" bson:"cardcount"`
+	PriceList []PriceEntry  `bson:"serra_prices"`
+	Created   bson.DateTime `bson:"serra_created"`
+	Updated   bson.DateTime `bson:"serra_updated"`
+	CardCount int64         `json:"card_count" bson:"cardcount"`
 
 	Code        string `json:"code"`
 	Digital     bool   `json:"digital"`

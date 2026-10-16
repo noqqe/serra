@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // Finishes a card can be owned in.
@@ -32,17 +32,17 @@ const (
 // identified by a deterministic ID so that adding/removing copies can be
 // expressed as a single atomic increment/decrement.
 type InventoryEntry struct {
-	ID              string             `bson:"_id"`
-	CardID          string             `bson:"card_id"`
-	Set             string             `bson:"set"`
-	CollectorNumber string             `bson:"collectornumber"`
-	Finish          string             `bson:"finish"`
-	Language        string             `bson:"language"`
-	Condition       string             `bson:"condition"`
-	Count           int64              `bson:"count"`
-	ValueHistory    []PriceEntry       `bson:"value_history"`
-	Created         primitive.DateTime `bson:"created"`
-	Updated         primitive.DateTime `bson:"updated"`
+	ID              string        `bson:"_id"`
+	CardID          string        `bson:"card_id"`
+	Set             string        `bson:"set"`
+	CollectorNumber string        `bson:"collectornumber"`
+	Finish          string        `bson:"finish"`
+	Language        string        `bson:"language"`
+	Condition       string        `bson:"condition"`
+	Count           int64         `bson:"count"`
+	ValueHistory    []PriceEntry  `bson:"value_history"`
+	Created         bson.DateTime `bson:"created"`
+	Updated         bson.DateTime `bson:"updated"`
 }
 
 // inventoryID builds the deterministic ID identifying a unique
@@ -77,7 +77,7 @@ func (client StorageClient) getInventoryCollection() InventoryCollection {
 // first value history entry) if it does not exist yet.
 func (coll InventoryCollection) IncrementInventory(cardID, set, collectorNumber, finish, language, condition string, amount int64, initialSnapshot PriceEntry) (*InventoryEntry, error) {
 	l := Logger()
-	now := primitive.NewDateTimeFromTime(time.Now())
+	now := bson.NewDateTimeFromTime(time.Now())
 
 	filter := bson.M{"_id": inventoryID(cardID, finish, language, condition)}
 	update := bson.M{
@@ -116,7 +116,7 @@ func (coll InventoryCollection) upsertMigratedEntry(entry *InventoryEntry) error
 // SetInventoryCount overwrites the count of an inventory entry.
 func (coll InventoryCollection) SetInventoryCount(id string, count int64) error {
 	l := Logger()
-	now := primitive.NewDateTimeFromTime(time.Now())
+	now := bson.NewDateTimeFromTime(time.Now())
 	_, err := coll.UpdateOne(context.TODO(),
 		bson.M{"_id": id},
 		bson.M{"$set": bson.M{"count": count, "updated": now}},
@@ -129,7 +129,7 @@ func (coll InventoryCollection) SetInventoryCount(id string, count int64) error 
 
 // valueHistoryAppend is the write AppendValueHistory performs, for batching
 // many of them into one BulkWrite.
-func valueHistoryAppend(id string, snapshot PriceEntry, now primitive.DateTime) mongo.WriteModel {
+func valueHistoryAppend(id string, snapshot PriceEntry, now bson.DateTime) mongo.WriteModel {
 	return mongo.NewUpdateOneModel().
 		SetFilter(bson.M{"_id": id}).
 		SetUpdate(bson.M{
@@ -187,7 +187,7 @@ func (coll InventoryCollection) FindInventoryEntriesWithoutHistory(filter bson.D
 	return coll.findInventoryEntries(filter, options.Find().SetProjection(bson.D{{"value_history", 0}}))
 }
 
-func (coll InventoryCollection) findInventoryEntries(filter bson.D, opts *options.FindOptions) ([]InventoryEntry, error) {
+func (coll InventoryCollection) findInventoryEntries(filter bson.D, opts *options.FindOptionsBuilder) ([]InventoryEntry, error) {
 	l := Logger()
 
 	cursor, err := coll.Find(context.TODO(), filter, opts)
@@ -214,17 +214,11 @@ func (coll InventoryCollection) FindInventoryEntriesBySetAndCollectorNumber(setC
 // given set.
 func (coll InventoryCollection) DistinctCollectorNumbers(setCode string) ([]string, error) {
 	l := Logger()
-	raw, err := coll.Distinct(context.TODO(), "collectornumber", bson.M{"set": setCode})
+	var numbers []string
+	err := coll.Distinct(context.TODO(), "collectornumber", bson.M{"set": setCode}).Decode(&numbers)
 	if err != nil {
 		l.Fatalf("Could not query inventory data due to connection errors to database: %s", err.Error())
 		return nil, err
-	}
-
-	numbers := make([]string, 0, len(raw))
-	for _, v := range raw {
-		if s, ok := v.(string); ok {
-			numbers = append(numbers, s)
-		}
 	}
 	return numbers, nil
 }
