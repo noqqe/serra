@@ -1,5 +1,5 @@
 # build
-FROM golang:1.26-alpine AS build
+FROM golang:1.27-alpine AS build
 RUN apk update && apk add --no-cache git ca-certificates curl
 WORKDIR /go/src/app
 COPY pkg /go/src/app/pkg
