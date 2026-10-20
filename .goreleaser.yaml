@@ -30,22 +30,20 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-brews:
+homebrew_casks:
   - name: serra
-    goarm: 6
     repository:
       owner: noqqe
       name: homebrew-tap
-    download_strategy: CurlDownloadStrategy
-    directory: Formula
+    directory: Casks
     commit_author:
       name: goreleaserbot
       email: goreleaser@carlosbecker.com
     homepage: "https://github.com/noqqe/serra"
-    description: "serra - Personal Magic: The Gathering Collection Tracker "
-    license: "MIT"
-    test: |
-      system "#{bin}/serra --version"
-    install: |
-      bin.install "serra"
-
+    description: "serra - Personal Magic: The Gathering Collection Tracker"
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/serra"]
+          end
