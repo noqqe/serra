@@ -302,10 +302,12 @@ func showColorStats(owned []OwnedCard) {
 var priceDistributionSteps = []float64{100, 80, 50, 40, 30, 20, 10, 5, 1, 0.5, 0.2}
 
 // showPriceDistributionStats counts every owned copy into a price bucket,
-// using the price of the finish that copy actually has. Copies without a
-// price in the configured currency are counted separately.
+// using the price of the finish that copy actually has, and sums up the
+// value of each bucket. Copies without a price in the configured currency
+// are counted separately.
 func showPriceDistributionStats(owned []OwnedCard) {
 	counts := make([]int64, len(priceDistributionSteps)+2)
+	sums := make([]float64, len(priceDistributionSteps)+2)
 	noPrice := len(priceDistributionSteps) + 1
 	bucket := func(price float64) int {
 		if price <= 0 {
@@ -319,10 +321,15 @@ func showPriceDistributionStats(owned []OwnedCard) {
 		return len(priceDistributionSteps)
 	}
 
+	add := func(price float64, count int64) {
+		b := bucket(price)
+		counts[b] += count
+		sums[b] += price * float64(count)
+	}
 	for _, c := range owned {
-		counts[bucket(c.getValue())] += c.Count
-		counts[bucket(c.getFoilValue())] += c.CountFoil
-		counts[bucket(c.getEtchedValue())] += c.CountEtched
+		add(c.getValue(), c.Count)
+		add(c.getFoilValue(), c.CountFoil)
+		add(c.getEtchedValue(), c.CountEtched)
 	}
 
 	cur := getCurrency()
@@ -334,9 +341,9 @@ func showPriceDistributionStats(owned []OwnedCard) {
 		} else {
 			label = fmt.Sprintf("%.2f - %.2f%s", step, priceDistributionSteps[i-1], cur)
 		}
-		fmt.Printf("%s: %s\n", label, Purple("%d", counts[i]))
+		fmt.Printf("%s: %s (%s%s)\n", label, Purple("%d", counts[i]), Pink("%.2f", sums[i]), Pink(cur))
 	}
 	last := priceDistributionSteps[len(priceDistributionSteps)-1]
-	fmt.Printf("< %.2f%s: %s\n", last, cur, Purple("%d", counts[len(priceDistributionSteps)]))
+	fmt.Printf("< %.2f%s: %s (%s%s)\n", last, cur, Purple("%d", counts[len(priceDistributionSteps)]), Pink("%.2f", sums[len(priceDistributionSteps)]), Pink(cur))
 	fmt.Printf("No price: %s\n", Purple("%d", counts[noPrice]))
 }
