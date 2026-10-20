@@ -37,6 +37,9 @@ func Stats() {
 	// Show Value Stats
 	showValueStats(owned, totalcoll)
 
+	// Price Distribution
+	showPriceDistributionStats(owned)
+
 	// Rarities
 	showRarityStats(owned)
 
@@ -235,4 +238,48 @@ func showColorStats(owned []OwnedCard) {
 	for _, e := range entries {
 		fmt.Printf("%s: %s\n", convertManaSymbols([]any{e.Color}), Purple("%d", e.Count))
 	}
+}
+
+// priceDistributionSteps are the lower bounds of the price buckets used by
+// showPriceDistributionStats, in descending order.
+var priceDistributionSteps = []float64{100, 80, 50, 40, 30, 20, 10, 5, 1, 0.5, 0.2}
+
+// showPriceDistributionStats counts every owned copy into a price bucket,
+// using the price of the finish that copy actually has. Copies without a
+// price in the configured currency are counted separately.
+func showPriceDistributionStats(owned []OwnedCard) {
+	counts := make([]int64, len(priceDistributionSteps)+2)
+	noPrice := len(priceDistributionSteps) + 1
+	bucket := func(price float64) int {
+		if price <= 0 {
+			return noPrice
+		}
+		for i, step := range priceDistributionSteps {
+			if price >= step {
+				return i
+			}
+		}
+		return len(priceDistributionSteps)
+	}
+
+	for _, c := range owned {
+		counts[bucket(c.getValue())] += c.Count
+		counts[bucket(c.getFoilValue())] += c.CountFoil
+		counts[bucket(c.getEtchedValue())] += c.CountEtched
+	}
+
+	cur := getCurrency()
+	fmt.Printf("\n%s\n", Green("Price Distribution"))
+	for i, step := range priceDistributionSteps {
+		var label string
+		if i == 0 {
+			label = fmt.Sprintf(">= %.2f%s", step, cur)
+		} else {
+			label = fmt.Sprintf("%.2f - %.2f%s", step, priceDistributionSteps[i-1], cur)
+		}
+		fmt.Printf("%s: %s\n", label, Purple("%d", counts[i]))
+	}
+	last := priceDistributionSteps[len(priceDistributionSteps)-1]
+	fmt.Printf("< %.2f%s: %s\n", last, cur, Purple("%d", counts[len(priceDistributionSteps)]))
+	fmt.Printf("No price: %s\n", Purple("%d", counts[noPrice]))
 }
