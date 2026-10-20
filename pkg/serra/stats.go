@@ -120,18 +120,19 @@ func showRarityStats(owned []OwnedCard) {
 	fmt.Printf("Commons: %s\n", Purple("%.0f", ri.Commons))
 }
 
-// superTypes are the words left of the "—" in a type line that are not card
-// types themselves (e.g. "Legendary Creature"), so they are skipped when
-// counting main types.
-var superTypes = map[string]bool{
-	"Basic": true, "Legendary": true, "Snow": true, "World": true,
-	"Ongoing": true, "Elite": true, "Host": true,
+// countedMainTypes are the card types counted as main types; everything else
+// left of the "—" in a type line (Legendary, Basic, Kindred, Battle, ...) is
+// ignored.
+var countedMainTypes = map[string]bool{
+	"Instant": true, "Creature": true, "Sorcery": true, "Enchantment": true,
+	"Artifact": true, "Land": true, "Planeswalker": true,
 }
 
 // splitTypeLine splits a type line like "Legendary Artifact Creature — Human
 // Wizard" into its main types (Artifact, Creature) and sub types (Human,
-// Wizard). Faces of multi-faced cards ("... // ...") are combined, with each
-// type reported at most once per card.
+// Wizard). Only types in countedMainTypes are reported as main types. Faces
+// of multi-faced cards ("... // ...") are combined, with each type reported at
+// most once per card.
 func splitTypeLine(typeLine string) (mainTypes, subTypes []string) {
 	seen := map[string]bool{}
 	add := func(list *[]string, kind, t string) {
@@ -144,7 +145,7 @@ func splitTypeLine(typeLine string) (mainTypes, subTypes []string) {
 	for _, face := range strings.Split(typeLine, "//") {
 		main, sub, _ := strings.Cut(face, "—")
 		for _, t := range strings.Fields(main) {
-			if !superTypes[t] {
+			if countedMainTypes[t] {
 				add(&mainTypes, "main:", t)
 			}
 		}
