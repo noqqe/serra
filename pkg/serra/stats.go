@@ -3,6 +3,7 @@ package serra
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -49,7 +50,7 @@ func Stats() {
 	// Colors
 	showColorStats(owned)
 
-	// Colors
+	// Types
 	showTypeStats(owned)
 
 	// Artists
@@ -119,28 +120,83 @@ func showRarityStats(owned []OwnedCard) {
 	fmt.Printf("Commons: %s\n", Purple("%.0f", ri.Commons))
 }
 
+// superTypes are the words left of the "—" in a type line that are not card
+// types themselves (e.g. "Legendary Creature"), so they are skipped when
+// counting main types.
+var superTypes = map[string]bool{
+	"Basic": true, "Legendary": true, "Snow": true, "World": true,
+	"Ongoing": true, "Elite": true, "Host": true,
+}
+
+// splitTypeLine splits a type line like "Legendary Artifact Creature — Human
+// Wizard" into its main types (Artifact, Creature) and sub types (Human,
+// Wizard). Faces of multi-faced cards ("... // ...") are combined, with each
+// type reported at most once per card.
+func splitTypeLine(typeLine string) (mainTypes, subTypes []string) {
+	seen := map[string]bool{}
+	add := func(list *[]string, kind, t string) {
+		if seen[kind+t] {
+			return
+		}
+		seen[kind+t] = true
+		*list = append(*list, t)
+	}
+	for _, face := range strings.Split(typeLine, "//") {
+		main, sub, _ := strings.Cut(face, "—")
+		for _, t := range strings.Fields(main) {
+			if !superTypes[t] {
+				add(&mainTypes, "main:", t)
+			}
+		}
+		for _, t := range strings.Fields(sub) {
+			add(&subTypes, "sub:", t)
+		}
+	}
+	return mainTypes, subTypes
+}
+
 func showTypeStats(owned []OwnedCard) {
-	counts := map[string]int64{}
+	mainCounts := map[string]int64{}
+	subCounts := map[string]int64{}
 	for _, c := range owned {
-		counts[c.TypeLine] += c.Count + c.CountFoil + c.CountEtched
+		n := c.Count + c.CountFoil + c.CountEtched
+		mainTypes, subTypes := splitTypeLine(c.TypeLine)
+		for _, t := range mainTypes {
+			mainCounts[t] += n
+		}
+		for _, t := range subTypes {
+			subCounts[t] += n
+		}
 	}
 
+	printTypeCounts("Main Types", mainCounts, 0)
+	printTypeCounts("Sub Types (Top 10)", subCounts, 10)
+}
+
+// printTypeCounts prints counts sorted descending, limited to the top n
+// entries (n <= 0 means all).
+func printTypeCounts(title string, counts map[string]int64, n int) {
 	type entry struct {
-		TypeLine string
-		Count    int64
+		Type  string
+		Count int64
 	}
 	entries := make([]entry, 0, len(counts))
 	for t, c := range counts {
 		entries = append(entries, entry{t, c})
 	}
-	sort.Slice(entries, func(i, j int) bool { return entries[i].Count > entries[j].Count })
-	if len(entries) > 10 {
-		entries = entries[:10]
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Count != entries[j].Count {
+			return entries[i].Count > entries[j].Count
+		}
+		return entries[i].Type < entries[j].Type
+	})
+	if n > 0 && len(entries) > n {
+		entries = entries[:n]
 	}
 
-	fmt.Printf("\n%s\n", Green("Types (Top 10)"))
+	fmt.Printf("\n%s\n", Green(title))
 	for _, e := range entries {
-		fmt.Printf("%s: %s\n", e.TypeLine, Purple("%d", e.Count))
+		fmt.Printf("%s: %s\n", e.Type, Purple("%d", e.Count))
 	}
 }
 
